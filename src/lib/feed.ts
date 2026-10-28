@@ -20,7 +20,8 @@ export function isFeed(x: unknown): x is Feed {
 }
 
 export async function fetchFeed(url: string): Promise<Feed> {
-  const res = await fetch(url, { headers: { 'Cache-Control': 'no-cache' } });
+  // No custom headers: they would trigger a CORS preflight that GitHub Pages does not answer.
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`Veri akışı alınamadı (${res.status})`);
   const body: unknown = await res.json();
   if (!isFeed(body)) throw new Error('Veri akışı beklenen biçimde değil');

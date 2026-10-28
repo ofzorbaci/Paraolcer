@@ -139,7 +139,8 @@ export async function refreshFeed(): Promise<boolean> {
   if (!FEED_URL) return false;
   try {
     const feed = await fetchFeed(FEED_URL);
-    if (newerFeed(state.feed, feed) !== feed) return false;
+    // An identical build still counts: it confirms the data on the phone is current.
+    if (feed.generatedAt < state.feed.generatedAt) return false;
     const before = state.feed.rateDecisions.dates.join();
     set(feedPatch(feed, 'live', lastCpiMonth()));
     persist(KEYS.feed, feed);
