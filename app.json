@@ -39,6 +39,9 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "feedUrl": "https://ofzorbaci.github.io/Paraolcer/feed.json"
     }
   }
 }
