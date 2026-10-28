@@ -1,5 +1,6 @@
 import { inflationFor, type CpiIndex, type InflationResult } from './cpi';
 import { depositValue } from './deposit';
+import { goldPureGrams } from './gold';
 import { isLivePriced, type Holding, type HoldingKind, type LivePrices, type Settings } from './types';
 
 /** Fisher equation: growth in purchasing power. */
@@ -12,9 +13,17 @@ export function holdingCost(h: Holding): number {
 }
 
 /** Current TRY value, or undefined when no current price is known yet. */
+/** Today's TRY price per unit: live where available (a gold coin is priced by its fine gold), else manual. */
+export function unitPrice(h: Holding, prices: LivePrices): number | undefined {
+  if (!isLivePriced(h.kind)) return h.currentPrice;
+  const live = prices[h.kind];
+  if (live === undefined) return h.currentPrice;
+  return h.kind === 'gold' ? live * goldPureGrams(h.goldType) : live;
+}
+
 export function holdingValue(h: Holding, today: string, prices: LivePrices): number | undefined {
   if (h.kind === 'deposit') return depositValue(h, today);
-  const price = isLivePriced(h.kind) ? (prices[h.kind] ?? h.currentPrice) : h.currentPrice;
+  const price = unitPrice(h, prices);
   return price === undefined ? undefined : h.quantity * price;
 }
 

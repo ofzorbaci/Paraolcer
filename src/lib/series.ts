@@ -1,5 +1,6 @@
 import { daysBetween, monthOf, monthsBetween, type CpiIndex } from './cpi';
 import { depositValue } from './deposit';
+import { unitPrice } from './returns';
 import type { Holding, LivePrices, Settings } from './types';
 
 export type PowerPoint = {
@@ -48,7 +49,7 @@ export function windowStart(holdings: Holding[], today: string): string {
 
 function valueOn(h: Holding, date: string, today: string, prices: LivePrices, fx: FxHistory): { v: number; est: boolean } {
   if (h.kind === 'deposit') return { v: depositValue(h, date), est: false };
-  const now = (h.kind === 'usd' || h.kind === 'eur' || h.kind === 'gold' ? prices[h.kind] : undefined) ?? h.currentPrice;
+  const now = unitPrice(h, prices);
   if (h.kind === 'usd' || h.kind === 'eur') {
     const r = fx[h.kind] && date < today ? rateOn(fx[h.kind]!, date) : undefined;
     if (r !== undefined) return { v: h.quantity * r, est: false };

@@ -1,5 +1,15 @@
 export type HoldingKind = 'deposit' | 'usd' | 'eur' | 'gold' | 'stock' | 'fund' | 'other';
 
+export type GoldType = 'gram' | 'ceyrek' | 'yarim' | 'tam' | 'cumhuriyet';
+
+export const GOLD_LABELS: Record<GoldType, string> = {
+  gram: 'Gram altın',
+  ceyrek: 'Çeyrek altın',
+  yarim: 'Yarım altın',
+  tam: 'Tam altın',
+  cumhuriyet: 'Cumhuriyet altını',
+};
+
 export type Holding = {
   id: string;
   kind: HoldingKind;
@@ -22,6 +32,8 @@ export type Holding = {
   withholding?: number;
   /** deposits saved before v2: annual net interest, % (no term, no withholding) */
   depositRate?: number;
+  /** gold: bar grams or a coin; quantity is grams for 'gram', pieces otherwise */
+  goldType?: GoldType;
 };
 
 export type InflationSource = 'tuik' | 'custom';
@@ -41,7 +53,7 @@ export const KIND_LABELS: Record<HoldingKind, string> = {
   deposit: 'TL mevduat',
   usd: 'Dolar',
   eur: 'Euro',
-  gold: 'Gram altın',
+  gold: 'Altın',
   stock: 'Hisse',
   fund: 'Fon',
   other: 'Diğer',

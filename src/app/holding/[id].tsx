@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { holdingTitle } from '@/components/holding-card';
+import { HoldingSource } from '@/components/source-line';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Disclaimer, Field, IconButton, Pct, Row, Screen } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate, formatLongDate, formatMonth, formatPct, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { priceLookup } from '@/lib/lookup';
-import { analyzeHolding } from '@/lib/returns';
+import { analyzeHolding, unitPrice } from '@/lib/returns';
 import { isLivePriced, KIND_LABELS } from '@/lib/types';
 import { deleteHolding, saveHolding, useStore } from '@/state/store';
 
@@ -79,9 +80,16 @@ export default function HoldingDetailScreen() {
             {a.inflation.complete ? '' : ' (son açıklanan ay)'}
           </ThemedText>
         )}
-        {isLivePriced(h.kind) && prices[h.kind] !== undefined && (
+        {isLivePriced(h.kind) && unitPrice(h, prices) !== undefined && (
           <ThemedText type="small" themeColor="textSecondary">
-            Güncel {h.kind === 'gold' ? 'gram fiyatı' : 'kur'}: {formatTL(prices[h.kind]!, true)} (otomatik)
+            Güncel {h.kind === 'gold' ? (h.goldType && h.goldType !== 'gram' ? 'adet değeri' : 'gram fiyatı') : 'kur'}:{' '}
+            {formatTL(unitPrice(h, prices)!, true)}
+          </ThemedText>
+        )}
+        <HoldingSource kind={h.kind} />
+        {h.kind === 'gold' && h.goldType && h.goldType !== 'gram' && (
+          <ThemedText type="small" themeColor="textSecondary">
+            İçindeki saf altından hesaplanır; kuyumcu fiyatına işçilik eklenir.
           </ThemedText>
         )}
       </Card>

@@ -5,8 +5,7 @@ import { Platform } from 'react-native';
 import snapshot from '@/data/cpi-tuik.json';
 import { buildCpiIndex, type CpiIndex } from '@/lib/cpi';
 import { parseTcmbCpiHtml, TCMB_CPI_URL, type CpiRow } from '@/lib/cpi-parse';
-import { fetchTryRate } from '@/lib/fx';
-import { fetchGoldUsdPerOunce, gramGoldTry } from '@/lib/gold';
+import { refreshPriceBook, toLivePrices, type PriceBook } from '@/lib/prices';
 import { disableCpiReminders, enableCpiReminders } from '@/lib/notify';
 import type { Holding, LivePrices, Settings } from '@/lib/types';
 
@@ -15,12 +14,14 @@ type State = {
   holdings: Holding[];
   settings: Settings;
   cpi: { rows: CpiRow[]; index: CpiIndex; fetchedAt: string; live: boolean };
+  /** plain numbers for the calculators */
   prices: LivePrices;
-  pricesUpdatedAt?: string;
+  /** the same prices with source and time */
+  priceBook: PriceBook;
   priceError?: string;
 };
 
-const KEYS = { holdings: 'gg.holdings.v1', settings: 'gg.settings.v1', cpi: 'gg.cpi.v1' };
+const KEYS = { holdings: 'gg.holdings.v1', settings: 'gg.settings.v1', cpi: 'gg.cpi.v1', prices: 'gg.prices.v1' };
 
 const bundledRows = snapshot.rows as CpiRow[];
 
@@ -30,6 +31,7 @@ let state: State = {
   settings: { inflationSource: 'tuik', customAnnualRate: 0, notifyCpi: false },
   cpi: { rows: bundledRows, index: buildCpiIndex(bundledRows), fetchedAt: snapshot.fetchedAt, live: false },
   prices: {},
+  priceBook: {},
 };
 
 const listeners = new Set<() => void>();
@@ -66,14 +68,17 @@ let loading: Promise<void> | undefined;
 /** Loads saved data, then refreshes CPI and FX in the background. */
 export function loadStore(): Promise<void> {
   loading ??= (async () => {
-    const [holdings, settings, cpi] = await Promise.all([
+    const [holdings, settings, cpi, priceBook] = await Promise.all([
       readJSON<Holding[]>(KEYS.holdings),
       readJSON<Settings>(KEYS.settings),
       readJSON<{ rows: CpiRow[]; fetchedAt: string }>(KEYS.cpi),
+      readJSON<PriceBook>(KEYS.prices),
     ]);
     const patch: Partial<State> = { ready: true };
     if (holdings) patch.holdings = holdings;
     if (settings) patch.settings = { ...state.settings, ...settings };
+    // Last good prices, so the app still works offline; their time shows how old they are.
+    if (priceBook) Object.assign(patch, { priceBook, prices: toLivePrices(priceBook) });
     if (cpi && cpi.rows.at(-1)!.month > bundledRows.at(-1)!.month) {
       patch.cpi = { rows: cpi.rows, index: buildCpiIndex(cpi.rows), fetchedAt: cpi.fetchedAt, live: true };
     }
@@ -103,23 +108,11 @@ export async function refreshCpi(): Promise<boolean> {
   }
 }
 
-/** USD and EUR from ECB reference rates; gram gold from spot gold × USD/TRY. */
+/** USD and EUR (ECB, TCMB as fallback) and gram gold; implausible quotes are rejected. */
 export async function refreshPrices(): Promise<void> {
-  const [usd, eur, gold] = await Promise.allSettled([
-    fetchTryRate('usd', 'latest'),
-    fetchTryRate('eur', 'latest'),
-    fetchGoldUsdPerOunce(),
-  ]);
-  const prices: LivePrices = { ...state.prices };
-  if (usd.status === 'fulfilled') prices.usd = usd.value;
-  if (eur.status === 'fulfilled') prices.eur = eur.value;
-  if (gold.status === 'fulfilled' && prices.usd) prices.gold = gramGoldTry(gold.value, prices.usd);
-  const failed = [usd, eur, gold].find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined;
-  set({
-    prices,
-    pricesUpdatedAt: new Date().toISOString(),
-    priceError: failed ? (failed.reason instanceof Error ? failed.reason.message : 'Fiyat alınamadı') : undefined,
-  });
+  const { book, errors } = await refreshPriceBook(state.priceBook, Platform.OS !== 'web');
+  set({ priceBook: book, prices: toLivePrices(book), priceError: errors[0] });
+  persist(KEYS.prices, book);
 }
 
 export function saveHolding(h: Holding) {
@@ -151,6 +144,13 @@ export async function setCpiReminders(on: boolean): Promise<boolean> {
   const ok = await enableCpiReminders();
   updateSettings({ notifyCpi: ok });
   return ok;
+}
+
+/** Replaces all holdings and settings with a restored backup. */
+export function restoreData(holdings: Holding[], settings: Settings) {
+  set({ holdings, settings: { ...settings, notifyCpi: state.settings.notifyCpi } });
+  persist(KEYS.holdings, holdings);
+  persist(KEYS.settings, state.settings);
 }
 
 export function newId(): string {

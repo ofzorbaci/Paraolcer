@@ -13,7 +13,8 @@ import { formatPct, formatRate, parseAmount, todayISO } from '@/lib/format';
 import { fetchTryRate } from '@/lib/fx';
 import { priceLookup } from '@/lib/lookup';
 import { analyzeHolding } from '@/lib/returns';
-import { KIND_LABELS, type Holding, type HoldingKind } from '@/lib/types';
+import { GOLD_LABELS, KIND_LABELS, type GoldType, type Holding, type HoldingKind } from '@/lib/types';
+import { plausibilityWarnings } from '@/lib/validate';
 import { newId, saveHolding, useStore } from '@/state/store';
 
 type Group = 'deposit' | 'fx' | 'gold' | 'fund' | 'stock' | 'other';
@@ -55,8 +56,11 @@ export default function EditHoldingScreen() {
   const [term, setTerm] = useState(numText(existing?.termDays ?? 32));
   const [withholding, setWithholding] = useState(numText(existing?.withholding));
   const [current, setCurrent] = useState(numText(existing?.currentPrice));
+  const [goldType, setGoldType] = useState<GoldType>(existing?.goldType ?? 'gram');
   const [rateNote, setRateNote] = useState<string>();
+  const [refRate, setRefRate] = useState<number>();
   const [tried, setTried] = useState(false);
+  const [acknowledged, setAcknowledged] = useState<string>();
 
   const kind: HoldingKind = group === 'fx' ? currency : group;
   const isDeposit = kind === 'deposit';
@@ -65,13 +69,15 @@ export default function EditHoldingScreen() {
   const manualPrice = !isDeposit && !isFx && !isGold;
   const lookup = priceLookup(kind, name);
 
-  // Fill the ECB rate of the purchase day for currency purchases.
+  // The ECB rate of the purchase day: pre-fills the cost and is the reference for the plausibility check.
   useEffect(() => {
-    if (!isFx || !buyDate || unitCost) return;
+    if (!isFx || !buyDate) return;
     let cancelled = false;
     fetchTryRate(currency, buyDate)
       .then((r) => {
         if (cancelled) return;
+        setRefRate(r);
+        if (unitCost) return;
         setUnitCost(numText(Number(r.toFixed(4))));
         setRateNote('O günün Avrupa Merkez Bankası kuru. Kendi alış kurunla değiştirebilirsin.');
       })
@@ -114,7 +120,8 @@ export default function EditHoldingScreen() {
     ? {
         id: existing?.id ?? newId(),
         kind,
-        name: name.trim() || KIND_LABELS[kind],
+        name: name.trim() || (isGold ? GOLD_LABELS[goldType] : KIND_LABELS[kind]),
+        goldType: isGold ? goldType : undefined,
         buyDate: buyDate!,
         quantity: draft.quantity!,
         unitCost: draft.unitCost!,
@@ -128,9 +135,15 @@ export default function EditHoldingScreen() {
     : undefined;
   const preview = holding ? analyzeHolding(holding, today, prices, settings, index) : undefined;
 
+  const warnings = holding ? plausibilityWarnings(holding, { referenceRate: isFx ? refRate : undefined, prices }) : [];
+  const warningKey = warnings.map((w) => w.message).join('|');
+  const needsConfirm = warnings.length > 0 && acknowledged !== warningKey;
+
   const onSave = () => {
     setTried(true);
     if (!holding) return;
+    // First tap shows the warnings; a second tap on "Yine de kaydet" saves.
+    if (needsConfirm) return setAcknowledged(warningKey);
     saveHolding(holding);
     router.back();
   };
@@ -159,6 +172,16 @@ export default function EditHoldingScreen() {
             ]}
             value={currency}
             onChange={(c) => { setCurrency(c); setUnitCost(''); setRateNote(undefined); }}
+          />
+        )}
+        {isGold && (
+          <Choice
+            options={(Object.keys(GOLD_LABELS) as GoldType[]).map((g) => ({
+              value: g,
+              label: g === 'gram' ? 'Gram' : GOLD_LABELS[g].split(' ')[0],
+            }))}
+            value={goldType}
+            onChange={setGoldType}
           />
         )}
       </View>
@@ -195,9 +218,9 @@ export default function EditHoldingScreen() {
               />
             )}
             <Field
-              label={isFx ? 'Miktar' : isGold ? 'Miktar' : 'Adet'}
+              label={isFx || (isGold && goldType === 'gram') ? 'Miktar' : 'Adet'}
               prefix={isFx ? (currency === 'usd' ? '$' : '€') : undefined}
-              suffix={isGold ? 'gr' : undefined}
+              suffix={isGold && goldType === 'gram' ? 'gr' : undefined}
               keyboardType="decimal-pad"
               value={quantity}
               onChangeText={setQuantity}
@@ -205,7 +228,7 @@ export default function EditHoldingScreen() {
             />
             <DateField label="Alış tarihi" value={buyDate} onChange={setBuyDate} max={today} />
             <Field
-              label={isFx ? 'Alış kuru' : isGold ? 'Gram alış fiyatı' : 'Birim alış fiyatı'}
+              label={isFx ? 'Alış kuru' : isGold ? (goldType === 'gram' ? 'Gram alış fiyatı' : 'Adet alış fiyatı') : 'Birim alış fiyatı'}
               prefix="₺"
               keyboardType="decimal-pad"
               value={unitCost}
@@ -235,7 +258,9 @@ export default function EditHoldingScreen() {
             )}
             {manualPrice ? null : (
               <ThemedText type="small" themeColor="textSecondary">
-                Güncel {isGold ? 'gram altın fiyatı' : 'kur'} otomatik alınır.
+                {isGold && goldType !== 'gram'
+                  ? 'Güncel değer, içindeki saf altından otomatik hesaplanır. Kuyumcu fiyatına işçilik eklendiği için biraz düşük görünebilir.'
+                  : `Güncel ${isGold ? 'gram altın fiyatı' : 'kur'} otomatik alınır.`}
               </ThemedText>
             )}
           </>
@@ -272,7 +297,19 @@ export default function EditHoldingScreen() {
           Verilerin yalnızca telefonunda saklanır
         </ThemedText>
       </View>
-      <Button title="Kaydet" onPress={onSave} />
+      {warnings.length > 0 && !needsConfirm && (
+        <View style={[styles.warn, { backgroundColor: theme.negativeSoft, borderColor: theme.negativeBorder }]}>
+          <ThemedText type="smallBold" style={{ color: theme.negative }}>
+            Emin misin?
+          </ThemedText>
+          {warnings.map((w) => (
+            <ThemedText key={w.field} type="small" style={{ color: theme.negative }}>
+              • {w.message}
+            </ThemedText>
+          ))}
+        </View>
+      )}
+      <Button title={warnings.length > 0 && !needsConfirm ? 'Yine de kaydet' : 'Kaydet'} onPress={onSave} />
     </Screen>
   );
 }
@@ -288,5 +325,6 @@ const styles = StyleSheet.create({
   divider: { height: 1, marginVertical: Spacing.one },
   previewTotal: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   previewLabel: { fontSize: 18, fontWeight: 700 },
+  warn: { borderWidth: 1, borderRadius: 16, padding: Spacing.three, gap: 4 },
   lock: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
 });

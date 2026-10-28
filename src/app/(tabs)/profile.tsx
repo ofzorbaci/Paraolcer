@@ -1,6 +1,11 @@
+import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
+
+import { BackupCard } from '@/components/backup-card';
+import { quoteLabel } from '@/components/source-line';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Choice, Disclaimer, Field, Row, Screen, ScreenHeader } from '@/components/ui';
@@ -8,6 +13,7 @@ import { Spacing } from '@/constants/theme';
 import { nextCpiReleases } from '@/lib/calendar';
 import { WITHHOLDING_VALID_UNTIL } from '@/lib/deposit';
 import { formatDate, formatMonth, formatRate, formatTL, parseAmount } from '@/lib/format';
+import { bugReportUrl, SUPPORT_EMAIL } from '@/lib/support';
 import type { InflationSource } from '@/lib/types';
 import { refreshCpi, refreshPrices, setCpiReminders, updateSettings, useStore } from '@/state/store';
 
@@ -16,7 +22,8 @@ const RELEASE_FMT = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'l
 export default function ProfileScreen() {
   const settings = useStore((s) => s.settings);
   const cpi = useStore((s) => s.cpi);
-  const prices = useStore((s) => s.prices);
+  const priceBook = useStore((s) => s.priceBook);
+  const holdings = useStore((s) => s.holdings);
   const priceError = useStore((s) => s.priceError);
   const [rate, setRate] = useState(settings.customAnnualRate ? String(settings.customAnnualRate) : '');
   const [status, setStatus] = useState<string>();
@@ -96,14 +103,61 @@ export default function ProfileScreen() {
         <Button title="Hızlı reel getiri hesabı" kind="secondary" onPress={() => router.push('/tools/calculator')} />
       </Card>
 
+      <BackupCard />
+
+      <Card>
+        <ThemedText style={styles.cardTitle}>Destek</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Yanlış bir rakam ya da hata mı gördün? E-posta taslağı açılır; uygulama sürümü ve veri tarihleri eklenir,
+          tutarlar eklenmez.
+        </ThemedText>
+        <Button
+          title="Hata bildir"
+          kind="secondary"
+          icon={{ ios: 'ladybug', android: 'bug_report', web: 'bug_report' }}
+          onPress={() =>
+            Linking.openURL(
+              bugReportUrl({
+                appVersion: Constants.expoConfig?.version ?? '?',
+                platform: `${Platform.OS} ${Platform.Version}`,
+                device: Device.modelName ?? undefined,
+                settings,
+                cpiLast: last.month,
+                cpiLive: cpi.live,
+                priceBook,
+                priceError,
+                holdings,
+              }),
+            ).catch(() => setStatus(`E-posta uygulaması açılamadı. ${SUPPORT_EMAIL} adresine yazabilirsin.`))
+          }
+        />
+      </Card>
+
       <Card>
         <ThemedText style={styles.cardTitle}>Veri durumu</ThemedText>
         <Row label="Son TÜFE" value={formatMonth(last.month)} />
         <Row label="Yıllık / aylık" value={`${formatRate(last.yoy)} / ${formatRate(last.mom)}`} />
         <Row label="TÜFE kaynağı" value={cpi.live ? 'TCMB (canlı)' : 'Uygulama içi'} />
-        <Row label="Dolar" value={prices.usd ? formatTL(prices.usd, true) : '—'} />
-        <Row label="Euro" value={prices.eur ? formatTL(prices.eur, true) : '—'} />
-        <Row label="Gram altın" value={prices.gold ? formatTL(prices.gold, true) : '—'} />
+        {(
+          [
+            ['usd', 'Dolar'],
+            ['eur', 'Euro'],
+            ['gold', 'Gram altın'],
+          ] as const
+        ).map(([key, label]) => {
+          const q = priceBook[key];
+          return (
+            <View key={key}>
+              <Row label={label} value={q ? formatTL(q.value, true) : '—'} />
+              {q && (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.source}>
+                  {quoteLabel(q)}
+                  {q.asOf ? ` · ${formatDate(q.asOf)} kuru` : ''}
+                </ThemedText>
+              )}
+            </View>
+          );
+        })}
         {priceError && (
           <ThemedText type="small" themeColor="textSecondary">
             Bazı fiyatlar alınamadı: {priceError}
@@ -154,4 +208,5 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   cardTitle: { fontSize: 19, lineHeight: 26, fontWeight: 700 },
   gap: { height: Spacing.one },
+  source: { textAlign: 'right' },
 });

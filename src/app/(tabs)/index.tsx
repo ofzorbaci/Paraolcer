@@ -2,13 +2,14 @@ import { Link, router } from 'expo-router';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { HeroCard } from '@/components/hero';
+import { SourcesFooter } from '@/components/source-line';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Disclaimer, IconButton, InfoBanner, Pct, Screen, ScreenHeader } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { usePortfolio } from '@/hooks/use-portfolio';
+import { useAlternatives, usePortfolio } from '@/hooks/use-portfolio';
 import { useTheme } from '@/hooks/use-theme';
 import { nextCpiReleases } from '@/lib/calendar';
-import { formatMonth, formatRate, todayISO } from '@/lib/format';
+import { formatMonth, formatRate, formatTL, todayISO } from '@/lib/format';
 import { KIND_LABELS } from '@/lib/types';
 import { setCpiReminders, useStore } from '@/state/store';
 
@@ -19,6 +20,7 @@ export default function SummaryScreen() {
   const ready = useStore((s) => s.ready);
   const lastCpi = useStore((s) => s.cpi.rows[s.cpi.rows.length - 1]);
   const { items, total, byKind, settings } = usePortfolio();
+  const alternatives = useAlternatives();
   const nextRelease = nextCpiReleases(new Date(), 1)[0];
   const tuik = settings.inflationSource === 'tuik';
 
@@ -84,6 +86,36 @@ export default function SummaryScreen() {
         </ThemedText>
       )}
 
+      {alternatives.list.length > 0 && (
+        <Card>
+          <ThemedText style={styles.cardTitle}>Başka ne yapabilirdin?</ThemedText>
+          {alternatives.list.map((a) => (
+            <View key={a.key} style={styles.kindRow}>
+              <View style={styles.flex}>
+                <ThemedText style={[styles.kindLabel, a.key === 'portfolio' && styles.bold]}>{a.label}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {formatTL(a.value)}
+                </ThemedText>
+              </View>
+              <Pct ratio={a.real} size={18} />
+            </View>
+          ))}
+          {alternatives.loading && (
+            <ThemedText type="small" themeColor="textSecondary">
+              Dolar karşılaştırması yükleniyor…
+            </ThemedText>
+          )}
+          <ThemedText type="small" themeColor="textSecondary">
+            Aynı paralar aynı tarihlerde yatırılsaydı; reel getiri aynı enflasyona göre. Mevduat:{' '}
+            {alternatives.terms.fromPortfolio ? 'senin mevduatlarının' : 'örnek'} koşulları (brüt{' '}
+            {formatRate(alternatives.terms.grossRate)}, {alternatives.terms.termDays} gün, {formatRate(alternatives.terms.withholding)}{' '}
+            stopaj) tüm dönem için varsayıldı.
+          </ThemedText>
+        </Card>
+      )}
+
+      {total && <SourcesFooter />}
+
       <InfoBanner
         title={`${formatMonth(lastCpi.month).split(' ')[0]} enflasyonu açıklandı`}
         body={`Aylık ${formatRate(lastCpi.mom)}, yıllık ${formatRate(lastCpi.yoy)}. Sonraki açıklama ${RELEASE_FMT.format(nextRelease)}, 10:00.`}
@@ -100,4 +132,6 @@ const styles = StyleSheet.create({
   link: { fontSize: 17, fontWeight: 600 },
   kindRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   kindLabel: { fontSize: 17 },
+  bold: { fontWeight: 700 },
+  flex: { flex: 1 },
 });

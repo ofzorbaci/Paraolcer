@@ -33,6 +33,13 @@ export function formatLongDate(iso: string): string {
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
+const STAMP = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+/** ISO time → '28 Eki 14:32' */
+export function formatStamp(iso: string): string {
+  return STAMP.format(new Date(iso));
+}
+
 /** Local calendar date of a Date as 'YYYY-MM-DD'. */
 export function toISODate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { HoldingSource } from '@/components/source-line';
 import { ThemedText } from '@/components/themed-text';
 import { Card, Pct, StatStrip } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -21,7 +22,7 @@ export function holdingTitle(h: Holding): string {
   const base = h.name || KIND_LABELS[h.kind];
   switch (h.kind) {
     case 'gold':
-      return `${base} · ${qty.format(h.quantity)} gr`;
+      return `${base} · ${qty.format(h.quantity)} ${(h.goldType ?? 'gram') === 'gram' ? 'gr' : 'adet'}`;
     case 'usd':
       return `${base} · $${qty.format(h.quantity)}`;
     case 'eur':
@@ -77,6 +78,7 @@ export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; ana
               Güncel fiyatı girmek için dokun.
             </ThemedText>
           )}
+          <HoldingSource kind={h.kind} />
           {age !== undefined && age >= STALE_DAYS && (
             <ThemedText type="small" themeColor="textSecondary">
               Fiyat {age} gün önce girildi · güncellemek için dokun
