@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import snapshot from '../../data/cpi-tuik.json';
+import feed from '../../data/feed-snapshot.json';
 import { buildCpiIndex, customInflation, tuikInflation } from '../cpi';
 import { parseTcmbCpiHtml } from '../cpi-parse';
 import { formatPct, parseAmount, parseDate } from '../format';
 import { analyzeHolding, analyzePortfolio, holdingValue, realReturn } from '../returns';
 import type { Holding, Settings } from '../types';
+
+const snapshot = feed.cpi;
 
 const index = buildCpiIndex(snapshot.rows);
 const tuik: Settings = { inflationSource: 'tuik', customAnnualRate: 0, notifyCpi: false };

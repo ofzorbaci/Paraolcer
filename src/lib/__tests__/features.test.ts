@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import snapshot from '../../data/cpi-tuik.json';
-import ppk from '../../data/ppk.json';
+import feed from '../../data/feed-snapshot.json';
 import { nextCpiReleases, nextRateDecisions, rateDecisionDates } from '../calendar';
 import { buildCpiIndex } from '../cpi';
 import { defaultWithholding, depositValue, effectiveAnnualYield, netAnnualRate } from '../deposit';
@@ -11,6 +10,8 @@ import { salaryErosion } from '../salary';
 import { depositTerms, scenarioReal } from '../scenario';
 import { purchasingPowerSeries, windowStart } from '../series';
 import type { Holding, Settings } from '../types';
+
+const snapshot = feed.cpi;
 
 const index = buildCpiIndex(snapshot.rows);
 const custom30: Settings = { inflationSource: 'custom', customAnnualRate: 30, notifyCpi: false };
@@ -146,7 +147,7 @@ describe('purchasing power series', () => {
 });
 
 describe('rate decision calendar', () => {
-  const schedule = rateDecisionDates(ppk.dates, ppk.time);
+  const schedule = rateDecisionDates(feed.rateDecisions.dates, feed.rateDecisions.time);
 
   it('is sorted, unique and on weekdays at 14:00', () => {
     const times = schedule.map((d) => d.getTime());

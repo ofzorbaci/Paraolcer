@@ -11,17 +11,20 @@ import { quoteLabel } from '@/components/source-line';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Choice, Disclaimer, Field, Row, Screen, ScreenHeader } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { WITHHOLDING_VALID_UNTIL } from '@/lib/deposit';
-import { formatDate, formatMonth, formatRate, formatTL, parseAmount } from '@/lib/format';
+import { currentPolicyRate } from '@/lib/feed';
+import { formatDate, formatMonth, formatRate, formatStamp, formatTL, parseAmount } from '@/lib/format';
 import { bugReportUrl, SUPPORT_EMAIL } from '@/lib/support';
 import type { InflationSource } from '@/lib/types';
-import { refreshCpi, refreshPrices, updateSettings, useStore } from '@/state/store';
+import { refreshCpi, refreshFeed, refreshPrices, updateSettings, useStore } from '@/state/store';
 
 export default function ProfileScreen() {
   const settings = useStore((s) => s.settings);
   const cpi = useStore((s) => s.cpi);
   const priceBook = useStore((s) => s.priceBook);
   const holdings = useStore((s) => s.holdings);
+  const feed = useStore((s) => s.feed);
+  const feedOrigin = useStore((s) => s.feedOrigin);
+  const policy = currentPolicyRate(feed);
   const priceError = useStore((s) => s.priceError);
   const [rate, setRate] = useState(settings.customAnnualRate ? String(settings.customAnnualRate) : '');
   const [status, setStatus] = useState<string>();
@@ -29,7 +32,7 @@ export default function ProfileScreen() {
 
   const onRefresh = async () => {
     setStatus('Güncelleniyor…');
-    const [ok] = await Promise.all([refreshCpi(), refreshPrices()]);
+    const [ok] = await Promise.all([refreshCpi(), refreshPrices(), refreshFeed()]);
     setStatus(ok ? 'TÜFE ve fiyatlar güncellendi.' : 'Fiyatlar güncellendi; TÜFE için uygulama içi veri kullanılıyor.');
   };
 
@@ -107,6 +110,11 @@ export default function ProfileScreen() {
         <Row label="Son TÜFE" value={formatMonth(last.month)} />
         <Row label="Yıllık / aylık" value={`${formatRate(last.yoy)} / ${formatRate(last.mom)}`} />
         <Row label="TÜFE kaynağı" value={cpi.live ? 'TCMB (canlı)' : 'Uygulama içi'} />
+        <Row label="Politika faizi (TCMB)" value={`${formatRate(policy.rate)} · ${formatDate(policy.from)}’den beri`} />
+        <Row
+          label="Veri akışı"
+          value={`${feedOrigin === 'live' ? 'Güncel' : feedOrigin === 'cached' ? 'Kayıtlı' : 'Uygulama içi'} · ${formatStamp(feed.generatedAt)}`}
+        />
         {(
           [
             ['usd', 'Dolar'],
@@ -143,12 +151,19 @@ export default function ProfileScreen() {
 
       <Card>
         <ThemedText style={styles.cardTitle}>Mevduat stopajı</ThemedText>
-        <Row label="Vadesiz ve 6 aya kadar" value="%17,5" />
-        <Row label="1 yıla kadar" value="%15" />
-        <Row label="1 yıldan uzun" value="%10" />
+        {feed.withholding.tiers.map((t, i) => {
+          const prev = feed.withholding.tiers[i - 1]?.maxDays;
+          const label =
+            t.maxDays === null
+              ? `${prev ?? 0} günden uzun`
+              : i === 0
+                ? `Vadesiz ve ${t.maxDays} güne kadar`
+                : `${t.maxDays} güne kadar`;
+          return <Row key={label} label={label} value={formatRate(t.rate)} />;
+        })}
         <ThemedText type="small" themeColor="textSecondary">
-          Temmuz 2025’ten sonra açılan veya yenilenen hesaplar için. {formatDate(WITHHOLDING_VALID_UNTIL)} tarihine kadar
-          geçerli (11444 sayılı Cumhurbaşkanı Kararı). Varlık eklerken değiştirebilirsin.
+          {formatDate(feed.withholding.validUntil)} tarihine kadar geçerli. Kaynak: {feed.withholding.source}. Varlık
+          eklerken değiştirebilirsin.
         </ThemedText>
       </Card>
 

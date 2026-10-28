@@ -10,8 +10,8 @@ import { useAlternatives, usePortfolio } from '@/hooks/use-portfolio';
 import { useTheme } from '@/hooks/use-theme';
 import { nextCpiReleases, nextRateDecisions } from '@/lib/calendar';
 import { formatMonth, formatRate, formatTL, todayISO } from '@/lib/format';
+import { currentPolicyRate } from '@/lib/feed';
 import { KIND_LABELS } from '@/lib/types';
-import { RATE_SCHEDULE } from '@/lib/notify';
 import { setReminders, useStore } from '@/state/store';
 
 const RELEASE_FMT = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' });
@@ -23,7 +23,9 @@ export default function SummaryScreen() {
   const { items, total, byKind, settings } = usePortfolio();
   const alternatives = useAlternatives();
   const nextRelease = nextCpiReleases(new Date(), 1)[0];
-  const nextRate = nextRateDecisions(new Date(), RATE_SCHEDULE, 1)[0];
+  const rateSchedule = useStore((s) => s.rateSchedule);
+  const policy = currentPolicyRate(useStore((s) => s.feed));
+  const nextRate = nextRateDecisions(new Date(), rateSchedule, 1)[0];
   const anyReminder = settings.notifyCpi || !!settings.notifyRate;
   const tuik = settings.inflationSource === 'tuik';
 
@@ -128,7 +130,7 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
 
       <InfoBanner
         title={`${formatMonth(lastCpi.month).split(' ')[0]} enflasyonu açıklandı`}
-        body={`Aylık ${formatRate(lastCpi.mom)}, yıllık ${formatRate(lastCpi.yoy)}. Sonraki açıklama ${RELEASE_FMT.format(nextRelease)}, 10:00.${nextRate ? ` Sonraki faiz kararı ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''}`}
+        body={`Aylık ${formatRate(lastCpi.mom)}, yıllık ${formatRate(lastCpi.yoy)}. Politika faizi ${formatRate(policy.rate)}. Sonraki açıklama ${RELEASE_FMT.format(nextRelease)}, 10:00.${nextRate ? ` Sonraki faiz kararı ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''}`}
       />
 
       <Disclaimer />

@@ -6,7 +6,7 @@ import { Card } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { nextCpiReleases, nextRateDecisions } from '@/lib/calendar';
-import { RATE_SCHEDULE, type ReminderKind } from '@/lib/notify';
+import type { ReminderKind } from '@/lib/notify';
 import { setReminders, useStore } from '@/state/store';
 
 export const ANNOUNCEMENT_FMT = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
@@ -15,10 +15,11 @@ export const ANNOUNCEMENT_FMT = new Intl.DateTimeFormat('tr-TR', { day: 'numeric
 export function RemindersCard() {
   const theme = useTheme();
   const settings = useStore((s) => s.settings);
+  const rateSchedule = useStore((s) => s.rateSchedule);
   const [status, setStatus] = useState<string>();
   const now = new Date();
   const nextCpi = nextCpiReleases(now, 1)[0];
-  const nextRates = nextRateDecisions(now, RATE_SCHEDULE);
+  const nextRates = nextRateDecisions(now, rateSchedule);
 
   const toggle = async (kind: ReminderKind, on: boolean) => {
     const ok = await setReminders(kind, on);
@@ -57,14 +58,9 @@ export function RemindersCard() {
         'Faiz kararı açıklandığında',
         nextRates.length > 0
           ? `TCMB Para Politikası Kurulu kararı 14:00’te açıklanır. Sonraki: ${ANNOUNCEMENT_FMT.format(nextRates[0])}.`
-          : 'Uygulamadaki toplantı takvimi bitti; yeni takvim bir güncellemeyle gelecek.',
+          : 'TCMB yeni toplantı takvimini henüz yayımlamadı; yayımlanınca otomatik eklenecek.',
         settings.notifyRate ?? false,
         nextRates.length === 0,
-      )}
-      {nextRates.length > 0 && nextRates.length <= 2 && (
-        <ThemedText type="small" themeColor="textSecondary">
-          Takvimde {nextRates.length} toplantı kaldı; TCMB yeni takvimi açıklayınca uygulama güncellenmeli.
-        </ThemedText>
       )}
       {Platform.OS === 'web' && (
         <ThemedText type="small" themeColor="textSecondary">

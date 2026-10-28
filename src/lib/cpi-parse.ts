@@ -1,5 +1,5 @@
 // Parses the CPI table on TCMB's "Tüketici Fiyatları" page.
-// Kept free of imports so scripts/update-cpi.ts can run it under plain Node.
+// Kept free of imports so feed/build.mts can run it under plain Node.
 
 export type CpiRow = {
   /** 'YYYY-MM' */

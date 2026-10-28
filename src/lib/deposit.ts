@@ -1,16 +1,26 @@
+import snapshot from '../data/feed-snapshot.json';
+
 import { daysBetween } from './cpi';
+import type { Feed } from './feed-types';
 import type { Holding } from './types';
 
 /**
- * Withholding on TRY deposit interest by term, per Presidential Decision 2025/66 (9 July 2025),
- * extended to 31.12.2026 by Decision 11444. Applies to accounts opened or renewed after July 2025.
+ * Withholding on TRY deposit interest by term. The table comes from the data feed
+ * (feed/withholding.json), so a new Presidential Decision needs no app release.
  */
-export const WITHHOLDING_VALID_UNTIL = '2026-12-31';
+let rules: Feed['withholding'] = snapshot.withholding as Feed['withholding'];
+
+export function setWithholdingRules(next: Feed['withholding']) {
+  rules = next;
+}
+
+export function withholdingRules(): Feed['withholding'] {
+  return rules;
+}
 
 export function defaultWithholding(termDays: number): number {
-  if (termDays <= 182) return 17.5;
-  if (termDays <= 365) return 15;
-  return 10;
+  const tier = rules.tiers.find((t) => t.maxDays === null || termDays <= t.maxDays);
+  return tier?.rate ?? rules.tiers[rules.tiers.length - 1].rate;
 }
 
 /** Annual net simple rate after withholding, %. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import snapshot from '../../data/cpi-tuik.json';
+import feed from '../../data/feed-snapshot.json';
 import { decryptBackup, encryptBackup, type BackupData } from '../backup';
 import { compareAlternatives } from '../benchmark';
 import { buildCpiIndex } from '../cpi';
@@ -10,6 +10,8 @@ import { analyzeHolding, holdingValue } from '../returns';
 import { bugReportUrl } from '../support';
 import type { Holding, Settings } from '../types';
 import { plausibilityWarnings } from '../validate';
+
+const snapshot = feed.cpi;
 
 const index = buildCpiIndex(snapshot.rows);
 const custom30: Settings = { inflationSource: 'custom', customAnnualRate: 30, notifyCpi: false };

@@ -1,13 +1,8 @@
 // Local notifications are not available in the web build.
-import ppk from '@/data/ppk.json';
-
-import { rateDecisionDates } from './calendar';
 
 export type ReminderKind = 'cpi' | 'rate';
 
-export const RATE_SCHEDULE = rateDecisionDates(ppk.dates, ppk.time);
-
-export async function enableReminders(_kind: ReminderKind): Promise<boolean> {
+export async function enableReminders(_kind: ReminderKind, _rateSchedule: Date[]): Promise<boolean> {
   return false;
 }
 

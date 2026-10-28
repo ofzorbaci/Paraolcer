@@ -1,0 +1,9 @@
+{
+ "source": "Cumhurbaşkanı Kararı 2025/66 (Resmi Gazete 9.7.2025), süresi 11444 sayılı Karar ile uzatıldı (Resmi Gazete 20.6.2026)",
+ "validUntil": "2026-12-31",
+ "tiers": [
+  { "maxDays": 182, "rate": 17.5 },
+  { "maxDays": 365, "rate": 15 },
+  { "maxDays": null, "rate": 10 }
+ ]
+}

@@ -5,7 +5,6 @@ import { DateField } from '@/components/date-field';
 import { PowerChart } from '@/components/power-chart';
 import { ThemedText } from '@/components/themed-text';
 import { Card, Disclaimer, Field, Pct, Radius, Row, Screen, ScreenHeader } from '@/components/ui';
-import expectations from '@/data/expectations.json';
 import { Spacing } from '@/constants/theme';
 import { usePowerSeries } from '@/hooks/use-portfolio';
 import { useTheme } from '@/hooks/use-theme';
@@ -70,6 +69,7 @@ function ScenarioCard() {
   const theme = useTheme();
   const holdings = useStore((s) => s.holdings);
   const lastYoy = useStore((s) => s.cpi.rows[s.cpi.rows.length - 1].yoy);
+  const expectations = useStore((s) => s.feed.expectations);
   const terms = depositTerms(holdings);
   const options = [
     { key: 'market', label: 'Piyasa beklentisi', cpi: expectations.next12m.market },

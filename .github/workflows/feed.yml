@@ -1,0 +1,76 @@
+# Builds the app's data feed from official TCMB sources and publishes it on GitHub Pages.
+# Runs after the CPI release (10:00 TR) and after rate decisions (14:00 TR); Turkey is UTC+3.
+# A broken source fails the run, and GitHub e-mails the repository owner.
+
+name: Veri akışı
+
+on:
+  schedule:
+    - cron: '15 7 * * *'
+    - cron: '15 11 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['feed/**', 'src/lib/cpi-parse.ts', 'src/lib/feed-types.ts', '.github/workflows/feed.yml']
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: feed
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      failed: ${{ steps.build.outcome == 'failure' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      - name: Ayrıştırıcı testleri
+        run: npx vitest run feed
+
+      - name: Feed derle
+        id: build
+        continue-on-error: true
+        run: node feed/build.mts
+
+      - name: Değişen veriyi kaydet
+        run: |
+          if [[ -n "$(git status --porcelain feed/public src/data/feed-snapshot.json)" ]]; then
+            git config user.name "veri-akisi[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add feed/public/feed.json src/data/feed-snapshot.json
+            git commit -m "Veri akışı: $(date -u +%Y-%m-%d) güncellemesi"
+            git push
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: feed/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Kaynak hatası varsa bildir
+        if: needs.build.outputs.failed == 'true'
+        run: |
+          echo "Bir ya da daha fazla kaynak alınamadı; ayrıntılar build işinin 'Feed derle' adımında."
+          exit 1

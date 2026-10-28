@@ -22,15 +22,22 @@ Sunucu yok, kullanıcı hesabı yok. Bu bilinçli bir gizlilik kararı.
 
 ## Veri kaynakları
 
-| veri | kaynak | durum |
+Resmi veriler bir **veri akışından** gelir: `feed/build.mts` TCMB sayfalarını okur, doğrular ve
+`feed/public/feed.json` + `src/data/feed-snapshot.json` yazar. GitHub Actions (`.github/workflows/feed.yml`)
+bunu her gün 10:15 ve 14:15'te (TR) çalıştırır, değişeni kaydeder ve GitHub Pages'te yayımlar.
+Uygulama açılışta `expo.extra.feedUrl` adresinden okur; ulaşamazsa kayıtlı, o da yoksa gömülü kopyayı kullanır.
+
+| veri | kaynak | otomatik mi |
 | --- | --- | --- |
-| TÜİK TÜFE (aylık/yıllık %, 2005→) | TCMB "Tüketici Fiyatları" sayfası | `scripts/update-cpi.mts` ile paketlenir, telefonda açılışta yenilenir |
-| USD/TRY, EUR/TRY (günlük, tarihsel) | Frankfurter API (ECB) | anahtarsız, canlı |
-| gram altın | gold-api.com ons × ECB USD/TRY ÷ 31,1035 | anahtarsız, canlı; Kapalıçarşı primi yok |
-| enflasyon beklentileri | TCMB Piyasa Katılımcıları ve Sektörel Beklentiler anketi | `src/data/expectations.json`, aylık elle güncellenir |
-| mevduat stopajı | 2025/66 ve 11444 sayılı Cumhurbaşkanı Kararları | %17,5 / %15 / %10, 31.12.2026'ya kadar |
-| ENAG / kişisel enflasyon | kullanıcı girer (yıllık %) | ENAG'ın makine okunur kaynağı yok |
-| BIST hisse, TEFAS fon | kullanıcı güncel fiyatı girer | TEFAS'ın açık API'si yok |
+| TÜİK TÜFE (2005→) | TCMB "Tüketici Fiyatları" sayfası | evet (feed + telefonda doğrudan) |
+| politika faizi | TCMB "1 Hafta Repo" tablosu | evet |
+| PPK karar takvimi | TCMB "PPK/<yıl>" sayfaları | evet (yeni yıl yayımlanınca kendiliğinden) |
+| 12 ay sonrası beklentiler | TCMB Sektörel Enflasyon Beklentileri raporu (PDF) | evet |
+| mevduat stopajı | Cumhurbaşkanı Kararı | hayır: `feed/withholding.json`; süre dolmadan 30 gün önce iş akışı hata verir |
+| USD/TRY, EUR/TRY | Frankfurter (ECB), yedek TCMB today.xml | evet (telefonda) |
+| gram altın | gold-api.com ons × USD/TRY | evet (telefonda) |
+| ENAG / kişisel enflasyon | kullanıcı girer | — |
+| BIST hisse, TEFAS fon | kullanıcı girer ("Fiyata bak" bağlantısıyla) | lisanslı kaynak gerekir |
 
 ## Veri modeli (cihazda JSON)
 
