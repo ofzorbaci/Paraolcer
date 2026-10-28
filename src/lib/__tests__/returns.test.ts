@@ -8,7 +8,7 @@ import { analyzeHolding, analyzePortfolio, holdingValue, realReturn } from '../r
 import type { Holding, Settings } from '../types';
 
 const index = buildCpiIndex(snapshot.rows);
-const tuik: Settings = { inflationSource: 'tuik', customAnnualRate: 0 };
+const tuik: Settings = { inflationSource: 'tuik', customAnnualRate: 0, notifyCpi: false };
 
 function holding(over: Partial<Holding>): Holding {
   return { id: 'h', kind: 'other', name: 'x', buyDate: '2024-01-15', quantity: 1, unitCost: 100, ...over };
@@ -91,7 +91,7 @@ describe('returns', () => {
   });
 
   it('beats inflation only when value exceeds the break-even', () => {
-    const custom: Settings = { inflationSource: 'custom', customAnnualRate: 30 };
+    const custom: Settings = { inflationSource: 'custom', customAnnualRate: 30, notifyCpi: false };
     const win = analyzeHolding(
       holding({ unitCost: 100, currentPrice: 140, buyDate: '2025-01-01' }),
       '2026-01-01', {}, custom, index,
@@ -109,7 +109,7 @@ describe('returns', () => {
   });
 
   it('aggregates a portfolio against each holding’s own inflation', () => {
-    const custom: Settings = { inflationSource: 'custom', customAnnualRate: 30 };
+    const custom: Settings = { inflationSource: 'custom', customAnnualRate: 30, notifyCpi: false };
     const items = [
       analyzeHolding(holding({ unitCost: 100, currentPrice: 140, buyDate: '2025-01-01' }), '2026-01-01', {}, custom, index),
       analyzeHolding(holding({ unitCost: 100, currentPrice: 120, buyDate: '2025-01-01' }), '2026-01-01', {}, custom, index),

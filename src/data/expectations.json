@@ -1,0 +1,13 @@
+{
+ "survey": "TCMB Piyasa Katılımcıları Anketi ve Sektörel Enflasyon Beklentileri",
+ "month": "2026-10",
+ "sources": [
+  "https://www.foreks.com/haber/detay/6ad1d143422c786f3f7a43e8/PICNEWS/tr/piyasa-katilimcilarinin-yil-sonu-enflasyon-beklentisi-yuzde-29-63-e-yukseldi-16-10-26/",
+  "https://www.alomaliye.com/2026/10/23/enflasyon-beklentileri-ayristi-piyasa-yukseldi-hanehalki-geriledi/"
+ ],
+ "next12m": {
+  "market": 23.89,
+  "realSector": 31.8,
+  "household": 43.75
+ }
+}

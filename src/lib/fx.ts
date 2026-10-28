@@ -23,6 +23,18 @@ export async function fetchTryRate(currency: Currency, date: string): Promise<nu
   return rate;
 }
 
+/** Daily TRY rates between two dates, keyed by 'YYYY-MM-DD' (business days only). */
+export async function fetchTryRateSeries(currency: Currency, from: string, to: string): Promise<Map<string, number>> {
+  const res = await fetch(`${BASE}/${from}..${to}?base=${currency.toUpperCase()}&symbols=TRY`);
+  if (!res.ok) throw new Error(`Kur serisi alınamadı (${res.status})`);
+  const body = (await res.json()) as { rates?: Record<string, { TRY?: number }> };
+  const out = new Map<string, number>();
+  for (const [date, r] of Object.entries(body.rates ?? {})) {
+    if (typeof r.TRY === 'number') out.set(date, r.TRY);
+  }
+  return out;
+}
+
 /** What `amountTry` invested on `fromDate` in `currency` would be worth today, in TRY. */
 export async function currencyBenchmark(currency: Currency, amountTry: number, fromDate: string): Promise<number> {
   const [then, now] = await Promise.all([fetchTryRate(currency, fromDate), fetchTryRate(currency, 'latest')]);

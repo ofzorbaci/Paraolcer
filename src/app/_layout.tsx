@@ -18,8 +18,9 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Özet' }} />
-        <Stack.Screen name="holding/edit" options={{ presentation: 'modal', title: 'Varlık' }} />
-        <Stack.Screen name="holding/[id]" options={{ title: 'Detay', headerBackTitle: 'Geri' }} />
+        <Stack.Screen name="holding/edit" options={{ headerShown: false }} />
+        <Stack.Screen name="holding/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="tools/calculator" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );

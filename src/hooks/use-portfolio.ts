@@ -1,49 +1,55 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { todayISO } from '@/lib/format';
-import { currencyBenchmark, type Currency } from '@/lib/fx';
-import { analyzeHolding, analyzePortfolio } from '@/lib/returns';
-import type { Holding } from '@/lib/types';
+import { fetchTryRateSeries } from '@/lib/fx';
+import { analyzeHolding, analyzePortfolio, summarizeByKind } from '@/lib/returns';
+import { purchasingPowerSeries, windowStart, type FxHistory } from '@/lib/series';
 import { useStore } from '@/state/store';
 
 export function usePortfolio() {
   const holdings = useStore((s) => s.holdings);
   const settings = useStore((s) => s.settings);
   const index = useStore((s) => s.cpi.index);
-  const fx = useStore((s) => s.fx);
+  const prices = useStore((s) => s.prices);
   const today = todayISO();
 
   return useMemo(() => {
     const items = holdings
-      .map((h) => ({ holding: h, analysis: analyzeHolding(h, today, fx, settings, index) }))
+      .map((h) => ({ holding: h, analysis: analyzeHolding(h, today, prices, settings, index) }))
       .sort((a, b) => b.holding.buyDate.localeCompare(a.holding.buyDate));
-    return { items, total: analyzePortfolio(items.map((i) => i.analysis)), cpiLast: index.last, settings };
-  }, [holdings, settings, index, fx, today]);
+    return {
+      items,
+      total: analyzePortfolio(items.map((i) => i.analysis)),
+      byKind: summarizeByKind(items),
+      cpiLast: index.last,
+      settings,
+    };
+  }, [holdings, settings, index, prices, today]);
 }
 
-export type Benchmarks = Partial<Record<Currency, number>>;
+/** Monthly "what the account shows" vs "what it buys", over the last 12 months. */
+export function usePowerSeries() {
+  const holdings = useStore((s) => s.holdings);
+  const settings = useStore((s) => s.settings);
+  const index = useStore((s) => s.cpi.index);
+  const prices = useStore((s) => s.prices);
+  const today = todayISO();
+  const [fx, setFx] = useState<{ key: string; data: FxHistory }>({ key: '', data: {} });
 
-/** What the same purchases would be worth today had they gone into USD or EUR. */
-export function useCurrencyBenchmarks(holdings: Holding[]): { data: Benchmarks; loading: boolean } {
-  const key = holdings.map((h) => `${h.id}:${h.buyDate}:${h.quantity * h.unitCost}`).join('|');
-  const [result, setResult] = useState<{ key: string; data: Benchmarks }>({ key: '', data: {} });
+  const currencies = [...new Set(holdings.map((h) => h.kind))].filter((k) => k === 'usd' || k === 'eur');
+  const from = holdings.length ? `${windowStart(holdings, today)}-01` : today;
+  const key = `${currencies.join(',')}:${from}:${today}`;
 
   useEffect(() => {
-    if (holdings.length === 0) return;
+    if (currencies.length === 0) return;
     let cancelled = false;
-    const total = (c: Currency) =>
-      Promise.all(holdings.map((h) => currencyBenchmark(c, h.quantity * h.unitCost, h.buyDate))).then((xs) =>
-        xs.reduce((a, b) => a + b, 0),
-      );
-    Promise.allSettled([total('usd'), total('eur')]).then(([usd, eur]) => {
+    Promise.allSettled(currencies.map((c) => fetchTryRateSeries(c, from, today))).then((results) => {
       if (cancelled) return;
-      setResult({
-        key,
-        data: {
-          usd: usd.status === 'fulfilled' ? usd.value : undefined,
-          eur: eur.status === 'fulfilled' ? eur.value : undefined,
-        },
+      const data: FxHistory = {};
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled') data[currencies[i]] = r.value;
       });
+      setFx({ key, data });
     });
     return () => {
       cancelled = true;
@@ -51,6 +57,8 @@ export function useCurrencyBenchmarks(holdings: Holding[]): { data: Benchmarks; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  if (holdings.length === 0) return { data: {}, loading: false };
-  return { data: result.key === key ? result.data : {}, loading: result.key !== key };
+  return useMemo(
+    () => purchasingPowerSeries(holdings, today, prices, fx.key === key ? fx.data : {}, settings, index),
+    [holdings, today, prices, fx, key, settings, index],
+  );
 }

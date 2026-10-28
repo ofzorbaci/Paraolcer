@@ -1,5 +1,6 @@
-import { daysBetween, inflationFor, type CpiIndex, type InflationResult } from './cpi';
-import type { FxQuotes, Holding, Settings } from './types';
+import { inflationFor, type CpiIndex, type InflationResult } from './cpi';
+import { depositValue } from './deposit';
+import { isLivePriced, type Holding, type HoldingKind, type LivePrices, type Settings } from './types';
 
 /** Fisher equation: growth in purchasing power. */
 export function realReturn(nominal: number, inflation: number): number {
@@ -11,16 +12,10 @@ export function holdingCost(h: Holding): number {
 }
 
 /** Current TRY value, or undefined when no current price is known yet. */
-export function holdingValue(h: Holding, today: string, fx: FxQuotes): number | undefined {
-  if (h.kind === 'deposit') {
-    const years = Math.max(0, daysBetween(h.buyDate, today)) / 365;
-    return holdingCost(h) * Math.pow(1 + (h.depositRate ?? 0) / 100, years);
-  }
-  if (h.kind === 'usd' || h.kind === 'eur') {
-    const rate = fx[h.kind] ?? h.currentPrice;
-    return rate === undefined ? undefined : h.quantity * rate;
-  }
-  return h.currentPrice === undefined ? undefined : h.quantity * h.currentPrice;
+export function holdingValue(h: Holding, today: string, prices: LivePrices): number | undefined {
+  if (h.kind === 'deposit') return depositValue(h, today);
+  const price = isLivePriced(h.kind) ? (prices[h.kind] ?? h.currentPrice) : h.currentPrice;
+  return price === undefined ? undefined : h.quantity * price;
 }
 
 export type HoldingAnalysis = {
@@ -38,12 +33,12 @@ export type HoldingAnalysis = {
 export function analyzeHolding(
   h: Holding,
   today: string,
-  fx: FxQuotes,
+  prices: LivePrices,
   settings: Settings,
   index: CpiIndex,
 ): HoldingAnalysis {
   const cost = holdingCost(h);
-  const value = holdingValue(h, today, fx);
+  const value = holdingValue(h, today, prices);
   const inflation = inflationFor(settings, index, h.buyDate, today);
   const breakEven = cost * inflation.factor;
   if (value === undefined || cost <= 0) {
@@ -93,6 +88,22 @@ export function analyzePortfolio(items: HoldingAnalysis[]): PortfolioAnalysis | 
     unpriced: items.length - priced.length,
     incomplete: priced.some((a) => !a.inflation.complete),
   };
+}
+
+export type KindSummary = { kind: HoldingKind; real: number; value: number };
+
+/** Real return per asset class, best protector first. */
+export function summarizeByKind(items: { holding: Holding; analysis: HoldingAnalysis }[]): KindSummary[] {
+  const groups = new Map<HoldingKind, HoldingAnalysis[]>();
+  for (const { holding, analysis } of items) {
+    groups.set(holding.kind, [...(groups.get(holding.kind) ?? []), analysis]);
+  }
+  const out: KindSummary[] = [];
+  for (const [kind, list] of groups) {
+    const total = analyzePortfolio(list);
+    if (total) out.push({ kind, real: total.real, value: total.value });
+  }
+  return out.sort((a, b) => b.real - a.real);
 }
 
 function sum(xs: number[]): number {

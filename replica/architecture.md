@@ -24,45 +24,50 @@ Sunucu yok, kullanıcı hesabı yok. Bu bilinçli bir gizlilik kararı.
 
 | veri | kaynak | durum |
 | --- | --- | --- |
-| TÜİK TÜFE (aylık/yıllık %, 2005→) | TCMB "Tüketici Fiyatları" sayfası | `scripts/update-cpi.mjs` ile paketlenir, uygulama açılışta yeniler |
-| USD/TRY, EUR/TRY (tarihsel) | Frankfurter API (ECB) | anahtarsız, canlı |
+| TÜİK TÜFE (aylık/yıllık %, 2005→) | TCMB "Tüketici Fiyatları" sayfası | `scripts/update-cpi.mts` ile paketlenir, telefonda açılışta yenilenir |
+| USD/TRY, EUR/TRY (günlük, tarihsel) | Frankfurter API (ECB) | anahtarsız, canlı |
+| gram altın | gold-api.com ons × ECB USD/TRY ÷ 31,1035 | anahtarsız, canlı; Kapalıçarşı primi yok |
+| enflasyon beklentileri | TCMB Piyasa Katılımcıları ve Sektörel Beklentiler anketi | `src/data/expectations.json`, aylık elle güncellenir |
+| mevduat stopajı | 2025/66 ve 11444 sayılı Cumhurbaşkanı Kararları | %17,5 / %15 / %10, 31.12.2026'ya kadar |
 | ENAG / kişisel enflasyon | kullanıcı girer (yıllık %) | ENAG'ın makine okunur kaynağı yok |
-| altın, BIST, TEFAS fon | kullanıcı güncel fiyatı girer | MVP; sonraki adım EVDS anahtarı ile otomatik |
+| BIST hisse, TEFAS fon | kullanıcı güncel fiyatı girer | TEFAS'ın açık API'si yok |
 
 ## Veri modeli (cihazda JSON)
 
 ```ts
 Holding {
-  id: string
-  kind: 'deposit' | 'usd' | 'eur' | 'gold' | 'stock' | 'fund' | 'other'
-  name: string
-  buyDate: 'YYYY-MM-DD'
-  quantity: number        // adet / gram / döviz miktarı; mevduatta 1
-  unitCost: number        // TL, alış birim fiyatı
-  currentPrice?: number   // TL, elle girilen güncel birim fiyat
-  priceUpdatedAt?: string
-  depositRate?: number    // mevduat: yıllık net faiz (%)
+  id, kind: 'deposit' | 'usd' | 'eur' | 'gold' | 'stock' | 'fund' | 'other'
+  name, buyDate: 'YYYY-MM-DD', quantity, unitCost
+  currentPrice?, priceUpdatedAt?        // elle fiyatlananlar
+  grossRate?, termDays?, withholding?   // mevduat: brüt faiz, vade, stopaj
+  depositRate?                          // v1 mevduat kayıtları (net faiz)
 }
-Settings { inflationSource: 'tuik' | 'custom', customAnnualRate: number }
+Settings { inflationSource: 'tuik' | 'custom', customAnnualRate, notifyCpi }
 ```
 
 ## Hesaplama
 
-- Enflasyon çarpanı: alış ayının TÜFE endeksinden son yayımlanan aya.
-  Endeks, aylık % değişimlerin zincirlenmesiyle kurulur (Ocak 2005 = 100).
+- Enflasyon çarpanı: alış ayının TÜFE endeksinden son yayımlanan aya (TÜİK yöntemi).
+  Endeks, aylık % değişimlerin zincirlenmesiyle kurulur.
 - Reel getiri (Fisher): `(1 + nominal) / (1 + enflasyon) − 1`.
+- Mevduat: net = brüt × (1 − stopaj); her vade sonunda bileşik.
 - Portföy: `Σ güncel değer / Σ (maliyet × çarpan) − 1`; reel kâr bugünün TL'si ile.
-- Kıyas: aynı para alış günü USD/EUR'ya çevrilseydi bugün ne ederdi.
+- Alım gücü serisi: son 12 ay, ay sonu değerleri pencere başı fiyatlarına indirgenir;
+  geçmiş fiyatı olmayan varlıklar doğrusal tahmin edilir ve ekranda belirtilir.
+- Senaryo: kullanıcının mevduat koşullarıyla 12 ay sonra reel getiri, üç TÜFE varsayımıyla.
+- Maaş: son zamdan beri TÜFE ile alım gücü kaybı ve gereken zam.
 
-## Ekranlar
+## Ekranlar ("Reel Getiri Pusulası" taslağı)
 
-| id | ekran | rota |
-| --- | --- | --- |
-| S1 | Özet: "Enflasyonu yeniyor musun?" kartı, kıyas, varlık listesi | `/(tabs)/index` |
-| S2 | Hesapla: tek seferlik reel getiri hesaplayıcı | `/(tabs)/calculator` |
-| S3 | Ayarlar: enflasyon kaynağı, veri durumu, uyarı | `/(tabs)/settings` |
-| S4 | Varlık ekle/düzenle (modal) | `/holding/edit` |
-| S5 | Varlık detayı | `/holding/[id]` |
+| ekran | rota |
+| --- | --- |
+| Özet: ana kart, "Kim koruyor, kim eritiyor?", TÜFE duyurusu, bildirim zili | `/(tabs)/index` |
+| Varlıklarım: kartlar, brüt faiz / net / reel şeridi | `/(tabs)/holdings` |
+| Alım gücün: grafik, senaryo, maaş hesabı | `/(tabs)/power` |
+| Profil: enflasyon kaynağı, hatırlatma, veri durumu, stopaj, yöntem | `/(tabs)/profile` |
+| Varlık ekle/düzenle + anlık hesap | `/holding/edit` |
+| Varlık detayı | `/holding/[id]` |
+| Hızlı reel getiri hesabı | `/tools/calculator` |
 
 ## Riskli kısımlar
 
@@ -71,3 +76,5 @@ Settings { inflationSource: 'tuik' | 'custom', customAnnualRate: number }
 2. Son TÜFE ayından sonraki alımlarda enflasyon henüz yayımlanmamıştır; bu
    durumda çarpan 1 olur ve ekranda belirtilir.
 3. Mevzuat: uygulama yatırım tavsiyesi vermez; her ekranda bilgi amaçlı uyarı.
+4. Stopaj oranları 31.12.2026'da sona eriyor; yeni karar çıkınca `src/lib/deposit.ts` güncellenmeli.
+5. Beklenti verisi elle güncelleniyor; eskidikçe senaryo kartındaki ay etiketi bunu gösterir.

@@ -1,0 +1,68 @@
+import { StyleSheet, View } from 'react-native';
+
+import { ThemedText } from '@/components/themed-text';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { formatPct, formatTL } from '@/lib/format';
+import type { PortfolioAnalysis } from '@/lib/returns';
+
+function verdict(real: number): string {
+  if (real >= 0.05) return 'Enflasyonun açık ara önündesin.';
+  if (real >= 0) return 'Enflasyonun önündesin, ama kıl payı.';
+  if (real > -0.05) return 'Enflasyonun az gerisindesin.';
+  return 'Birikimin enflasyon karşısında eriyor.';
+}
+
+/** Navy headline card: real return, the verdict, and the three numbers behind it. */
+export function HeroCard({ total, inflationLabel }: { total: PortfolioAnalysis; inflationLabel: string }) {
+  const theme = useTheme();
+  const gain = total.realGain;
+  return (
+    <View style={[styles.card, { backgroundColor: theme.hero }]}>
+      <ThemedText style={[styles.label, { color: theme.heroMuted }]}>Birikimin enflasyona karşı</ThemedText>
+      <View style={styles.bigRow}>
+        <ThemedText style={[styles.big, { color: theme.heroText }]}>{formatPct(total.real)}</ThemedText>
+        <ThemedText style={[styles.unit, { color: theme.heroAccent }]}>reel getiri</ThemedText>
+      </View>
+      <ThemedText style={[styles.verdict, { color: theme.heroText }]}>{verdict(total.real)}</ThemedText>
+      {total.nominal > 0 && total.real < 0 ? (
+        <ThemedText type="small" style={{ color: theme.heroMuted }}>
+          Kâr görünüyor ama alım gücün azaldı.
+        </ThemedText>
+      ) : null}
+      <View style={[styles.divider, { backgroundColor: theme.heroMuted }]} />
+      <View style={styles.stats}>
+        <Stat label="Nominal" value={formatPct(total.nominal, false)} />
+        <Stat label={inflationLabel} value={formatPct(total.inflation, false)} />
+        <Stat label="Alım gücü" value={`${gain >= 0 ? '+' : '−'}${formatTL(Math.abs(gain))}`} />
+      </View>
+    </View>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  const theme = useTheme();
+  return (
+    <View style={styles.stat}>
+      <ThemedText type="small" style={{ color: theme.heroMuted }}>
+        {label}
+      </ThemedText>
+      <ThemedText style={[styles.statValue, { color: theme.heroText }]} adjustsFontSizeToFit numberOfLines={1}>
+        {value}
+      </ThemedText>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: { borderRadius: 28, padding: 24, gap: Spacing.two },
+  label: { fontSize: 16 },
+  bigRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: Spacing.two },
+  big: { fontSize: 56, lineHeight: 66, fontWeight: 800, letterSpacing: -1 },
+  unit: { fontSize: 17, fontWeight: 600 },
+  verdict: { fontSize: 20, lineHeight: 27, fontWeight: 700 },
+  divider: { height: StyleSheet.hairlineWidth, opacity: 0.4, marginVertical: Spacing.two },
+  stats: { flexDirection: 'row', gap: Spacing.two },
+  stat: { flex: 1, gap: 2 },
+  statValue: { fontSize: 20, lineHeight: 26, fontWeight: 700 },
+});

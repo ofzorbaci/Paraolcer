@@ -9,22 +9,28 @@ export default function AppTabs() {
 
   return (
     <NativeTabs
-      backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
+      backgroundColor={colors.backgroundElement}
+      indicatorColor={colors.info}
+      tintColor={colors.accent}
+      labelStyle={{ selected: { color: colors.accent } }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Özet</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="chart.pie.fill" md="pie_chart" />
+        <NativeTabs.Trigger.Icon sf="safari" md="explore" />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="calculator">
-        <NativeTabs.Trigger.Label>Hesapla</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="function" md="calculate" />
+      <NativeTabs.Trigger name="holdings">
+        <NativeTabs.Trigger.Label>Varlıklar</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="creditcard" md="credit_card" />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="settings">
-        <NativeTabs.Trigger.Label>Ayarlar</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="gearshape.fill" md="settings" />
+      <NativeTabs.Trigger name="power">
+        <NativeTabs.Trigger.Label>Alım gücü</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="chart.xyaxis.line" md="show_chart" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Label>Profil</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="person" md="person" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

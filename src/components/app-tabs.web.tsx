@@ -15,11 +15,14 @@ export default function AppTabs() {
           <TabTrigger name="index" href="/" asChild>
             <TabButton>Özet</TabButton>
           </TabTrigger>
-          <TabTrigger name="calculator" href="/calculator" asChild>
-            <TabButton>Hesapla</TabButton>
+          <TabTrigger name="holdings" href="/holdings" asChild>
+            <TabButton>Varlıklar</TabButton>
           </TabTrigger>
-          <TabTrigger name="settings" href="/settings" asChild>
-            <TabButton>Ayarlar</TabButton>
+          <TabTrigger name="power" href="/power" asChild>
+            <TabButton>Alım gücü</TabButton>
+          </TabTrigger>
+          <TabTrigger name="profile" href="/profile" asChild>
+            <TabButton>Profil</TabButton>
           </TabTrigger>
         </CustomTabList>
       </TabList>
@@ -46,9 +49,6 @@ export function CustomTabList(props: TabListProps) {
   return (
     <View {...props} style={styles.tabListContainer}>
       <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        <ThemedText type="smallBold" style={styles.brandText}>
-          Gerçek Getiri
-        </ThemedText>
         {props.children}
       </ThemedView>
     </View>
@@ -67,16 +67,14 @@ const styles = StyleSheet.create({
   },
   innerContainer: {
     paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.two,
+    justifyContent: 'space-between',
     borderRadius: Spacing.five,
     flexDirection: 'row',
     alignItems: 'center',
     flexGrow: 1,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
-  },
-  brandText: {
-    marginRight: 'auto',
   },
   pressed: {
     opacity: 0.7,

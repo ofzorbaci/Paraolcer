@@ -27,6 +27,22 @@ export function formatMonth(month: string): string {
   return `${MONTHS[m - 1]} ${y}`;
 }
 
+/** 'YYYY-MM-DD' → '22 Ekim 2025' */
+export function formatLongDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${d} ${MONTHS[m - 1]} ${y}`;
+}
+
+/** Local calendar date of a Date as 'YYYY-MM-DD'. */
+export function toISODate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** 40 → "%40,0", for rates that are not returns */
+export function formatRate(percent: number): string {
+  return `%${pct.format(percent)}`;
+}
+
 /** 'GG.AA.YYYY' → 'YYYY-MM-DD', or undefined if it is not a real past-or-today date. */
 export function parseDate(text: string, today: string): string | undefined {
   const match = /^(\d{1,2})[./](\d{1,2})[./](\d{4})$/.exec(text.trim());

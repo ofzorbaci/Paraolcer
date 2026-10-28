@@ -6,15 +6,18 @@ import snapshot from '@/data/cpi-tuik.json';
 import { buildCpiIndex, type CpiIndex } from '@/lib/cpi';
 import { parseTcmbCpiHtml, TCMB_CPI_URL, type CpiRow } from '@/lib/cpi-parse';
 import { fetchTryRate } from '@/lib/fx';
-import type { FxQuotes, Holding, Settings } from '@/lib/types';
+import { fetchGoldUsdPerOunce, gramGoldTry } from '@/lib/gold';
+import { disableCpiReminders, enableCpiReminders } from '@/lib/notify';
+import type { Holding, LivePrices, Settings } from '@/lib/types';
 
 type State = {
   ready: boolean;
   holdings: Holding[];
   settings: Settings;
   cpi: { rows: CpiRow[]; index: CpiIndex; fetchedAt: string; live: boolean };
-  fx: FxQuotes;
-  fxError?: string;
+  prices: LivePrices;
+  pricesUpdatedAt?: string;
+  priceError?: string;
 };
 
 const KEYS = { holdings: 'gg.holdings.v1', settings: 'gg.settings.v1', cpi: 'gg.cpi.v1' };
@@ -24,9 +27,9 @@ const bundledRows = snapshot.rows as CpiRow[];
 let state: State = {
   ready: false,
   holdings: [],
-  settings: { inflationSource: 'tuik', customAnnualRate: 0 },
+  settings: { inflationSource: 'tuik', customAnnualRate: 0, notifyCpi: false },
   cpi: { rows: bundledRows, index: buildCpiIndex(bundledRows), fetchedAt: snapshot.fetchedAt, live: false },
-  fx: {},
+  prices: {},
 };
 
 const listeners = new Set<() => void>();
@@ -76,7 +79,8 @@ export function loadStore(): Promise<void> {
     }
     set(patch);
     void refreshCpi();
-    void refreshFx();
+    void refreshPrices();
+    if (state.settings.notifyCpi) void enableCpiReminders();
   })();
   return loading;
 }
@@ -99,13 +103,23 @@ export async function refreshCpi(): Promise<boolean> {
   }
 }
 
-export async function refreshFx(): Promise<void> {
-  try {
-    const [usd, eur] = await Promise.all([fetchTryRate('usd', 'latest'), fetchTryRate('eur', 'latest')]);
-    set({ fx: { usd, eur }, fxError: undefined });
-  } catch (e) {
-    set({ fxError: e instanceof Error ? e.message : 'Kur alınamadı' });
-  }
+/** USD and EUR from ECB reference rates; gram gold from spot gold × USD/TRY. */
+export async function refreshPrices(): Promise<void> {
+  const [usd, eur, gold] = await Promise.allSettled([
+    fetchTryRate('usd', 'latest'),
+    fetchTryRate('eur', 'latest'),
+    fetchGoldUsdPerOunce(),
+  ]);
+  const prices: LivePrices = { ...state.prices };
+  if (usd.status === 'fulfilled') prices.usd = usd.value;
+  if (eur.status === 'fulfilled') prices.eur = eur.value;
+  if (gold.status === 'fulfilled' && prices.usd) prices.gold = gramGoldTry(gold.value, prices.usd);
+  const failed = [usd, eur, gold].find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined;
+  set({
+    prices,
+    pricesUpdatedAt: new Date().toISOString(),
+    priceError: failed ? (failed.reason instanceof Error ? failed.reason.message : 'Fiyat alınamadı') : undefined,
+  });
 }
 
 export function saveHolding(h: Holding) {
@@ -125,6 +139,18 @@ export function updateSettings(patch: Partial<Settings>) {
   const settings = { ...state.settings, ...patch };
   set({ settings });
   persist(KEYS.settings, settings);
+}
+
+/** Turns CPI release reminders on or off; returns false if notifications are not permitted. */
+export async function setCpiReminders(on: boolean): Promise<boolean> {
+  if (!on) {
+    await disableCpiReminders();
+    updateSettings({ notifyCpi: false });
+    return true;
+  }
+  const ok = await enableCpiReminders();
+  updateSettings({ notifyCpi: ok });
+  return ok;
 }
 
 export function newId(): string {
