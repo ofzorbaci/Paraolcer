@@ -8,7 +8,7 @@ export async function exportBackup(data: BackupData, password: string): Promise<
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = `reel-getiri-yedek-${data.exportedAt.slice(0, 10)}.json`;
+  a.download = `paraolcer-yedek-${data.exportedAt.slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }

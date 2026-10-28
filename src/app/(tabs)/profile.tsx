@@ -15,7 +15,7 @@ import { currentPolicyRate } from '@/lib/feed';
 import { formatDate, formatMonth, formatRate, formatStamp, formatTL, parseAmount } from '@/lib/format';
 import { bugReportUrl, SUPPORT_EMAIL } from '@/lib/support';
 import type { InflationSource } from '@/lib/types';
-import { refreshCpi, refreshFeed, refreshPrices, updateSettings, useStore } from '@/state/store';
+import { refreshCpi, refreshFeed, refreshPrices, rescheduleReminders, updateSettings, useStore } from '@/state/store';
 
 export default function ProfileScreen() {
   const settings = useStore((s) => s.settings);
@@ -33,6 +33,7 @@ export default function ProfileScreen() {
   const onRefresh = async () => {
     setStatus('Güncelleniyor…');
     const [ok] = await Promise.all([refreshCpi(), refreshPrices(), refreshFeed()]);
+    await rescheduleReminders();
     setStatus(ok ? 'TÜFE ve fiyatlar güncellendi.' : 'Fiyatlar güncellendi; TÜFE için uygulama içi veri kullanılıyor.');
   };
 
@@ -184,7 +185,10 @@ export default function ProfileScreen() {
         </ThemedText>
       </Card>
 
-      <Disclaimer text="Kaynaklar: TÜİK (TCMB aracılığıyla), Avrupa Merkez Bankası, gold-api.com · Yatırım tavsiyesi değildir" />
+      <Disclaimer text="Kaynaklar: TÜİK ve TCMB, Avrupa Merkez Bankası, gold-api.com" />
+      <Disclaimer
+        text={`Paraölçer ${Constants.expoConfig?.version ?? ''} · Alım gücünü ölç · Bir hesaplama aracıdır, yatırım tavsiyesi vermez.`}
+      />
     </Screen>
   );
 }

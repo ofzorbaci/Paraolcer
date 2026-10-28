@@ -8,13 +8,13 @@ import '@/global.css';
 import { Platform } from 'react-native';
 
 export const Colors = {
-  // "Reel Getiri Pusulası" palette: navy hero, blue for gains, burnt orange for losses.
+  // Paraölçer brand: navy, blue for gains, burnt orange for losses (no red/green, readable for colour-blind users).
   light: {
-    text: '#0F172A',
-    background: '#F3F5F9',
+    text: '#0F1B2D',
+    background: '#F4F6F9',
     backgroundElement: '#FFFFFF',
     backgroundSelected: '#F1F4F8',
-    textSecondary: '#64748B',
+    textSecondary: '#5B6475',
     accent: '#1D4ED8',
     onAccent: '#FFFFFF',
     positive: '#1D4ED8',
@@ -24,11 +24,11 @@ export const Colors = {
     info: '#E8EEFD',
     infoText: '#1E3A8A',
     border: '#E2E8F0',
-    hero: '#111C30',
+    hero: '#0F1B2D',
     heroText: '#FFFFFF',
     heroMuted: '#A8B3C7',
     heroAccent: '#8EAEFF',
-    chip: '#111C30',
+    chip: '#0F1B2D',
     onChip: '#FFFFFF',
     chartMuted: '#8A93A6',
   },
@@ -83,6 +83,26 @@ export const Fonts = Platform.select({
     mono: 'var(--font-mono)',
   },
 });
+
+/** Brand type: Inter for all app text, Sora (bold) only for the Paraölçer wordmark. */
+export const BrandFonts = {
+  400: 'Inter_400Regular',
+  500: 'Inter_500Medium',
+  600: 'Inter_600SemiBold',
+  700: 'Inter_700Bold',
+  800: 'Inter_800ExtraBold',
+  wordmark: 'Sora_700Bold',
+} as const;
+
+/** Each Inter weight is its own font file, so the family is picked from the weight. */
+export function interFor(weight: string | number | undefined): string {
+  const w = Number(weight === 'bold' ? 700 : weight === 'normal' || weight === undefined ? 400 : weight);
+  if (w >= 800) return BrandFonts[800];
+  if (w >= 700) return BrandFonts[700];
+  if (w >= 600) return BrandFonts[600];
+  if (w >= 500) return BrandFonts[500];
+  return BrandFonts[400];
+}
 
 export const Spacing = {
   half: 2,

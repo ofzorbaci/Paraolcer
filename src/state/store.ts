@@ -124,12 +124,11 @@ export function loadStore(): Promise<void> {
     if (cpi && cpi.rows.at(-1)!.month > lastCpiMonth()) {
       set({ cpi: { rows: cpi.rows, index: buildCpiIndex(cpi.rows), live: true } });
     }
-    await refreshFeed();
     void refreshCpi();
     void refreshPrices();
-    // Re-schedule so the reminders roll forward as dates pass.
-    if (state.settings.notifyCpi) void enableReminders('cpi', state.rateSchedule);
-    if (state.settings.notifyRate) void enableReminders('rate', state.rateSchedule);
+    // In the background, so a slow network never holds the splash screen. Reminders are
+    // re-scheduled afterwards so they roll forward and pick up a newly published PPK calendar.
+    void refreshFeed().finally(rescheduleReminders);
   })();
   return loading;
 }
@@ -141,12 +140,8 @@ export async function refreshFeed(): Promise<boolean> {
     const feed = await fetchFeed(FEED_URL);
     // An identical build still counts: it confirms the data on the phone is current.
     if (feed.generatedAt < state.feed.generatedAt) return false;
-    const before = state.feed.rateDecisions.dates.join();
     set(feedPatch(feed, 'live', lastCpiMonth()));
     persist(KEYS.feed, feed);
-    if (state.settings.notifyRate && feed.rateDecisions.dates.join() !== before) {
-      void enableReminders('rate', state.rateSchedule);
-    }
     return true;
   } catch {
     return false;
@@ -196,6 +191,12 @@ export function updateSettings(patch: Partial<Settings>) {
   const settings = { ...state.settings, ...patch };
   set({ settings });
   persist(KEYS.settings, settings);
+}
+
+/** Re-schedules the reminders that are on, so they follow the current CPI and PPK calendars. */
+export async function rescheduleReminders(): Promise<void> {
+  if (state.settings.notifyCpi) await enableReminders('cpi', state.rateSchedule);
+  if (state.settings.notifyRate) await enableReminders('rate', state.rateSchedule);
 }
 
 const SETTING: Record<ReminderKind, 'notifyCpi' | 'notifyRate'> = { cpi: 'notifyCpi', rate: 'notifyRate' };

@@ -48,7 +48,8 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
     <Screen>
       <ScreenHeader
         eyebrow={`Başlangıçtan bu yana · ${formatMonth(todayISO().slice(0, 7))}`}
-        title="Reel Getiri Pusulası"
+        title="Paraölçer"
+        wordmark
         right={
           <IconButton
             name={{ ios: anyReminder ? 'bell.fill' : 'bell', android: 'notifications', web: 'notifications' }}
@@ -61,7 +62,7 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
 
       {ready && items.length === 0 && (
         <Card>
-          <ThemedText style={styles.cardTitle}>Paran gerçekten büyüyor mu?</ThemedText>
+          <ThemedText style={styles.cardTitle}>Paran enflasyonu yeniyor mu?</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             Mevduatını, dövizini, altınını ya da fonunu ekle. Aynı dönemin enflasyonuyla karşılaştırıp alım gücünün
             artıp artmadığını gösterelim.

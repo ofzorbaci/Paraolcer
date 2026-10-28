@@ -10,14 +10,16 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 
 import type { Holding, Settings } from './types';
 
-export const BACKUP_APP = 'reel-getiri-pusulasi';
+export const BACKUP_APP = 'paraolcer';
+/** Backups made before the app was named Paraölçer. */
+const LEGACY_APPS = ['reel-getiri-pusulasi'];
 const ITERATIONS = 100_000;
 export const MIN_PASSWORD = 8;
 
 export type BackupData = { holdings: Holding[]; settings: Settings; exportedAt: string };
 
 type BackupFile = {
-  app: typeof BACKUP_APP;
+  app: string;
   version: 1;
   kdf: { alg: 'PBKDF2-SHA256'; iterations: number; salt: string };
   cipher: { alg: 'AES-256-GCM'; nonce: string };
@@ -56,7 +58,8 @@ export async function decryptBackup(text: string, password: string): Promise<Bac
   } catch {
     throw new Error('Bu bir yedek dosyası değil');
   }
-  if (file?.app !== BACKUP_APP || file.version !== 1) throw new Error('Bu dosya Reel Getiri Pusulası yedeği değil');
+  const known = file?.app === BACKUP_APP || LEGACY_APPS.includes(file?.app);
+  if (!known || file.version !== 1) throw new Error('Bu dosya Paraölçer yedeği değil');
 
   const key = await deriveKey(password, hexToBytes(file.kdf.salt), file.kdf.iterations);
   let plain: Uint8Array;

@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, BrandFonts, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatPct } from '@/lib/format';
 
@@ -31,7 +31,18 @@ export function Screen({ children, tabs = true }: { children: ReactNode; tabs?: 
   );
 }
 
-export function ScreenHeader({ eyebrow, title, right }: { eyebrow?: string; title: string; right?: ReactNode }) {
+export function ScreenHeader({
+  eyebrow,
+  title,
+  right,
+  wordmark,
+}: {
+  eyebrow?: string;
+  title: string;
+  right?: ReactNode;
+  /** set on the screen that shows the app name, which uses the logo typeface */
+  wordmark?: boolean;
+}) {
   return (
     <View style={styles.header}>
       <View style={styles.flex}>
@@ -40,7 +51,7 @@ export function ScreenHeader({ eyebrow, title, right }: { eyebrow?: string; titl
             {eyebrow}
           </ThemedText>
         ) : null}
-        <ThemedText style={styles.title}>{title}</ThemedText>
+        <ThemedText style={[styles.title, wordmark && styles.wordmark]}>{title}</ThemedText>
       </View>
       {right}
     </View>
@@ -274,6 +285,7 @@ const styles = StyleSheet.create({
   inner: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', gap: Spacing.three },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginBottom: Spacing.one },
   title: { fontSize: 28, lineHeight: 34, fontWeight: 800 },
+  wordmark: { fontFamily: BrandFonts.wordmark, fontWeight: 'normal', letterSpacing: -0.5 },
   card: { borderRadius: Radius.card, borderWidth: 1, padding: 20, gap: Spacing.two },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.two },
   strip: { flexDirection: 'row', borderRadius: Radius.inner, padding: Spacing.three, gap: Spacing.two },
@@ -300,7 +312,7 @@ const styles = StyleSheet.create({
   buttonText: { fontSize: 17, lineHeight: 22, fontWeight: 700 },
   field: { gap: 6 },
   inputBox: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: Radius.inner, paddingHorizontal: Spacing.three },
-  input: { flex: 1, paddingVertical: 14, fontSize: 17 },
+  input: { flex: 1, paddingVertical: 14, fontSize: 17, fontFamily: BrandFonts[400] },
   adornment: { fontSize: 17, marginHorizontal: 2 },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   chip: { borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: 18, paddingVertical: 10 },

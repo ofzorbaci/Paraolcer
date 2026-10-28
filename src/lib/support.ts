@@ -41,6 +41,6 @@ export function bugReportUrl(d: Diagnostics): string {
     `Varlıklar: ${holdings}`,
   ].join('\n');
 
-  const subject = `Hata bildirimi · Reel Getiri Pusulası ${d.appVersion}`;
+  const subject = `Hata bildirimi · Paraölçer ${d.appVersion}`;
   return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }

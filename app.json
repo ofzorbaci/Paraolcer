@@ -1,26 +1,31 @@
 {
   "expo": {
-    "name": "Gerçek Getiri",
-    "slug": "gercek-getiri",
+    "name": "Paraölçer",
+    "slug": "paraolcer",
+    "description": "Alım gücünü ölç: birikiminin enflasyon karşısındaki gerçek getirisi.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "gercekgetiri",
+    "scheme": "paraolcer",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#F4F6F9",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/icon.png"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0F1B2D",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "server",
+      "name": "Paraölçer",
+      "shortName": "Paraölçer",
+      "themeColor": "#0F1B2D",
+      "backgroundColor": "#F4F6F9",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -28,13 +33,14 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0F766E",
+          "backgroundColor": "#0F1B2D",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 120
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
