@@ -6,7 +6,7 @@ import snapshot from '@/data/cpi-tuik.json';
 import { buildCpiIndex, type CpiIndex } from '@/lib/cpi';
 import { parseTcmbCpiHtml, TCMB_CPI_URL, type CpiRow } from '@/lib/cpi-parse';
 import { refreshPriceBook, toLivePrices, type PriceBook } from '@/lib/prices';
-import { disableCpiReminders, enableCpiReminders } from '@/lib/notify';
+import { disableReminders, enableReminders, type ReminderKind } from '@/lib/notify';
 import type { Holding, LivePrices, Settings } from '@/lib/types';
 
 type State = {
@@ -85,7 +85,9 @@ export function loadStore(): Promise<void> {
     set(patch);
     void refreshCpi();
     void refreshPrices();
-    if (state.settings.notifyCpi) void enableCpiReminders();
+    // Re-schedule so the reminders roll forward as dates pass.
+    if (state.settings.notifyCpi) void enableReminders('cpi');
+    if (state.settings.notifyRate) void enableReminders('rate');
   })();
   return loading;
 }
@@ -134,21 +136,24 @@ export function updateSettings(patch: Partial<Settings>) {
   persist(KEYS.settings, settings);
 }
 
-/** Turns CPI release reminders on or off; returns false if notifications are not permitted. */
-export async function setCpiReminders(on: boolean): Promise<boolean> {
+const SETTING: Record<ReminderKind, 'notifyCpi' | 'notifyRate'> = { cpi: 'notifyCpi', rate: 'notifyRate' };
+
+/** Turns CPI or rate-decision reminders on or off; returns false if notifications are not permitted. */
+export async function setReminders(kind: ReminderKind, on: boolean): Promise<boolean> {
   if (!on) {
-    await disableCpiReminders();
-    updateSettings({ notifyCpi: false });
+    await disableReminders(kind);
+    updateSettings({ [SETTING[kind]]: false });
     return true;
   }
-  const ok = await enableCpiReminders();
-  updateSettings({ notifyCpi: ok });
+  const ok = await enableReminders(kind);
+  updateSettings({ [SETTING[kind]]: ok });
   return ok;
 }
 
 /** Replaces all holdings and settings with a restored backup. */
 export function restoreData(holdings: Holding[], settings: Settings) {
-  set({ holdings, settings: { ...settings, notifyCpi: state.settings.notifyCpi } });
+  // Reminders belong to this phone's permissions, not to the backup.
+  set({ holdings, settings: { ...settings, notifyCpi: state.settings.notifyCpi, notifyRate: state.settings.notifyRate } });
   persist(KEYS.holdings, holdings);
   persist(KEYS.settings, state.settings);
 }

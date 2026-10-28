@@ -8,10 +8,11 @@ import { Button, Card, Disclaimer, IconButton, InfoBanner, Pct, Screen, ScreenHe
 import { Spacing } from '@/constants/theme';
 import { useAlternatives, usePortfolio } from '@/hooks/use-portfolio';
 import { useTheme } from '@/hooks/use-theme';
-import { nextCpiReleases } from '@/lib/calendar';
+import { nextCpiReleases, nextRateDecisions } from '@/lib/calendar';
 import { formatMonth, formatRate, formatTL, todayISO } from '@/lib/format';
 import { KIND_LABELS } from '@/lib/types';
-import { setCpiReminders, useStore } from '@/state/store';
+import { RATE_SCHEDULE } from '@/lib/notify';
+import { setReminders, useStore } from '@/state/store';
 
 const RELEASE_FMT = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' });
 
@@ -22,13 +23,22 @@ export default function SummaryScreen() {
   const { items, total, byKind, settings } = usePortfolio();
   const alternatives = useAlternatives();
   const nextRelease = nextCpiReleases(new Date(), 1)[0];
+  const nextRate = nextRateDecisions(new Date(), RATE_SCHEDULE, 1)[0];
+  const anyReminder = settings.notifyCpi || !!settings.notifyRate;
   const tuik = settings.inflationSource === 'tuik';
 
+  // The bell switches both reminders; Profil lets them be set one by one.
   const toggleReminders = async () => {
-    const on = !settings.notifyCpi;
-    const ok = await setCpiReminders(on);
-    if (!on) Alert.alert('Hatırlatma kapatıldı', 'Enflasyon açıklamalarında bildirim gelmeyecek.');
-    else if (ok) Alert.alert('Hatırlatma açık', `Bir sonraki: ${RELEASE_FMT.format(nextRelease)}, 10:00.`);
+    const on = !anyReminder;
+    const [cpiOk] = await Promise.all([setReminders('cpi', on), nextRate ? setReminders('rate', on) : true]);
+    if (!on) Alert.alert('Hatırlatmalar kapatıldı', 'Enflasyon ve faiz kararı açıklamalarında bildirim gelmeyecek.');
+    else if (cpiOk)
+      Alert.alert(
+        'Hatırlatmalar açık',
+        `Enflasyon: ${RELEASE_FMT.format(nextRelease)}, 10:00.` +
+          (nextRate ? `
+Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
+      );
     else Alert.alert('Bildirim izni yok', 'Ayarlar’dan bildirimlere izin verip tekrar dene.');
   };
 
@@ -39,9 +49,9 @@ export default function SummaryScreen() {
         title="Reel Getiri Pusulası"
         right={
           <IconButton
-            name={{ ios: settings.notifyCpi ? 'bell.fill' : 'bell', android: 'notifications', web: 'notifications' }}
-            label="Enflasyon açıklama hatırlatması"
-            active={settings.notifyCpi}
+            name={{ ios: anyReminder ? 'bell.fill' : 'bell', android: 'notifications', web: 'notifications' }}
+            label="Enflasyon ve faiz kararı hatırlatmaları"
+            active={anyReminder}
             onPress={toggleReminders}
           />
         }
@@ -118,7 +128,7 @@ export default function SummaryScreen() {
 
       <InfoBanner
         title={`${formatMonth(lastCpi.month).split(' ')[0]} enflasyonu açıklandı`}
-        body={`Aylık ${formatRate(lastCpi.mom)}, yıllık ${formatRate(lastCpi.yoy)}. Sonraki açıklama ${RELEASE_FMT.format(nextRelease)}, 10:00.`}
+        body={`Aylık ${formatRate(lastCpi.mom)}, yıllık ${formatRate(lastCpi.yoy)}. Sonraki açıklama ${RELEASE_FMT.format(nextRelease)}, 10:00.${nextRate ? ` Sonraki faiz kararı ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''}`}
       />
 
       <Disclaimer />

@@ -5,19 +5,17 @@ import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { BackupCard } from '@/components/backup-card';
+import { RemindersCard } from '@/components/reminders-card';
 import { quoteLabel } from '@/components/source-line';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Choice, Disclaimer, Field, Row, Screen, ScreenHeader } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { nextCpiReleases } from '@/lib/calendar';
 import { WITHHOLDING_VALID_UNTIL } from '@/lib/deposit';
 import { formatDate, formatMonth, formatRate, formatTL, parseAmount } from '@/lib/format';
 import { bugReportUrl, SUPPORT_EMAIL } from '@/lib/support';
 import type { InflationSource } from '@/lib/types';
-import { refreshCpi, refreshPrices, setCpiReminders, updateSettings, useStore } from '@/state/store';
-
-const RELEASE_FMT = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+import { refreshCpi, refreshPrices, updateSettings, useStore } from '@/state/store';
 
 export default function ProfileScreen() {
   const settings = useStore((s) => s.settings);
@@ -27,9 +25,7 @@ export default function ProfileScreen() {
   const priceError = useStore((s) => s.priceError);
   const [rate, setRate] = useState(settings.customAnnualRate ? String(settings.customAnnualRate) : '');
   const [status, setStatus] = useState<string>();
-  const [notifyStatus, setNotifyStatus] = useState<string>();
   const last = cpi.rows[cpi.rows.length - 1];
-  const next = nextCpiReleases(new Date(), 1)[0];
 
   const onRefresh = async () => {
     setStatus('Güncelleniyor…');
@@ -37,11 +33,6 @@ export default function ProfileScreen() {
     setStatus(ok ? 'TÜFE ve fiyatlar güncellendi.' : 'Fiyatlar güncellendi; TÜFE için uygulama içi veri kullanılıyor.');
   };
 
-  const onToggleNotify = async () => {
-    const on = !settings.notifyCpi;
-    const ok = await setCpiReminders(on);
-    setNotifyStatus(on && !ok ? 'Bildirim izni verilmedi. Telefon ayarlarından izin verebilirsin.' : undefined);
-  };
 
   return (
     <Screen>
@@ -74,29 +65,7 @@ export default function ProfileScreen() {
         )}
       </Card>
 
-      <Card>
-        <ThemedText style={styles.cardTitle}>Enflasyon hatırlatması</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          TÜİK her ayın 3’ünde (hafta sonuysa pazartesi) saat 10:00’da enflasyonu açıklar. Açıklandığında haber
-          verelim. Sonraki: {RELEASE_FMT.format(next)}.
-        </ThemedText>
-        {Platform.OS === 'web' ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            Bildirimler yalnızca telefonda çalışır.
-          </ThemedText>
-        ) : (
-          <Button
-            title={settings.notifyCpi ? 'Hatırlatmayı kapat' : 'Hatırlatmayı aç'}
-            kind={settings.notifyCpi ? 'secondary' : 'primary'}
-            onPress={onToggleNotify}
-          />
-        )}
-        {notifyStatus && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {notifyStatus}
-          </ThemedText>
-        )}
-      </Card>
+      <RemindersCard />
 
       <Card>
         <ThemedText style={styles.cardTitle}>Araçlar</ThemedText>

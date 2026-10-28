@@ -44,6 +44,8 @@ export type Settings = {
   customAnnualRate: number;
   /** remind when TÜİK publishes CPI */
   notifyCpi: boolean;
+  /** remind when TCMB announces a rate decision */
+  notifyRate?: boolean;
 };
 
 /** Live TRY prices per unit */

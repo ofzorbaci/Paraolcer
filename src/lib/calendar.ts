@@ -25,3 +25,17 @@ export function nextCpiReleases(from: Date, count: number): Date[] {
   }
   return out;
 }
+
+/** Rate decisions from the published PPK calendar, as local Date objects at the announcement time. */
+export function rateDecisionDates(dates: string[], time: string): Date[] {
+  const [hh, mm] = time.split(':').map(Number);
+  return dates.map((iso) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d, hh, mm, 0);
+  });
+}
+
+/** Upcoming rate decisions after `from`; empty once the bundled calendar runs out. */
+export function nextRateDecisions(from: Date, schedule: Date[], count = schedule.length): Date[] {
+  return schedule.filter((d) => d > from).slice(0, count);
+}

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import snapshot from '../../data/cpi-tuik.json';
-import { nextCpiReleases } from '../calendar';
+import ppk from '../../data/ppk.json';
+import { nextCpiReleases, nextRateDecisions, rateDecisionDates } from '../calendar';
 import { buildCpiIndex } from '../cpi';
 import { defaultWithholding, depositValue, effectiveAnnualYield, netAnnualRate } from '../deposit';
 import { gramGoldTry } from '../gold';
@@ -141,5 +142,35 @@ describe('purchasing power series', () => {
     const s = purchasingPowerSeries([g], '2026-10-28', {}, {}, tuik, index)!;
     expect(s.estimated).toBe(true);
     expect(s.points.at(-1)!.nominal).toBe(200);
+  });
+});
+
+describe('rate decision calendar', () => {
+  const schedule = rateDecisionDates(ppk.dates, ppk.time);
+
+  it('is sorted, unique and on weekdays at 14:00', () => {
+    const times = schedule.map((d) => d.getTime());
+    expect([...times].sort((a, b) => a - b)).toEqual(times);
+    expect(new Set(times).size).toBe(times.length);
+    for (const d of schedule) {
+      expect([0, 6]).not.toContain(d.getDay());
+      expect([d.getHours(), d.getMinutes()]).toEqual([14, 0]);
+    }
+  });
+
+  it('finds the next decisions after a moment', () => {
+    const next = nextRateDecisions(new Date(2026, 9, 28), schedule);
+    expect(next.map((d) => [d.getFullYear(), d.getMonth() + 1, d.getDate()])).toEqual([
+      [2026, 12, 10],
+      [2027, 1, 21],
+      [2027, 3, 18],
+      [2027, 4, 22],
+      [2027, 6, 10],
+    ]);
+    expect(nextRateDecisions(new Date(2026, 11, 10, 15), schedule, 1)[0].getMonth()).toBe(0);
+  });
+
+  it('runs out after the last published meeting', () => {
+    expect(nextRateDecisions(new Date(2027, 6, 1), schedule)).toEqual([]);
   });
 });
