@@ -7,10 +7,14 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { defaultWithholding } from '@/lib/deposit';
 import { formatPct, formatRate, formatTL } from '@/lib/format';
+import { priceAgeDays } from '@/lib/lookup';
 import type { HoldingAnalysis } from '@/lib/returns';
-import { KIND_LABELS, type Holding } from '@/lib/types';
+import { isLivePriced, KIND_LABELS, type Holding } from '@/lib/types';
 
 const qty = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 });
+
+/** A hand-entered price older than this gets a reminder on the card. */
+const STALE_DAYS = 7;
 
 /** "Gram altın · 20 gr", "Dolar · $2.000" */
 export function holdingTitle(h: Holding): string {
@@ -33,6 +37,7 @@ export function holdingTitle(h: Holding): string {
 export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; analysis: HoldingAnalysis }) {
   const theme = useTheme();
   const losing = a.real !== undefined && a.real < 0;
+  const age = h.kind !== 'deposit' && !isLivePriced(h.kind) ? priceAgeDays(h, new Date()) : undefined;
   const stats =
     h.kind === 'deposit' && h.grossRate !== undefined
       ? [
@@ -70,6 +75,11 @@ export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; ana
           {a.value === undefined && (
             <ThemedText type="small" themeColor="textSecondary">
               Güncel fiyatı girmek için dokun.
+            </ThemedText>
+          )}
+          {age !== undefined && age >= STALE_DAYS && (
+            <ThemedText type="small" themeColor="textSecondary">
+              Fiyat {age} gün önce girildi · güncellemek için dokun
             </ThemedText>
           )}
           {h.kind === 'deposit' && h.grossRate !== undefined && (

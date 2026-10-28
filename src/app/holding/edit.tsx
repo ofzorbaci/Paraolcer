@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -10,6 +11,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { defaultWithholding } from '@/lib/deposit';
 import { formatPct, formatRate, parseAmount, todayISO } from '@/lib/format';
 import { fetchTryRate } from '@/lib/fx';
+import { priceLookup } from '@/lib/lookup';
 import { analyzeHolding } from '@/lib/returns';
 import { KIND_LABELS, type Holding, type HoldingKind } from '@/lib/types';
 import { newId, saveHolding, useStore } from '@/state/store';
@@ -61,6 +63,7 @@ export default function EditHoldingScreen() {
   const isFx = group === 'fx';
   const isGold = kind === 'gold';
   const manualPrice = !isDeposit && !isFx && !isGold;
+  const lookup = priceLookup(kind, name);
 
   // Fill the ECB rate of the purchase day for currency purchases.
   useEffect(() => {
@@ -220,7 +223,17 @@ export default function EditHoldingScreen() {
                 error={show(errors.current)}
                 hint="Bu varlığın fiyatını şimdilik sen güncelliyorsun."
               />
-            ) : (
+            ) : null}
+            {lookup && (
+              <Button
+                title={`Güncel fiyata bak · ${lookup.site}`}
+                kind="secondary"
+                compact
+                icon={{ ios: 'arrow.up.right.square', android: 'open_in_new', web: 'open_in_new' }}
+                onPress={() => WebBrowser.openBrowserAsync(lookup.url)}
+              />
+            )}
+            {manualPrice ? null : (
               <ThemedText type="small" themeColor="textSecondary">
                 Güncel {isGold ? 'gram altın fiyatı' : 'kur'} otomatik alınır.
               </ThemedText>

@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -8,6 +9,7 @@ import { Button, Card, Disclaimer, Field, IconButton, Pct, Row, Screen } from '@
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDate, formatLongDate, formatMonth, formatPct, formatTL, parseAmount, todayISO } from '@/lib/format';
+import { priceLookup } from '@/lib/lookup';
 import { analyzeHolding } from '@/lib/returns';
 import { isLivePriced, KIND_LABELS } from '@/lib/types';
 import { deleteHolding, saveHolding, useStore } from '@/state/store';
@@ -43,6 +45,7 @@ export default function HoldingDetailScreen() {
   const a = analyzeHolding(h, todayISO(), prices, settings, index);
   const manual = h.kind !== 'deposit' && !isLivePriced(h.kind);
   const newPrice = parseAmount(price);
+  const lookup = priceLookup(h.kind, h.name);
   const losing = a.real !== undefined && a.real < 0;
 
   return (
@@ -91,6 +94,14 @@ export default function HoldingDetailScreen() {
               Şu an {formatTL(h.currentPrice, true)}
               {h.priceUpdatedAt ? ` · ${formatDate(h.priceUpdatedAt.slice(0, 10))} tarihinde girildi` : ''}
             </ThemedText>
+          )}
+          {lookup && (
+            <Button
+              title={`Fiyata bak · ${lookup.site}`}
+              kind="secondary"
+              icon={{ ios: 'arrow.up.right.square', android: 'open_in_new', web: 'open_in_new' }}
+              onPress={() => WebBrowser.openBrowserAsync(lookup.url)}
+            />
           )}
           <Field label="Birim fiyat" prefix="₺" keyboardType="decimal-pad" value={price} onChangeText={setPrice} />
           <Button
