@@ -47,7 +47,16 @@
       "reactCompiler": true
     },
     "extra": {
-      "feedUrl": "https://ofzorbaci.github.io/Paraolcer/feed.json"
+      "feedUrl": "https://ofzorbaci.github.io/Paraolcer/feed.json",
+      "revenuecat": {
+        "iosApiKey": "",
+        "androidApiKey": "",
+        "entitlement": "premium"
+      },
+      "legal": {
+        "termsUrl": "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/",
+        "privacyUrl": ""
+      }
     }
   }
 }

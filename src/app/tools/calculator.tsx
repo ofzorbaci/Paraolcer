@@ -15,7 +15,7 @@ import { useStore } from '@/state/store';
 /** One-off check without saving anything: "I put X in on date D, it is worth Y now." */
 export default function CalculatorScreen() {
   const theme = useTheme();
-  const settings = useStore((s) => s.settings);
+  const settings = useStore((s) => s.calcSettings);
   const index = useStore((s) => s.cpi.index);
   const [start, setStart] = useState('');
   const [buyDate, setBuyDate] = useState<string>();

@@ -19,7 +19,7 @@ export default function HoldingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
   const h = useStore((s) => s.holdings.find((x) => x.id === id));
-  const settings = useStore((s) => s.settings);
+  const settings = useStore((s) => s.calcSettings);
   const index = useStore((s) => s.cpi.index);
   const prices = useStore((s) => s.prices);
   const [price, setPrice] = useState('');

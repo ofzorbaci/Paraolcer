@@ -1,7 +1,8 @@
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { HeroCard } from '@/components/hero';
+import { PremiumGate, useAddHolding, usePremium } from '@/components/premium-gate';
 import { SourcesFooter } from '@/components/source-line';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Disclaimer, IconButton, InfoBanner, Pct, Screen, ScreenHeader } from '@/components/ui';
@@ -22,6 +23,8 @@ export default function SummaryScreen() {
   const lastCpi = useStore((s) => s.cpi.rows[s.cpi.rows.length - 1]);
   const { items, total, byKind, settings } = usePortfolio();
   const alternatives = useAlternatives();
+  const addHolding = useAddHolding();
+  const premium = usePremium();
   const nextRelease = nextCpiReleases(new Date(), 1)[0];
   const rateSchedule = useStore((s) => s.rateSchedule);
   const policy = currentPolicyRate(useStore((s) => s.feed));
@@ -32,13 +35,13 @@ export default function SummaryScreen() {
   // The bell switches both reminders; Profil lets them be set one by one.
   const toggleReminders = async () => {
     const on = !anyReminder;
-    const [cpiOk] = await Promise.all([setReminders('cpi', on), nextRate ? setReminders('rate', on) : true]);
+    const [cpiOk] = await Promise.all([setReminders('cpi', on), nextRate && (premium || !on) ? setReminders('rate', on) : true]);
     if (!on) Alert.alert('Hatırlatmalar kapatıldı', 'Enflasyon ve faiz kararı açıklamalarında bildirim gelmeyecek.');
     else if (cpiOk)
       Alert.alert(
         'Hatırlatmalar açık',
         `Enflasyon: ${RELEASE_FMT.format(nextRelease)}, 10:00.` +
-          (nextRate ? `
+          (nextRate && premium ? `
 Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
       );
     else Alert.alert('Bildirim izni yok', 'Ayarlar’dan bildirimlere izin verip tekrar dene.');
@@ -67,7 +70,7 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
             Mevduatını, dövizini, altınını ya da fonunu ekle. Aynı dönemin enflasyonuyla karşılaştırıp alım gücünün
             artıp artmadığını gösterelim.
           </ThemedText>
-          <Button title="İlk varlığını ekle" icon={{ ios: 'plus', android: 'add', web: 'add' }} onPress={() => router.push('/holding/edit')} />
+          <Button title="İlk varlığını ekle" icon={{ ios: 'plus', android: 'add', web: 'add' }} onPress={addHolding} />
         </Card>
       )}
 
@@ -100,6 +103,7 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
       )}
 
       {alternatives.list.length > 0 && (
+        <PremiumGate feature="alternatives" pitch="Aynı parayı dolarda ya da mevduatta tutsaydın bugün ne olurdu, reel olarak karşılaştır.">
         <Card>
           <ThemedText style={styles.cardTitle}>Başka ne yapabilirdin?</ThemedText>
           {alternatives.list.map((a) => (
@@ -125,6 +129,7 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
             stopaj) tüm dönem için varsayıldı.
           </ThemedText>
         </Card>
+        </PremiumGate>
       )}
 
       {total && <SourcesFooter />}

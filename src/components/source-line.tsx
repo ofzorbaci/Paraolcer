@@ -24,7 +24,7 @@ export function HoldingSource({ kind }: { kind: HoldingKind }) {
 export function SourcesFooter() {
   const book = useStore((s) => s.priceBook);
   const cpiMonth = useStore((s) => s.cpi.rows[s.cpi.rows.length - 1].month);
-  const custom = useStore((s) => s.settings.inflationSource === 'custom');
+  const custom = useStore((s) => s.calcSettings.inflationSource === 'custom');
   const parts = [custom ? 'Enflasyon: senin oranın' : `TÜFE: ${formatMonth(cpiMonth)} (TÜİK)`];
   if (book.usd) parts.push(`Kur: ${quoteLabel(book.usd)}`);
   if (book.gold) parts.push(`Altın: ${quoteLabel(book.gold)}`);

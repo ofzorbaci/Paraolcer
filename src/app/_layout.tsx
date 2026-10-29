@@ -47,6 +47,7 @@ export default function RootLayout() {
         <Stack.Screen name="holding/edit" options={{ headerShown: false }} />
         <Stack.Screen name="holding/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="tools/calculator" options={{ headerShown: false }} />
+        <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );

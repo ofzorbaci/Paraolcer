@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { openPaywall, usePremium } from '@/components/premium-gate';
 import { Card } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -21,7 +22,10 @@ export function RemindersCard() {
   const nextCpi = nextCpiReleases(now, 1)[0];
   const nextRates = nextRateDecisions(now, rateSchedule);
 
+  const premium = usePremium();
+
   const toggle = async (kind: ReminderKind, on: boolean) => {
+    if (kind === 'rate' && on && !premium) return openPaywall('rateReminders');
     const ok = await setReminders(kind, on);
     setStatus(on && !ok ? 'Bildirim izni verilmedi. Telefon ayarlarından izin verebilirsin.' : undefined);
   };
@@ -55,7 +59,7 @@ export function RemindersCard() {
       )}
       {row(
         'rate',
-        'Faiz kararı açıklandığında',
+        premium ? 'Faiz kararı açıklandığında' : 'Faiz kararı açıklandığında · Premium',
         nextRates.length > 0
           ? `TCMB Para Politikası Kurulu kararı 14:00’te açıklanır. Sonraki: ${ANNOUNCEMENT_FMT.format(nextRates[0])}.`
           : 'TCMB yeni toplantı takvimini henüz yayımlamadı; yayımlanınca otomatik eklenecek.',

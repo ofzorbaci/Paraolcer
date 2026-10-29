@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { DateField } from '@/components/date-field';
 import { PowerChart } from '@/components/power-chart';
 import { ThemedText } from '@/components/themed-text';
+import { PremiumGate } from '@/components/premium-gate';
 import { Card, Disclaimer, Field, Pct, Radius, Row, Screen, ScreenHeader } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { usePowerSeries } from '@/hooks/use-portfolio';
@@ -20,8 +21,16 @@ export default function PowerScreen() {
   return (
     <Screen>
       <ScreenHeader eyebrow={yearBack ? 'Son 12 ay' : 'İlk yatırımdan bu yana'} title="Alım gücün" />
-      {series ? <PowerCard series={series} /> : <EmptyPower />}
-      <ScenarioCard />
+      {series ? (
+        <PremiumGate feature="powerChart" pitch="Hesabında görünen tutarın, başlangıç fiyatlarıyla ay ay ne ettiğini grafikte gör.">
+          <PowerCard series={series} />
+        </PremiumGate>
+      ) : (
+        <EmptyPower />
+      )}
+      <PremiumGate feature="scenario" pitch="Enflasyon piyasa beklentisi, bugünkü oran ya da hanehalkı beklentisi gibi gelirse mevduatının reel getirisini hesapla.">
+        <ScenarioCard />
+      </PremiumGate>
       <SalaryCard />
       <Disclaimer />
     </Screen>
@@ -128,7 +137,7 @@ function ScenarioCard() {
 }
 
 function SalaryCard() {
-  const settings = useStore((s) => s.settings);
+  const settings = useStore((s) => s.calcSettings);
   const index = useStore((s) => s.cpi.index);
   const [salary, setSalary] = useState('');
   const [raiseDate, setRaiseDate] = useState<string>();

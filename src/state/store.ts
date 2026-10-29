@@ -8,16 +8,26 @@ import { rateDecisionDates } from '@/lib/calendar';
 import { buildCpiIndex, type CpiIndex } from '@/lib/cpi';
 import { parseTcmbCpiHtml, TCMB_CPI_URL, type CpiRow } from '@/lib/cpi-parse';
 import { setWithholdingRules } from '@/lib/deposit';
+import { NO_PREMIUM, type PremiumStatus } from '@/lib/entitlements';
 import { fetchFeed, isFeed, newerFeed } from '@/lib/feed';
 import type { Feed } from '@/lib/feed-types';
 import { disableReminders, enableReminders, type ReminderKind } from '@/lib/notify';
 import { refreshPriceBook, toLivePrices, type PriceBook } from '@/lib/prices';
+import { buy, initPurchases, restore, type Plan } from '@/lib/purchases';
 import type { Holding, LivePrices, Settings } from '@/lib/types';
 
 type State = {
   ready: boolean;
   holdings: Holding[];
+  /** what the user chose; kept even when Premium lapses */
   settings: Settings;
+  /** what the calculations use: Premium-only choices fall back to the free defaults */
+  calcSettings: Settings;
+  premium: PremiumStatus;
+  /** the store subscription, before the development switch is applied */
+  storePremium: PremiumStatus;
+  /** development builds only: pretend to be Premium to test gated screens */
+  devPremium: boolean;
   /** official data: CPI, policy rate, PPK calendar, expectations, withholding */
   feed: Feed;
   /** 'bundled' until a downloaded feed replaces it */
@@ -37,6 +47,7 @@ const KEYS = {
   feed: 'gg.feed.v1',
   cpi: 'gg.cpi.v1',
   prices: 'gg.prices.v1',
+  devPremium: 'gg.devPremium.v1',
 };
 
 /** GitHub Pages address of feed.json, set in app.json → expo.extra.feedUrl. */
@@ -59,10 +70,16 @@ function feedPatch(feed: Feed, origin: State['feedOrigin'], currentCpiMonth = ''
 }
 
 const initialFeed = feedPatch(bundled, 'bundled');
+const defaultSettings: Settings = { inflationSource: 'tuik', customAnnualRate: 0, notifyCpi: false };
+
 let state: State = {
   ready: false,
   holdings: [],
-  settings: { inflationSource: 'tuik', customAnnualRate: 0, notifyCpi: false },
+  settings: defaultSettings,
+  calcSettings: defaultSettings,
+  premium: NO_PREMIUM,
+  storePremium: NO_PREMIUM,
+  devPremium: false,
   prices: {},
   priceBook: {},
   ...initialFeed,
@@ -74,7 +91,12 @@ const lastCpiMonth = () => state.cpi.rows.at(-1)!.month;
 const listeners = new Set<() => void>();
 
 function set(patch: Partial<State>) {
-  state = { ...state, ...patch };
+  const next = { ...state, ...patch };
+  if (patch.storePremium || patch.devPremium !== undefined) {
+    next.premium = __DEV__ && next.devPremium ? { ...NO_PREMIUM, active: true, source: 'dev' } : next.storePremium;
+  }
+  next.calcSettings = next.premium.active ? next.settings : { ...next.settings, inflationSource: 'tuik' };
+  state = next;
   listeners.forEach((l) => l());
 }
 
@@ -105,16 +127,18 @@ let loading: Promise<void> | undefined;
 /** Loads saved data, then refreshes the feed, CPI and prices in the background. */
 export function loadStore(): Promise<void> {
   loading ??= (async () => {
-    const [holdings, settings, cachedFeed, cpi, priceBook] = await Promise.all([
+    const [holdings, settings, cachedFeed, cpi, priceBook, devPremium] = await Promise.all([
       readJSON<Holding[]>(KEYS.holdings),
       readJSON<Settings>(KEYS.settings),
       readJSON<Feed>(KEYS.feed),
       readJSON<{ rows: CpiRow[] }>(KEYS.cpi),
       readJSON<PriceBook>(KEYS.prices),
+      __DEV__ ? readJSON<boolean>(KEYS.devPremium) : Promise.resolve(undefined),
     ]);
     const patch: Partial<State> = { ready: true };
     if (holdings) patch.holdings = holdings;
     if (settings) patch.settings = { ...state.settings, ...settings };
+    if (devPremium) patch.devPremium = true;
     // Last good prices, so the app still works offline; their time shows how old they are.
     if (priceBook) Object.assign(patch, { priceBook, prices: toLivePrices(priceBook) });
     if (isFeed(cachedFeed) && newerFeed(bundled, cachedFeed) === cachedFeed) {
@@ -124,6 +148,7 @@ export function loadStore(): Promise<void> {
     if (cpi && cpi.rows.at(-1)!.month > lastCpiMonth()) {
       set({ cpi: { rows: cpi.rows, index: buildCpiIndex(cpi.rows), live: true } });
     }
+    void initPurchases(applyStorePremium).then((s) => s && applyStorePremium(s));
     void refreshCpi();
     void refreshPrices();
     // In the background, so a slow network never holds the splash screen. Reminders are
@@ -191,6 +216,36 @@ export function updateSettings(patch: Partial<Settings>) {
   const settings = { ...state.settings, ...patch };
   set({ settings });
   persist(KEYS.settings, settings);
+}
+
+/** A subscription change from the store: trial start, renewal, expiry or refund. */
+function applyStorePremium(status: PremiumStatus) {
+  set({ storePremium: status });
+  // Rate-decision reminders are Premium; stop them when the subscription ends.
+  if (!state.premium.active && state.settings.notifyRate) void setReminders('rate', false);
+}
+
+/** Opens the store purchase sheet; false if the user cancelled. Throws on store errors. */
+export async function purchasePlan(plan: Plan): Promise<boolean> {
+  const status = await buy(plan);
+  if (!status) return false;
+  applyStorePremium(status);
+  return status.active;
+}
+
+/** Restores a subscription from the user's store account; true if one was found. */
+export async function restorePurchases(): Promise<boolean> {
+  const status = await restore();
+  applyStorePremium(status);
+  return status.active;
+}
+
+/** Development builds only: switch Premium on to test locked screens without a purchase. */
+export function setDevPremium(on: boolean) {
+  if (!__DEV__) return;
+  set({ devPremium: on });
+  persist(KEYS.devPremium, on);
+  if (!state.premium.active && state.settings.notifyRate) void setReminders('rate', false);
 }
 
 /** Re-schedules the reminders that are on, so they follow the current CPI and PPK calendars. */

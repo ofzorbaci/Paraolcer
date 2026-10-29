@@ -10,7 +10,7 @@ import { useStore } from '@/state/store';
 
 export function usePortfolio() {
   const holdings = useStore((s) => s.holdings);
-  const settings = useStore((s) => s.settings);
+  const settings = useStore((s) => s.calcSettings);
   const index = useStore((s) => s.cpi.index);
   const prices = useStore((s) => s.prices);
   const today = todayISO();
@@ -32,7 +32,7 @@ export function usePortfolio() {
 /** Monthly "what the account shows" vs "what it buys", over the last 12 months. */
 export function usePowerSeries() {
   const holdings = useStore((s) => s.holdings);
-  const settings = useStore((s) => s.settings);
+  const settings = useStore((s) => s.calcSettings);
   const index = useStore((s) => s.cpi.index);
   const prices = useStore((s) => s.prices);
   const today = todayISO();

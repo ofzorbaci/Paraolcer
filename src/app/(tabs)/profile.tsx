@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { BackupCard } from '@/components/backup-card';
+import { PremiumCard } from '@/components/premium-card';
+import { openPaywall, usePremium } from '@/components/premium-gate';
 import { RemindersCard } from '@/components/reminders-card';
 import { quoteLabel } from '@/components/source-line';
 
@@ -22,6 +24,7 @@ export default function ProfileScreen() {
   const cpi = useStore((s) => s.cpi);
   const priceBook = useStore((s) => s.priceBook);
   const holdings = useStore((s) => s.holdings);
+  const premium = usePremium();
   const feed = useStore((s) => s.feed);
   const feedOrigin = useStore((s) => s.feedOrigin);
   const policy = currentPolicyRate(feed);
@@ -42,17 +45,21 @@ export default function ProfileScreen() {
     <Screen>
       <ScreenHeader title="Profil" />
 
+      <PremiumCard />
+
       <Card>
         <ThemedText style={styles.cardTitle}>Enflasyon kaynağı</ThemedText>
         <Choice<InflationSource>
           options={[
             { value: 'tuik', label: 'TÜİK (resmi)' },
-            { value: 'custom', label: 'ENAG / kendi oranım' },
+            { value: 'custom', label: premium ? 'ENAG / kendi oranım' : 'ENAG / kendi oranım · Premium' },
           ]}
-          value={settings.inflationSource}
-          onChange={(inflationSource) => updateSettings({ inflationSource })}
+          value={premium ? settings.inflationSource : 'tuik'}
+          onChange={(inflationSource) =>
+            inflationSource === 'custom' && !premium ? openPaywall('customInflation') : updateSettings({ inflationSource })
+          }
         />
-        {settings.inflationSource === 'custom' && (
+        {premium && settings.inflationSource === 'custom' && (
           <Field
             label="Yıllık enflasyon"
             suffix="%"
