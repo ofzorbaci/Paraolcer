@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gizlilik Politikası · Paraölçer</title>
+<meta name="description" content="Paraölçer uygulamasının gizlilik politikası ve KVKK aydınlatma metni.">
+<style>
+  :root {
+    --bg: #F4F6F9; --card: #FFFFFF; --text: #0F1B2D; --muted: #5B6475;
+    --accent: #1D4ED8; --border: #E2E8F0; --navy: #0F1B2D;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0A101C; --card: #131C2D; --text: #E6EBF4; --muted: #94A3B8; --accent: #7FA3FF; --border: #23304A; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  }
+  header { background: var(--navy); color: #fff; padding: 32px 16px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+  header .wrap { padding: 0; }
+  header h1 { margin: 0 0 4px; font-size: 28px; line-height: 1.2; }
+  header p { margin: 0; color: #A8B3C7; }
+  main { padding: 24px 0 48px; }
+  section { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; margin-bottom: 16px; }
+  h2 { font-size: 19px; margin: 0 0 8px; }
+  p, li { color: var(--text); }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  .muted { color: var(--muted); font-size: 14px; }
+  a { color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 6px; border-top: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  .table-scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Gizlilik Politikası</h1>
+    <p>Paraölçer · Son güncelleme: 29 Ekim 2026</p>
+  </div>
+</header>
+<main class="wrap">
+
+  <section>
+    <h2>Kısaca</h2>
+    <ul>
+      <li>Birikimlerin, varlıkların ve ayarların <strong>yalnızca kendi telefonunda</strong> saklanır. Bize ya da başka bir sunucuya gönderilmez.</li>
+      <li>Hesap açman gerekmez. Adını, e-posta adresini ya da telefon numaranı istemeyiz.</li>
+      <li>Banka hesabı bağlantısı istemez, şifreni sormayız.</li>
+      <li>Reklam göstermeyiz; reklam ya da analiz amaçlı takip aracı kullanmayız.</li>
+      <li>Abonelik ödemelerini App Store ya da Google Play alır; kart bilgilerin bize gelmez.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Telefonunda tutulan bilgiler</h2>
+    <p>Uygulamaya girdiğin varlıklar (tür, tutar, alış tarihi, faiz oranı gibi), ayarların, son indirilen enflasyon ve fiyat verileri telefonunun uygulamaya ayrılmış alanında saklanır. Uygulamayı sildiğinde bu bilgiler de silinir. Bu bilgilere bizim erişimimiz yoktur.</p>
+  </section>
+
+  <section>
+    <h2>İnternete giden istekler</h2>
+    <p>Uygulama güncel veriyi almak için aşağıdaki kamuya açık kaynaklara istek gönderir. Bu isteklerde senin varlıkların ya da kişisel bilgilerin <strong>gönderilmez</strong>. Her internet isteğinde olduğu gibi, bu servisler IP adresini ve cihazının genel teknik bilgilerini (ör. tarayıcı/işletim sistemi türü) kendi kayıtlarında görebilir.</p>
+    <div class="table-scroll">
+    <table>
+      <tr><th>Kaynak</th><th>Ne için</th></tr>
+      <tr><td>Paraölçer veri akışı (GitHub Pages, ofzorbaci.github.io)</td><td>TÜFE, politika faizi, faiz kararı takvimi, enflasyon beklentileri, stopaj oranları</td></tr>
+      <tr><td>Türkiye Cumhuriyet Merkez Bankası (tcmb.gov.tr)</td><td>TÜFE tablosu ve yedek döviz kurları</td></tr>
+      <tr><td>Frankfurter (Avrupa Merkez Bankası kurları)</td><td>Dolar ve euro kurları</td></tr>
+      <tr><td>gold-api.com</td><td>Uluslararası altın fiyatı</td></tr>
+      <tr><td>RevenueCat ve App Store / Google Play</td><td>Abonelik durumu (aşağıya bak)</td></tr>
+    </table>
+    </div>
+    <p class="muted">“Fiyata bak” bağlantısına dokunduğunda TradingView ya da TEFAS sayfası açılır; o sayfalarda ilgili sitenin kendi gizlilik politikası geçerlidir.</p>
+  </section>
+
+  <section>
+    <h2>Abonelik (Paraölçer Premium)</h2>
+    <p>Abonelik satın alma, deneme süresi, yenileme ve iptal işlemleri Apple App Store ya da Google Play üzerinden yapılır ve bu şirketlerin gizlilik politikalarına tabidir. Ödeme bilgilerin bize iletilmez.</p>
+    <p>Aboneliğinin geçerli olup olmadığını öğrenmek için <strong>RevenueCat</strong> (RevenueCat, Inc.) altyapısını kullanırız. RevenueCat’e şu bilgiler gider:</p>
+    <ul>
+      <li>Uygulamanın rastgele oluşturduğu, seni tanımlamayan bir kullanıcı kimliği,</li>
+      <li>satın aldığın abonelik, deneme ve yenileme durumu, işlem kayıtları,</li>
+      <li>cihazın ve uygulamanın sürüm, dil, ülke gibi teknik bilgileri.</li>
+    </ul>
+    <p>RevenueCat bu bilgileri yalnızca aboneliğini doğrulamak ve satın alımlarını geri yüklemek için işler. Ayrıntılar: <a href="https://www.revenuecat.com/privacy" rel="noopener">RevenueCat Gizlilik Politikası</a>.</p>
+  </section>
+
+  <section>
+    <h2>Bildirimler</h2>
+    <p>Enflasyon ve faiz kararı hatırlatmaları telefonunda yerel olarak kurulur. Bunun için bir bildirim kimliği oluşturmayız ve sunucuya göndermeyiz. Hatırlatmaları uygulamadan ya da telefon ayarlarından kapatabilirsin.</p>
+  </section>
+
+  <section>
+    <h2>Şifreli yedekleme</h2>
+    <p>Yedek oluşturduğunda verilerin belirlediğin şifreyle telefonunda şifrelenir (AES-256) ve dosyayı nereye kaydedeceğini sen seçersin (ör. Dosyalar, iCloud Drive, Google Drive). Şifren hiçbir yere gönderilmez ve saklanmaz; şifre olmadan yedek açılamaz. Yedeğin bulunduğu servis kendi gizlilik koşullarına tabidir.</p>
+  </section>
+
+  <section>
+    <h2>Hata bildirimi ve destek</h2>
+    <p>“Hata bildir” düğmesi e-posta uygulamanda bir taslak açar. Taslakta uygulama sürümü, cihaz modeli, veri tarihleri ve kaç varlık türü girdiğin yer alır; <strong>tutarlar yer almaz</strong>. E-postayı göndermek senin kararındır. Gönderdiğin e-postayı ve içindeki bilgileri yalnızca sana yanıt vermek ve hatayı gidermek için kullanırız.</p>
+  </section>
+
+  <section>
+    <h2>Çocuklar</h2>
+    <p>Paraölçer genel kitleye yöneliktir ve kimseden kişisel bilgi toplamaz. Abonelik satın almak mağazaların yaş ve ebeveyn onayı kurallarına tabidir.</p>
+  </section>
+
+  <section>
+    <h2>KVKK kapsamındaki hakların</h2>
+    <p>6698 sayılı Kişisel Verilerin Korunması Kanunu’nun 11. maddesi uyarınca kişisel verilerinin işlenip işlenmediğini öğrenme, işlenmişse bilgi talep etme, düzeltilmesini ya da silinmesini isteme ve diğer haklarını kullanmak için bize e-postayla başvurabilirsin. Telefonunda tutulan verileri uygulamayı silerek dilediğin zaman tamamen kaldırabilirsin.</p>
+  </section>
+
+  <section>
+    <h2>Değişiklikler ve iletişim</h2>
+    <p>Bu politikayı güncellersek bu sayfadaki “Son güncelleme” tarihini değiştiririz.</p>
+    <p>Soruların için: <a href="mailto:ofzorbaci@gmail.com">ofzorbaci@gmail.com</a></p>
+    <p class="muted">Veri sorumlusu: Paraölçer geliştiricisi.</p>
+  </section>
+
+</main>
+</body>
+</html>

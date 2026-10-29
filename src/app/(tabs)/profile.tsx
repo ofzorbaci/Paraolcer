@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
@@ -18,6 +19,8 @@ import { formatDate, formatMonth, formatRate, formatStamp, formatTL, parseAmount
 import { bugReportUrl, SUPPORT_EMAIL } from '@/lib/support';
 import type { InflationSource } from '@/lib/types';
 import { refreshCpi, refreshFeed, refreshPrices, rescheduleReminders, updateSettings, useStore } from '@/state/store';
+
+const legal = (Constants.expoConfig?.extra?.legal ?? {}) as { privacyUrl?: string };
 
 export default function ProfileScreen() {
   const settings = useStore((s) => s.settings);
@@ -190,6 +193,9 @@ export default function ProfileScreen() {
         <ThemedText type="small" themeColor="textSecondary">
           Varlıkların yalnızca bu telefonda saklanır. Hesap açman gerekmez, hiçbir sunucuya gönderilmez.
         </ThemedText>
+        {!!legal.privacyUrl && (
+          <Button title="Gizlilik politikası" kind="secondary" onPress={() => WebBrowser.openBrowserAsync(legal.privacyUrl!)} />
+        )}
       </Card>
 
       <Disclaimer text="Kaynaklar: TÜİK ve TCMB, Avrupa Merkez Bankası, gold-api.com" />
