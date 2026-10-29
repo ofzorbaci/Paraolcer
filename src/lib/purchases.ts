@@ -2,8 +2,8 @@
 // payment; RevenueCat validates receipts and tells us whether the "premium" entitlement is
 // active (trial, renewal, cancellation and refunds included).
 //
-// Keys live in app.json → expo.extra.revenuecat. Without a key (or in Expo Go and on the web,
-// where the SDK runs in preview mode) real purchases are unavailable.
+// Keys live in app.json → expo.extra.revenuecat. They are public SDK keys (appl_…, goog_…,
+// test_…); the secret sk_… key must never be put in the app or the repository.
 
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -12,11 +12,17 @@ import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-nativ
 import { NO_PREMIUM, type PremiumStatus } from './entitlements';
 import { freeTrialDays, statusFromCustomerInfo } from './subscription-map';
 
-type Config = { iosApiKey?: string; androidApiKey?: string; entitlement?: string };
+type Config = { testApiKey?: string; iosApiKey?: string; androidApiKey?: string; entitlement?: string };
 
 const config: Config = (Constants.expoConfig?.extra?.revenuecat as Config | undefined) ?? {};
 const ENTITLEMENT = config.entitlement ?? 'premium';
-const apiKey = Platform.select({ ios: config.iosApiKey, android: config.androidApiKey });
+/**
+ * Development uses RevenueCat's Test Store, which simulates purchases without App Store or
+ * Google Play. A release build started with a test key shows an alert and crashes, so the
+ * test key is only ever picked in __DEV__; releases use the platform keys.
+ */
+const apiKey =
+  (__DEV__ && config.testApiKey) || Platform.select({ ios: config.iosApiKey, android: config.androidApiKey }) || undefined;
 
 export type Plan = {
   id: string;

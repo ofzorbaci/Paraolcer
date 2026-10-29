@@ -49,6 +49,7 @@
     "extra": {
       "feedUrl": "https://ofzorbaci.github.io/Paraolcer/feed.json",
       "revenuecat": {
+        "testApiKey": "test_UaGMsZCByupqMnOTUNwVsljFriq",
         "iosApiKey": "",
         "androidApiKey": "",
         "entitlement": "premium"

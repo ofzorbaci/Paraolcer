@@ -19,6 +19,12 @@ const STORE = Platform.OS === 'android' ? 'Google Play' : 'App Store';
 const money = (n: number, currency: string) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n);
 
+/** Back to where the user came from, or to the summary when the paywall was opened by a link. */
+function close() {
+  if (router.canGoBack()) router.back();
+  else router.replace('/');
+}
+
 export default function PaywallScreen() {
   const theme = useTheme();
   const { feature } = useLocalSearchParams<{ feature?: PremiumFeature }>();
@@ -49,7 +55,7 @@ export default function PaywallScreen() {
       const ok = await job();
       if (ok) {
         setMessage(success);
-        setTimeout(() => router.back(), 900);
+        setTimeout(close, 900);
       } else if (none) setMessage(none);
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Bir şeyler ters gitti.');
@@ -61,7 +67,7 @@ export default function PaywallScreen() {
   return (
     <Screen tabs={false}>
       <View style={styles.top}>
-        <IconButton name={{ ios: 'xmark', android: 'close', web: 'close' }} label="Kapat" onPress={() => router.back()} />
+        <IconButton name={{ ios: 'xmark', android: 'close', web: 'close' }} label="Kapat" onPress={() => close()} />
       </View>
 
       <View style={styles.hero}>
@@ -109,7 +115,7 @@ export default function PaywallScreen() {
               : `Abonelik, uygulamanın ${STORE} sürümünde açılacak.`}
           </ThemedText>
           {__DEV__ && (
-            <Button title="Geliştirici: Premium'u simüle et" kind="secondary" onPress={() => { setDevPremium(true); router.back(); }} />
+            <Button title="Geliştirici: Premium'u simüle et" kind="secondary" onPress={() => { setDevPremium(true); close(); }} />
           )}
         </View>
       ) : (

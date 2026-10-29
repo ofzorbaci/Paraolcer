@@ -19,8 +19,13 @@ type IntroPriceLike = { price: number; periodUnit: string; periodNumberOfUnits: 
 
 const DAYS: Record<string, number> = { DAY: 1, WEEK: 7, MONTH: 30, YEAR: 365 };
 
+/**
+ * Paraölçer sells a single tier, so if the dashboard's entitlement is named differently from
+ * `entitlement` (e.g. RevenueCat's default "pro"), any active entitlement still unlocks Premium.
+ */
 export function statusFromCustomerInfo(info: CustomerInfoLike, entitlement: string): PremiumStatus {
-  const e = info.entitlements.active[entitlement];
+  const active = info.entitlements.active;
+  const e = active[entitlement] ?? Object.values(active).find((x) => x?.isActive);
   const managementUrl = info.managementURL ?? undefined;
   if (!e?.isActive) return { ...NO_PREMIUM, managementUrl };
   return {

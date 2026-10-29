@@ -57,10 +57,14 @@ describe('store status', () => {
   it('is free when the entitlement is missing or inactive', () => {
     expect(statusFromCustomerInfo(info({}), 'premium').active).toBe(false);
     expect(statusFromCustomerInfo(info({ premium: entitlement({ isActive: false }) }), 'premium').active).toBe(false);
-    expect(statusFromCustomerInfo(info({ other: entitlement({}) }), 'premium')).toEqual({
+    expect(statusFromCustomerInfo(info({ premium: entitlement({ isActive: false }) }), 'premium')).toEqual({
       ...NO_PREMIUM,
       managementUrl: 'https://apps.apple.com/account/subscriptions',
     });
+  });
+
+  it('accepts a single entitlement named differently in the dashboard', () => {
+    expect(statusFromCustomerInfo(info({ pro: entitlement({}) }), 'premium').active).toBe(true);
   });
 
   it('turns store intro offers into trial days', () => {
