@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { BottomTabInset, BrandFonts, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatPct } from '@/lib/format';
+import { formatMoneyInput, formatPct } from '@/lib/format';
 
 export const Radius = { card: 24, inner: 16, pill: 999 } as const;
 
@@ -191,6 +191,15 @@ export function Field({
   ...input
 }: TextInputProps & { label: string; hint?: string; error?: string; prefix?: string; suffix?: string; style?: ViewStyle }) {
   const theme = useTheme();
+  // Lira fields group thousands while typing: 1.000.000
+  if (prefix === '₺') {
+    const { onChangeText } = input;
+    input = {
+      ...input,
+      value: input.value === undefined ? undefined : formatMoneyInput(input.value),
+      onChangeText: onChangeText && ((t: string) => onChangeText(formatMoneyInput(t, true))),
+    };
+  }
   return (
     <View style={[styles.field, style]}>
       <ThemedText type="small" themeColor="textSecondary">

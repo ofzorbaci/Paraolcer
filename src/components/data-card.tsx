@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 
+import { ImportButtons } from '@/components/import-buttons';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card } from '@/components/ui';
 import { exportWorkbook } from '@/lib/spreadsheet';
@@ -24,7 +24,7 @@ export function DataCard() {
         disabled={holdings.length === 0}
         onPress={() => shareWorkbook(exportWorkbook(holdings), `paraolcer-${new Date().toISOString().slice(0, 10)}.xlsx`)}
       />
-      <Button title="Excel / CSV’den içe aktar" kind="secondary" onPress={() => router.push('/import')} />
+      <ImportButtons />
       <ThemedText type="small" themeColor="textSecondary">
         Hesap yok; bütün veriler bu telefonda. Silersen varlıkların, ayarların, otomatik yedeğin ve hatırlatmaların
         kalıcı olarak kaldırılır. Oluşturduğun şifreli yedek dosyaları ve mağaza aboneliğin etkilenmez.

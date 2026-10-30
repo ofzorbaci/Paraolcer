@@ -6,13 +6,8 @@ import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { BackupCard } from '@/components/backup-card';
-import { InflationCard } from '@/components/inflation-card';
 import { PremiumCard } from '@/components/premium-card';
-import { RemindersCard } from '@/components/reminders-card';
 import { DataCard } from '@/components/data-card';
-import { GoalsCard } from '@/components/goals-card';
-import { PortfoliosCard } from '@/components/portfolios-card';
-import { PremiumGate } from '@/components/premium-gate';
 import { SecurityCard } from '@/components/security-card';
 import { quoteLabel } from '@/components/source-line';
 
@@ -52,23 +47,9 @@ export default function ProfileScreen() {
 
       <PremiumCard />
 
-      <InflationCard />
-
-      <RemindersCard />
-
-      <PremiumGate feature="goals" pitch="“Reel getirim eksiye düşerse haber ver” alarmı ve bugünün lirasıyla bir hedef koy; ulaşınca bildirim gelsin.">
-        <GoalsCard />
-      </PremiumGate>
-
-      <PremiumGate feature="portfolios" pitch="Senin, eşinin, çocuğunun birikimini ayrı portföylerde izle.">
-        <PortfoliosCard />
-      </PremiumGate>
-
-      <Card>
-        <ThemedText style={styles.cardTitle}>Araçlar</ThemedText>
-        <Button title="Hızlı reel getiri hesabı" kind="secondary" onPress={() => router.push('/tools/calculator')} />
-        <Button title="TÜFE karnem" kind="secondary" onPress={() => router.push('/karne')} />
-      </Card>
+      <ThemedText type="small" themeColor="textSecondary">
+        Enflasyon ölçüsü, hedef ve alarmlar, hatırlatmalar ve portföyler Araçlar sekmesinde.
+      </ThemedText>
 
       <SecurityCard />
 

@@ -1,5 +1,3 @@
-const tl = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 });
-const tlPrecise = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 2 });
 const pct = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 
 let masked = false;
@@ -9,9 +7,42 @@ export function setAmountsMasked(on: boolean) {
   masked = on;
 }
 
+/** Groups thousands with dots, Turkish style: 1234567.5 → "1.234.567,5". Independent of the JS engine's Intl data. */
+export function groupThousands(n: number, maxDecimals = 0): string {
+  const factor = 10 ** maxDecimals;
+  const rounded = Math.round(Math.abs(n) * factor) / factor;
+  const [int, dec] = rounded.toFixed(maxDecimals).split('.');
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const decimals = dec?.replace(/0+$/, '');
+  return `${n < 0 && rounded !== 0 ? '-' : ''}${grouped}${decimals ? `,${decimals}` : ''}`;
+}
+
 export function formatTL(n: number, precise = false): string {
   if (masked) return '₺•••••';
-  return (precise ? tlPrecise : tl).format(n);
+  const s = groupThousands(n, precise ? 2 : 0);
+  return s.startsWith('-') ? `-₺${s.slice(1)}` : `₺${s}`;
+}
+
+/**
+ * What a money field shows while typing: dots every three digits, a comma for kuruş.
+ * "1000000" → "1.000.000", "1234,5" → "1.234,5". While typing, dots are always our own separators
+ * (deleting a digit from "1.000" gives "100"); a prefilled "38.25" keeps its decimal.
+ */
+export function formatMoneyInput(text: string, typed = false): string {
+  let t = text.replace(/[^\d.,]/g, '');
+  // Our grouping never ends in a dot, so a trailing dot is the user's decimal key (English keyboards).
+  if (typed && t.endsWith('.') && !t.includes(',')) t = `${t.slice(0, -1)},`;
+  // In a prefilled value, a dot followed by one or two digits at the end is a decimal point.
+  if (!typed && !t.includes(',') && /\.\d{1,2}$/.test(t) && !/^\d{1,3}(\.\d{3})+$/.test(t)) {
+    const i = t.lastIndexOf('.');
+    t = `${t.slice(0, i)},${t.slice(i + 1)}`;
+  }
+  const comma = t.indexOf(',');
+  const intPart = (comma >= 0 ? t.slice(0, comma) : t).replace(/\D/g, '');
+  const decPart = comma >= 0 ? t.slice(comma + 1).replace(/\D/g, '').slice(0, 2) : undefined;
+  const int = intPart.replace(/^0+(?=\d)/, '');
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return decPart === undefined ? grouped : `${grouped || '0'},${decPart}`;
 }
 
 /** 0.123 → "+%12,3" */

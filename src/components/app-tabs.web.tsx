@@ -21,6 +21,9 @@ export default function AppTabs() {
           <TabTrigger name="power" href="/power" asChild>
             <TabButton>Alım gücü</TabButton>
           </TabTrigger>
+          <TabTrigger name="araclar" href="/araclar" asChild>
+            <TabButton>Araçlar</TabButton>
+          </TabTrigger>
           <TabTrigger name="profile" href="/profile" asChild>
             <TabButton>Profil</TabButton>
           </TabTrigger>

@@ -1,7 +1,7 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ImportButtons } from '@/components/import-buttons';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Choice, Field, Pct } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -83,7 +83,7 @@ export function QuickStart() {
       )}
 
       <Button title="Kaydet ve devam et" disabled={!holding} onPress={() => holding && saveHolding(holding)} />
-      <Button title="Excel / CSV’den içe aktar" kind="secondary" onPress={() => router.push('/import')} />
+      <ImportButtons />
       <Button
         title="Örnek birikimle dene"
         kind="secondary"

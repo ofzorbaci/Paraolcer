@@ -9,7 +9,7 @@ import { Spacing } from '@/constants/theme';
 import { useMasked } from '@/hooks/use-masked';
 import { useTheme } from '@/hooks/use-theme';
 import { defaultWithholding } from '@/lib/deposit';
-import { formatDate, formatPct, formatRate, formatTL, todayISO } from '@/lib/format';
+import { formatDate, formatPct, formatRate, formatTL, groupThousands, todayISO } from '@/lib/format';
 import { usdReal } from '@/lib/usd-real';
 import { priceAgeDays } from '@/lib/lookup';
 import { nextMaturity } from '@/lib/renew';
@@ -17,7 +17,7 @@ import type { HoldingAnalysis } from '@/lib/returns';
 import { isLivePriced, KIND_LABELS, type Holding } from '@/lib/types';
 import { useStore } from '@/state/store';
 
-const qty = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 });
+const qty = { format: (n: number) => groupThousands(n, 2) };
 
 /** A hand-entered price older than this gets a reminder on the card and next to the score. */
 export const STALE_DAYS = 7;

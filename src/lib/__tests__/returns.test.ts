@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import feed from '../../data/feed-snapshot.json';
 import { buildCpiIndex, customInflation, tuikInflation } from '../cpi';
 import { parseTcmbCpiHtml } from '../cpi-parse';
-import { formatPct, parseAmount, parseDate } from '../format';
+import { formatMoneyInput, formatPct, formatTL, groupThousands, parseAmount, parseDate } from '../format';
 import { analyzeHolding, analyzePortfolio, holdingValue, realReturn } from '../returns';
 import type { Holding, Settings } from '../types';
 
@@ -141,6 +141,30 @@ describe('format', () => {
     expect(parseAmount('1.250.000')).toBe(1250000);
     expect(parseAmount('38.25')).toBe(38.25);
     expect(parseAmount('abc')).toBeUndefined();
+  });
+
+  it('groups thousands in every amount', () => {
+    expect(groupThousands(1_000_000)).toBe('1.000.000');
+    expect(groupThousands(1234.5, 2)).toBe('1.234,5');
+    expect(groupThousands(999)).toBe('999');
+    expect(formatTL(1_250_000)).toBe('₺1.250.000');
+    expect(formatTL(-4321.456, true)).toBe('-₺4.321,46');
+    expect(formatTL(0.4)).toBe('₺0');
+  });
+
+  it('groups thousands while a lira amount is typed', () => {
+    expect(formatMoneyInput('1000000')).toBe('1.000.000');
+    expect(formatMoneyInput('1.000.0005', true)).toBe('10.000.005');
+    expect(formatMoneyInput('1.00', true)).toBe('100');
+    expect(formatMoneyInput('38.', true)).toBe('38,');
+    expect(formatMoneyInput('1.000.', true)).toBe('1.000,');
+    expect(formatMoneyInput('1234,567')).toBe('1.234,56');
+    expect(formatMoneyInput('38.25')).toBe('38,25');
+    expect(formatMoneyInput('100.000')).toBe('100.000');
+    expect(formatMoneyInput('12,')).toBe('12,');
+    expect(formatMoneyInput('')).toBe('');
+    expect(parseAmount(formatMoneyInput('2500000'))).toBe(2_500_000);
+    expect(parseAmount(formatMoneyInput('1234,5'))).toBe(1234.5);
   });
 
   it('formats signed percentages', () => {

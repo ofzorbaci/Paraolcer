@@ -1,6 +1,6 @@
 import { useMasked } from '@/hooks/use-masked';
-import { router } from 'expo-router';
 
+import { ImportButtons } from '@/components/import-buttons';
 import { HoldingCard } from '@/components/holding-card';
 import { useAddHolding } from '@/components/premium-gate';
 import { ThemedText } from '@/components/themed-text';
@@ -31,7 +31,7 @@ export default function AssetsScreen() {
       {items.map((i) => (
         <HoldingCard key={i.holding.id} holding={i.holding} analysis={i.analysis} />
       ))}
-      <Button title="Excel / CSV’den içe aktar" kind="secondary" onPress={() => router.push('/import')} />
+      <ImportButtons />
       <Disclaimer />
     </Screen>
   );
