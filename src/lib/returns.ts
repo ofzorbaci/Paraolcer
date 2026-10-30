@@ -22,7 +22,11 @@ export function unitPrice(h: Holding, prices: LivePrices): number | undefined {
 }
 
 export function holdingValue(h: Holding, today: string, prices: LivePrices): number | undefined {
-  if (h.kind === 'deposit') return depositValue(h, today);
+  if (h.kind === 'deposit') {
+    if (!h.depositCurrency) return depositValue(h, today);
+    const rate = prices[h.depositCurrency];
+    return rate === undefined ? undefined : depositValue(h, today, rate);
+  }
   const price = unitPrice(h, prices);
   return price === undefined ? undefined : h.quantity * price;
 }

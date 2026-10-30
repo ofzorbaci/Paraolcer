@@ -3,7 +3,7 @@
 // 12-month inflation expectation (Fisher). It describes an expectation; it never recommends.
 
 import { daysBetween, inflationFor, type CpiIndex } from './cpi';
-import { defaultWithholding, depositValue, netAnnualRate } from './deposit';
+import { defaultWithholding, depositValue, isTlDeposit, netAnnualRate } from './deposit';
 import type { Feed } from './feed-types';
 import type { RenewResult } from './renew';
 import { scenarioReal } from './scenario';
@@ -22,7 +22,7 @@ export function forwardReal(grossRate: number, termDays: number, withholding: nu
 
 /** Real return of the last completed term, or undefined before the first rollover. */
 export function lastTermReal(h: Holding, today: string, settings: Settings, index: CpiIndex): number | undefined {
-  if (h.kind !== 'deposit' || h.grossRate === undefined || !h.termDays) return undefined;
+  if (!isTlDeposit(h) || h.grossRate === undefined || !h.termDays) return undefined;
   const done = Math.floor(Math.max(0, daysBetween(h.buyDate, today)) / h.termDays);
   if (done < 1) return undefined;
   const at = (n: number) => {

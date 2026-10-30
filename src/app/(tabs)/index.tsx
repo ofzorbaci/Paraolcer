@@ -17,6 +17,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { nextCpiReleases, nextRateDecisions } from '@/lib/calendar';
 import { formatMonth, formatRate, formatTL, todayISO } from '@/lib/format';
 import { goalProgress, goalTarget } from '@/lib/alerts';
+import { isTlDeposit } from '@/lib/deposit';
 import { currentPolicyRate } from '@/lib/feed';
 import { cpiPendingMonth, karneFresh, renewSavingsThisYear } from '@/lib/karne';
 import { nextMaturity } from '@/lib/renew';
@@ -53,7 +54,7 @@ export default function SummaryScreen() {
   const nextRelease = nextCpiReleases(new Date(), 1)[0];
   // The nearest deposit maturity within a week, for the "Yenilesem mi?" nudge.
   const upcoming = items
-    .filter((i) => i.holding.kind === 'deposit' && !i.holding.sample)
+    .filter((i) => isTlDeposit(i.holding) && !i.holding.sample)
     .map((i) => {
       const date = nextMaturity(i.holding, todayISO());
       return date && { id: i.holding.id, name: i.holding.name, days: Math.round((Date.parse(date) - Date.parse(todayISO())) / 86_400_000) };

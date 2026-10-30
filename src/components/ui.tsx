@@ -191,8 +191,8 @@ export function Field({
   ...input
 }: TextInputProps & { label: string; hint?: string; error?: string; prefix?: string; suffix?: string; style?: ViewStyle }) {
   const theme = useTheme();
-  // Lira fields group thousands while typing: 1.000.000
-  if (prefix === '₺') {
+  // Money fields (₺ $ € £) group thousands while typing: 1.000.000
+  if (prefix && ['₺', '$', '€', '£'].includes(prefix)) {
     const { onChangeText } = input;
     input = {
       ...input,

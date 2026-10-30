@@ -97,6 +97,7 @@ export default function ProfileScreen() {
           [
             ['usd', 'Dolar'],
             ['eur', 'Euro'],
+            ['gbp', 'Sterlin'],
             ['gold', 'Gram altın'],
           ] as const
         ).map(([key, label]) => {

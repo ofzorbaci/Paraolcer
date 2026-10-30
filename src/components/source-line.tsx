@@ -1,7 +1,7 @@
 import { ThemedText } from '@/components/themed-text';
 import { formatMonth, formatStamp } from '@/lib/format';
 import type { PriceKey, PriceQuote } from '@/lib/prices';
-import type { HoldingKind } from '@/lib/types';
+import { isCurrencyKind, type HoldingKind } from '@/lib/types';
 import { useStore } from '@/state/store';
 
 /** "ECB · 28 Eki 14:32" */
@@ -11,7 +11,7 @@ export function quoteLabel(q: PriceQuote): string {
 
 /** Where a live-priced holding's price came from and when; nothing for hand-entered prices. */
 export function HoldingSource({ kind }: { kind: HoldingKind }) {
-  const q = useStore((s) => (kind === 'usd' || kind === 'eur' || kind === 'gold' ? s.priceBook[kind as PriceKey] : undefined));
+  const q = useStore((s) => (isCurrencyKind(kind) || kind === 'gold' ? s.priceBook[kind as PriceKey] : undefined));
   if (!q) return null;
   return (
     <ThemedText type="small" themeColor="textSecondary">

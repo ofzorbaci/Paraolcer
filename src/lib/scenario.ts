@@ -1,4 +1,4 @@
-import { defaultWithholding, effectiveAnnualYield, netAnnualRate } from './deposit';
+import { defaultWithholding, effectiveAnnualYield, isTlDeposit, netAnnualRate } from './deposit';
 import type { Holding } from './types';
 
 export type DepositTerms = { grossRate: number; termDays: number; withholding: number; fromPortfolio: boolean };
@@ -8,7 +8,7 @@ export const EXAMPLE_DEPOSIT = { grossRate: 40, termDays: 32 };
 
 /** The user's deposit terms, weighted by principal; falls back to the example deposit. */
 export function depositTerms(holdings: Holding[]): DepositTerms {
-  const deposits = holdings.filter((h) => h.kind === 'deposit' && h.grossRate !== undefined);
+  const deposits = holdings.filter((h) => isTlDeposit(h) && h.grossRate !== undefined);
   if (deposits.length === 0) {
     const { grossRate, termDays } = EXAMPLE_DEPOSIT;
     return { grossRate, termDays, withholding: defaultWithholding(termDays), fromPortfolio: false };

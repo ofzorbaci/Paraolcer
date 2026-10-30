@@ -153,7 +153,7 @@ describe('bug report', () => {
     });
     expect(url.startsWith('mailto:ofzorbaci@gmail.com?subject=')).toBe(true);
     const body = decodeURIComponent(url.split('&body=')[1]);
-    expect(body).toContain('TL mevduat: 2');
+    expect(body).toContain('Mevduat: 2');
     expect(body).toContain('usd ECB');
     expect(body).not.toContain('123');
     expect(body).not.toContain('49.8');

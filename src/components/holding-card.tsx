@@ -14,7 +14,7 @@ import { usdReal } from '@/lib/usd-real';
 import { priceAgeDays } from '@/lib/lookup';
 import { nextMaturity } from '@/lib/renew';
 import type { HoldingAnalysis } from '@/lib/returns';
-import { isLivePriced, KIND_LABELS, type Holding } from '@/lib/types';
+import { CURRENCY_SYMBOL, isLivePriced, KIND_LABELS, type Holding } from '@/lib/types';
 import { useStore } from '@/state/store';
 
 const qty = { format: (n: number) => groupThousands(n, 2) };
@@ -37,6 +37,10 @@ export function holdingTitle(h: Holding): string {
       return `${base} · $${qty.format(h.quantity)}`;
     case 'eur':
       return `${base} · €${qty.format(h.quantity)}`;
+    case 'gbp':
+      return `${base} · £${qty.format(h.quantity)}`;
+    case 'deposit':
+      return h.depositCurrency ? `${base} · ${CURRENCY_SYMBOL[h.depositCurrency]}${qty.format(h.quantity)}` : base;
     case 'stock':
     case 'fund':
       return `${base} · ${qty.format(h.quantity)} adet`;
@@ -54,7 +58,7 @@ export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; ana
   const premium = usePremium();
   const prices = useStore((s) => s.prices);
   const feed = useStore((s) => s.feed);
-  const dollarBased = h.kind === 'usd' || h.kind === 'eur' || h.kind === 'gold';
+  const dollarBased = h.kind === 'usd' || h.kind === 'eur' || h.kind === 'gbp' || h.kind === 'gold';
   const usd = dollarBased && premium ? usdReal(h, a, prices, feed) : undefined;
   const stats =
     h.kind === 'deposit' && h.grossRate !== undefined
@@ -121,7 +125,7 @@ export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; ana
             ))}
           {h.kind === 'deposit' && h.grossRate !== undefined && (
             <ThemedText type="small" themeColor="textSecondary">
-              {h.termDays} gün vade · %{String(h.withholding ?? defaultWithholding(h.termDays ?? 32)).replace('.', ',')} stopaj
+              {h.termDays} gün vade · %{String(h.withholding ?? defaultWithholding(h.termDays ?? 32, h.depositCurrency)).replace('.', ',')} stopaj
               {maturity ? ` · sonraki vade ${formatDate(maturity)}` : ''}
             </ThemedText>
           )}

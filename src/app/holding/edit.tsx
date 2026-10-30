@@ -13,7 +13,7 @@ import { formatPct, formatRate, parseAmount, todayISO } from '@/lib/format';
 import { fetchTryRate } from '@/lib/fx';
 import { priceLookup } from '@/lib/lookup';
 import { analyzeHolding } from '@/lib/returns';
-import { GOLD_LABELS, KIND_LABELS, type GoldType, type Holding, type HoldingKind } from '@/lib/types';
+import { CURRENCY_SYMBOL, GOLD_LABELS, isCurrencyKind, KIND_LABELS, type CurrencyKind, type GoldType, type Holding, type HoldingKind } from '@/lib/types';
 import { plausibilityWarnings } from '@/lib/validate';
 import { newId, saveHolding, useStore } from '@/state/store';
 
@@ -29,7 +29,7 @@ const GROUPS: { value: Group; label: string }[] = [
 ];
 
 function groupOf(kind: HoldingKind): Group {
-  return kind === 'usd' || kind === 'eur' ? 'fx' : kind;
+  return isCurrencyKind(kind) ? 'fx' : kind;
 }
 
 function numText(n: number | undefined): string {
@@ -46,12 +46,16 @@ export default function EditHoldingScreen() {
   const today = todayISO();
 
   const [group, setGroup] = useState<Group>(existing ? groupOf(existing.kind) : 'deposit');
-  const [currency, setCurrency] = useState<'usd' | 'eur'>(existing?.kind === 'eur' ? 'eur' : 'usd');
+  const [currency, setCurrency] = useState<CurrencyKind>(existing && isCurrencyKind(existing.kind) ? existing.kind : 'usd');
+  // A deposit's currency: 'try' or a foreign currency (then the principal is in that currency).
+  const [depositCurrency, setDepositCurrency] = useState<'try' | 'usd' | 'eur'>(existing?.depositCurrency ?? 'try');
   const [name, setName] = useState(existing?.name ?? '');
   const [buyDate, setBuyDate] = useState<string | undefined>(existing?.buyDate);
   const [quantity, setQuantity] = useState(numText(existing?.quantity));
   const [unitCost, setUnitCost] = useState(numText(existing?.unitCost));
-  const [principal, setPrincipal] = useState(existing?.kind === 'deposit' ? numText(existing.unitCost) : '');
+  const [principal, setPrincipal] = useState(
+    existing?.kind === 'deposit' ? numText(existing.depositCurrency ? existing.quantity : existing.unitCost) : '',
+  );
   const [gross, setGross] = useState(numText(existing?.grossRate ?? existing?.depositRate));
   const [term, setTerm] = useState(numText(existing?.termDays ?? 32));
   const [withholding, setWithholding] = useState(numText(existing?.withholding));
@@ -65,15 +69,18 @@ export default function EditHoldingScreen() {
   const kind: HoldingKind = group === 'fx' ? currency : group;
   const isDeposit = kind === 'deposit';
   const isFx = group === 'fx';
+  const fxDeposit = isDeposit && depositCurrency !== 'try' ? depositCurrency : undefined;
+  // Which currency's rate on the purchase day to look up: cash or a foreign-currency deposit.
+  const rateCurrency: CurrencyKind | undefined = isFx ? currency : fxDeposit;
   const isGold = kind === 'gold';
   const manualPrice = !isDeposit && !isFx && !isGold;
   const lookup = priceLookup(kind, name);
 
   // The ECB rate of the purchase day: pre-fills the cost and is the reference for the plausibility check.
   useEffect(() => {
-    if (!isFx || !buyDate) return;
+    if (!rateCurrency || !buyDate) return;
     let cancelled = false;
-    fetchTryRate(currency, buyDate)
+    fetchTryRate(rateCurrency, buyDate)
       .then((r) => {
         if (cancelled) return;
         setRefRate(r);
@@ -86,14 +93,15 @@ export default function EditHoldingScreen() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFx, currency, buyDate]);
+  }, [rateCurrency, buyDate]);
 
   const termDays = parseAmount(term);
-  const autoWithholding = defaultWithholding(termDays && termDays > 0 ? termDays : 32);
+  const autoWithholding = defaultWithholding(termDays && termDays > 0 ? termDays : 32, fxDeposit);
   const draft: Partial<Holding> = isDeposit
     ? {
-        quantity: 1,
-        unitCost: parseAmount(principal),
+        // TRY: one unit worth the principal. Foreign currency: the principal in units, at the deposit-day rate.
+        quantity: fxDeposit ? parseAmount(principal) : 1,
+        unitCost: fxDeposit ? parseAmount(unitCost) : parseAmount(principal),
         grossRate: parseAmount(gross),
         termDays: termDays ? Math.round(termDays) : undefined,
         withholding: withholding.trim() ? parseAmount(withholding) : autoWithholding,
@@ -106,9 +114,9 @@ export default function EditHoldingScreen() {
 
   const errors = {
     date: !buyDate ? 'Tarih seç' : undefined,
-    quantity: !isDeposit && !(draft.quantity && draft.quantity > 0) ? 'Sıfırdan büyük bir miktar gir' : undefined,
-    cost: !(draft.unitCost && draft.unitCost > 0) ? 'Sıfırdan büyük bir tutar gir' : undefined,
-    gross: isDeposit && draft.grossRate === undefined ? 'Yıllık brüt faizi gir (ör. 40)' : undefined,
+    quantity: (!isDeposit || fxDeposit) && !(draft.quantity && draft.quantity > 0) ? 'Sıfırdan büyük bir miktar gir' : undefined,
+    cost: !(draft.unitCost && draft.unitCost > 0) ? (fxDeposit ? 'Yatırdığın günkü kuru gir' : 'Sıfırdan büyük bir tutar gir') : undefined,
+    gross: isDeposit && draft.grossRate === undefined ? `Yıllık brüt faizi gir (ör. ${fxDeposit ? '2' : '40'})` : undefined,
     term: isDeposit && !(draft.termDays && draft.termDays > 0) ? 'Vadeyi gün olarak gir' : undefined,
     withholding: isDeposit && (draft.withholding === undefined || draft.withholding >= 100) ? 'Geçerli bir oran gir' : undefined,
     current: manualPrice && current.trim() && draft.currentPrice === undefined ? 'Geçerli bir fiyat gir' : undefined,
@@ -120,7 +128,9 @@ export default function EditHoldingScreen() {
     ? {
         id: existing?.id ?? newId(),
         kind,
-        name: name.trim() || (isGold ? GOLD_LABELS[goldType] : KIND_LABELS[kind]),
+        name:
+          name.trim() ||
+          (isGold ? GOLD_LABELS[goldType] : fxDeposit ? `${fxDeposit === 'usd' ? 'Dolar' : 'Euro'} mevduat` : isDeposit ? 'TL mevduat' : KIND_LABELS[kind]),
         goldType: isGold ? goldType : undefined,
         buyDate: buyDate!,
         quantity: draft.quantity!,
@@ -131,11 +141,12 @@ export default function EditHoldingScreen() {
         grossRate: draft.grossRate,
         termDays: draft.termDays,
         withholding: draft.withholding,
+        depositCurrency: fxDeposit,
       }
     : undefined;
   const preview = holding ? analyzeHolding(holding, today, prices, settings, index) : undefined;
 
-  const warnings = holding ? plausibilityWarnings(holding, { referenceRate: isFx ? refRate : undefined, prices }) : [];
+  const warnings = holding ? plausibilityWarnings(holding, { referenceRate: rateCurrency ? refRate : undefined, prices }) : [];
   const warningKey = warnings.map((w) => w.message).join('|');
   const needsConfirm = warnings.length > 0 && acknowledged !== warningKey;
 
@@ -169,9 +180,21 @@ export default function EditHoldingScreen() {
             options={[
               { value: 'usd', label: 'Dolar ($)' },
               { value: 'eur', label: 'Euro (€)' },
+              { value: 'gbp', label: 'Sterlin (£)' },
             ]}
             value={currency}
             onChange={(c) => { setCurrency(c); setUnitCost(''); setRateNote(undefined); }}
+          />
+        )}
+        {isDeposit && (
+          <Choice<'try' | 'usd' | 'eur'>
+            options={[
+              { value: 'try', label: 'TL (₺)' },
+              { value: 'usd', label: 'Dolar ($)' },
+              { value: 'eur', label: 'Euro (€)' },
+            ]}
+            value={depositCurrency}
+            onChange={(c) => { setDepositCurrency(c); setUnitCost(''); setRateNote(undefined); }}
           />
         )}
         {isGold && (
@@ -189,9 +212,17 @@ export default function EditHoldingScreen() {
       <Card style={styles.form}>
         {isDeposit ? (
           <>
-            <Field label="Yatırdığın tutar" prefix="₺" keyboardType="decimal-pad" placeholder="100.000" value={principal} onChangeText={setPrincipal} error={show(errors.cost)} />
+            <Field
+              label="Yatırdığın tutar"
+              prefix={fxDeposit ? CURRENCY_SYMBOL[fxDeposit] : '₺'}
+              keyboardType="decimal-pad"
+              placeholder={fxDeposit ? '10.000' : '100.000'}
+              value={principal}
+              onChangeText={setPrincipal}
+              error={show(fxDeposit ? errors.quantity : errors.cost)}
+            />
             <View style={styles.pair}>
-              <Field style={styles.flex} label="Yıllık brüt faiz" prefix="%" keyboardType="decimal-pad" placeholder="40" value={gross} onChangeText={setGross} error={show(errors.gross)} />
+              <Field style={styles.flex} label="Yıllık brüt faiz" prefix="%" keyboardType="decimal-pad" placeholder={fxDeposit ? '2' : '40'} value={gross} onChangeText={setGross} error={show(errors.gross)} />
               <Field style={styles.flex} label="Vade" suffix="gün" keyboardType="number-pad" placeholder="32" value={term} onChangeText={setTerm} error={show(errors.term)} />
             </View>
             <Field
@@ -202,9 +233,24 @@ export default function EditHoldingScreen() {
               value={withholding}
               onChangeText={setWithholding}
               error={show(errors.withholding)}
-              hint={`Boş bırakırsan vadeye göre %${String(autoWithholding).replace('.', ',')} uygulanır.`}
+              hint={
+                fxDeposit
+                  ? `Döviz mevduatında stopaj %${autoWithholding}; boş bırakırsan bu uygulanır.`
+                  : `Boş bırakırsan vadeye göre %${String(autoWithholding).replace('.', ',')} uygulanır.`
+              }
             />
             <DateField label="Başlangıç tarihi" value={buyDate} onChange={setBuyDate} max={today} />
+            {fxDeposit && (
+              <Field
+                label="Yatırdığın günkü kur"
+                prefix="₺"
+                keyboardType="decimal-pad"
+                value={unitCost}
+                onChangeText={(t) => { setUnitCost(t); setRateNote(undefined); }}
+                error={show(errors.cost)}
+                hint={rateNote ?? 'TL karşılığını ve reel getiriyi bu kurdan hesaplarız; güncel kur otomatik alınır.'}
+              />
+            )}
           </>
         ) : (
           <>
@@ -219,7 +265,7 @@ export default function EditHoldingScreen() {
             )}
             <Field
               label={isFx || (isGold && goldType === 'gram') ? 'Miktar' : 'Adet'}
-              prefix={isFx ? (currency === 'usd' ? '$' : '€') : undefined}
+              prefix={isFx ? CURRENCY_SYMBOL[currency] : undefined}
               suffix={isGold && goldType === 'gram' ? 'gr' : undefined}
               keyboardType="decimal-pad"
               value={quantity}
@@ -273,7 +319,7 @@ export default function EditHoldingScreen() {
             Anlık hesap
           </ThemedText>
           <Row
-            label={isDeposit ? 'Stopaj sonrası net getiri' : 'TL getiri'}
+            label={isDeposit && !fxDeposit ? 'Stopaj sonrası net getiri' : 'TL getiri'}
             value={formatPct(preview.nominal!, false)}
             strong
           />

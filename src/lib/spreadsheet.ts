@@ -48,10 +48,16 @@ function normalise(s: unknown): string {
     .trim();
 }
 
+const FX_DEPOSIT: Record<string, 'usd' | 'eur'> = {
+  'dolar mevduat': 'usd', 'usd mevduat': 'usd', 'euro mevduat': 'eur', 'eur mevduat': 'eur',
+};
+
 const KIND_ALIASES: Record<string, HoldingKind> = {
   mevduat: 'deposit', 'tl mevduat': 'deposit', deposit: 'deposit', vadeli: 'deposit',
+  'dolar mevduat': 'deposit', 'usd mevduat': 'deposit', 'euro mevduat': 'deposit', 'eur mevduat': 'deposit',
   dolar: 'usd', usd: 'usd', 'abd dolari': 'usd',
   euro: 'eur', eur: 'eur', avro: 'eur',
+  sterlin: 'gbp', gbp: 'gbp', pound: 'gbp', 'ingiliz sterlini': 'gbp',
   altin: 'gold', 'gram altin': 'gold', gold: 'gold', ceyrek: 'gold', 'ceyrek altin': 'gold', yarim: 'gold',
   'yarim altin': 'gold', tam: 'gold', 'tam altin': 'gold', cumhuriyet: 'gold', 'cumhuriyet altini': 'gold',
   hisse: 'stock', 'hisse senedi': 'stock', bist: 'stock', stock: 'stock',
@@ -127,7 +133,9 @@ export function rowsToHoldings(rows: unknown[][], today: string, id: () => strin
 
     const cost = toNumber(get('cost'));
     if (!(cost && cost > 0)) errors.push('Birim maliyet ya da tutar sıfırdan büyük olmalı');
-    const quantity = kind === 'deposit' ? 1 : toNumber(get('quantity'));
+    // "Dolar mevduat" / "Euro mevduat": principal in that currency under Miktar, the day's rate under Birim maliyet.
+    const depositCurrency = kind === 'deposit' ? FX_DEPOSIT[rawKind] : undefined;
+    const quantity = kind === 'deposit' && !depositCurrency ? 1 : toNumber(get('quantity'));
     if (!(quantity && quantity > 0)) errors.push('Miktar sıfırdan büyük olmalı');
     const gross = toNumber(get('gross'));
     const term = toNumber(get('term'));
@@ -137,7 +145,9 @@ export function rowsToHoldings(rows: unknown[][], today: string, id: () => strin
       out.push({ line, errors });
       return;
     }
-    const name = String(get('name') ?? '').trim() || (goldType ? GOLD_LABELS[goldType] : KIND_LABELS[kind]);
+    const name =
+      String(get('name') ?? '').trim() ||
+      (goldType ? GOLD_LABELS[goldType] : depositCurrency ? `${depositCurrency === 'usd' ? 'Dolar' : 'Euro'} mevduat` : KIND_LABELS[kind]);
     out.push({
       line,
       errors: [],
@@ -152,6 +162,7 @@ export function rowsToHoldings(rows: unknown[][], today: string, id: () => strin
         grossRate: kind === 'deposit' ? gross : undefined,
         termDays: kind === 'deposit' ? Math.round(term ?? 32) : undefined,
         withholding: kind === 'deposit' ? toNumber(get('withholding')) : undefined,
+        depositCurrency,
         goldType,
       },
     });
@@ -172,8 +183,9 @@ export function parseSpreadsheet(data: Uint8Array | string, today: string, id: (
 }
 
 function holdingRow(h: Holding): (string | number)[] {
+  const kind = h.depositCurrency ? `${h.depositCurrency === 'usd' ? 'Dolar' : 'Euro'} mevduat` : KIND_LABELS[h.kind];
   return [
-    h.goldType && h.goldType !== 'gram' ? 'Altın' : KIND_LABELS[h.kind],
+    h.goldType && h.goldType !== 'gram' ? 'Altın' : kind,
     h.name,
     h.buyDate,
     h.quantity,
@@ -191,7 +203,10 @@ function typesSheet(): XLSX.WorkSheet {
     ['Tür', 'Ne zaman', 'Not'],
     ['TL mevduat', 'Vadeli hesap', 'Miktar 1; Birim maliyet = anapara; Brüt faiz ve Vade gerekli; Stopaj boşsa vadeye göre otomatik'],
     ['Dolar', 'USD', 'Miktar = dolar; Birim maliyet = alış kuru'],
+    ['Dolar mevduat', 'USD vadeli hesap', 'Miktar = yatırılan dolar; Birim maliyet = o günkü kur; Brüt faiz ve Vade gerekli; Stopaj boşsa %25'],
+    ['Euro mevduat', 'EUR vadeli hesap', 'Miktar = yatırılan euro; Birim maliyet = o günkü kur; Brüt faiz ve Vade gerekli; Stopaj boşsa %25'],
     ['Euro', 'EUR', 'Miktar = euro; Birim maliyet = alış kuru'],
+    ['Sterlin', 'GBP', 'Miktar = sterlin; Birim maliyet = alış kuru'],
     ['Altın', 'Gram ya da ziynet', 'Altın türü: Gram altın, Çeyrek altın, Yarım altın, Tam altın, Cumhuriyet altını'],
     ['Hisse', 'BIST', 'Ad = hisse kodu (THYAO); Güncel birim fiyat elle'],
     ['Fon', 'TEFAS', 'Ad = fon kodu (TTE); Güncel birim fiyat elle'],

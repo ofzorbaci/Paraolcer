@@ -42,10 +42,10 @@ export default function RenewScreen() {
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
-  if (!h || h.kind !== 'deposit') {
+  if (!h || h.kind !== 'deposit' || h.depositCurrency) {
     return (
       <Screen tabs={false}>
-        <ThemedText>Bu ekran mevduatlar için.</ThemedText>
+        <ThemedText>“Yenilesem mi?” karşılaştırması TL mevduatlar için.</ThemedText>
         <Button title="Geri" kind="secondary" onPress={close} />
       </Screen>
     );

@@ -1,6 +1,6 @@
 import { goldPureGrams } from './gold';
 import { formatTL } from './format';
-import type { Holding, LivePrices } from './types';
+import { isCurrencyKind, type Holding, type LivePrices } from './types';
 
 /** A save-blocking check would be an error; these only ask "are you sure?". */
 export type Warning = { field: string; message: string };
@@ -27,7 +27,9 @@ export function plausibilityWarnings(h: Holding, ctx: Context): Warning[] {
   }
 
   if (h.kind === 'deposit') {
-    if (h.grossRate !== undefined && (h.grossRate > 150 || h.grossRate < 1)) {
+    // Foreign-currency deposits pay a few percent; TRY deposits tens of percent.
+    const [lo, hi] = h.depositCurrency ? [0, 20] : [1, 150];
+    if (h.grossRate !== undefined && (h.grossRate > hi || h.grossRate < lo)) {
       out.push({ field: 'gross', message: `Yıllık %${h.grossRate} faiz alışılmadık. Aylık değil yıllık oranı gir.` });
     }
     if (h.termDays !== undefined && h.termDays > 3650) {
@@ -35,7 +37,7 @@ export function plausibilityWarnings(h: Holding, ctx: Context): Warning[] {
     }
   }
 
-  if ((h.kind === 'usd' || h.kind === 'eur') && ctx.referenceRate && off(h.unitCost, ctx.referenceRate) > 0.3) {
+  if ((isCurrencyKind(h.kind) || h.depositCurrency) && ctx.referenceRate && off(h.unitCost, ctx.referenceRate) > 0.3) {
     out.push({
       field: 'cost',
       message: `Alış kuru o günün referans kurundan (${formatTL(ctx.referenceRate, true)}) çok farklı.`,

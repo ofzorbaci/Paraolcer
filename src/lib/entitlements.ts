@@ -67,7 +67,7 @@ export function premiumShowcase(holdings: Holding[]): Showcase {
       lead: ['renewUnlimited', 'renewForward', 'goals'],
     };
   }
-  if (own.length > 0 && own.every((h) => h.kind === 'usd' || h.kind === 'eur' || h.kind === 'gold')) {
+  if (own.length > 0 && own.every((h) => h.kind === 'usd' || h.kind === 'eur' || h.kind === 'gbp' || h.kind === 'gold')) {
     return {
       key: 'wealth',
       title: 'Gerçek Servet Paketi',

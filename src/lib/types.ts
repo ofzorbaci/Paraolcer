@@ -1,6 +1,15 @@
 import type { Basket } from './basket';
 
-export type HoldingKind = 'deposit' | 'usd' | 'eur' | 'gold' | 'stock' | 'fund' | 'other';
+export type HoldingKind = 'deposit' | 'usd' | 'eur' | 'gbp' | 'gold' | 'stock' | 'fund' | 'other';
+
+/** Foreign currencies held as cash or in a deposit, priced live */
+export type CurrencyKind = 'usd' | 'eur' | 'gbp';
+
+export const CURRENCY_SYMBOL: Record<CurrencyKind, string> = { usd: '$', eur: '€', gbp: '£' };
+
+export function isCurrencyKind(kind: string | undefined): kind is CurrencyKind {
+  return kind === 'usd' || kind === 'eur' || kind === 'gbp';
+}
 
 export type GoldType = 'gram' | 'ceyrek' | 'yarim' | 'tam' | 'cumhuriyet';
 
@@ -28,6 +37,11 @@ export type Holding = {
   priceUpdatedAt?: string;
   /** deposits: annual gross interest, % */
   grossRate?: number;
+  /**
+   * deposits in a foreign currency: quantity is the principal in that currency and unitCost the
+   * TRY rate on the deposit day; undefined is a TRY deposit (quantity 1, unitCost the principal)
+   */
+  depositCurrency?: 'usd' | 'eur';
   /** deposits: term in days; interest compounds at each rollover */
   termDays?: number;
   /** deposits: withholding tax on interest, % */
@@ -80,12 +94,13 @@ export type Goal = { amount: number; /** 'YYYY-MM-DD' */ setAt: string };
 export type Portfolio = { id: string; name: string };
 
 /** Live TRY prices per unit */
-export type LivePrices = Partial<Record<'usd' | 'eur' | 'gold', number>>;
+export type LivePrices = Partial<Record<CurrencyKind | 'gold', number>>;
 
 export const KIND_LABELS: Record<HoldingKind, string> = {
-  deposit: 'TL mevduat',
+  deposit: 'Mevduat',
   usd: 'Dolar',
   eur: 'Euro',
+  gbp: 'Sterlin',
   gold: 'Altın',
   stock: 'Hisse',
   fund: 'Fon',
@@ -93,8 +108,8 @@ export const KIND_LABELS: Record<HoldingKind, string> = {
 };
 
 /** Kinds whose current price is fetched automatically */
-export const LIVE_PRICED: HoldingKind[] = ['usd', 'eur', 'gold'];
+export const LIVE_PRICED: HoldingKind[] = ['usd', 'eur', 'gbp', 'gold'];
 
-export function isLivePriced(kind: HoldingKind): kind is 'usd' | 'eur' | 'gold' {
+export function isLivePriced(kind: HoldingKind): kind is CurrencyKind | 'gold' {
   return LIVE_PRICED.includes(kind);
 }

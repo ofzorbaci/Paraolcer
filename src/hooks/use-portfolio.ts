@@ -6,6 +6,7 @@ import { currencyBenchmark, fetchTryRateSeries } from '@/lib/fx';
 import { analyzeHolding, analyzePortfolio, summarizeByKind } from '@/lib/returns';
 import { depositTerms } from '@/lib/scenario';
 import { purchasingPowerSeries, windowStart, type FxHistory } from '@/lib/series';
+import { isCurrencyKind } from '@/lib/types';
 import { useStore } from '@/state/store';
 
 export function usePortfolio() {
@@ -48,7 +49,7 @@ export function usePowerSeries() {
   const today = todayISO();
   const [fx, setFx] = useState<{ key: string; data: FxHistory }>({ key: '', data: {} });
 
-  const currencies = [...new Set(holdings.map((h) => h.kind))].filter((k) => k === 'usd' || k === 'eur');
+  const currencies = [...new Set(holdings.map((h) => (h.kind === 'deposit' ? h.depositCurrency : h.kind)))].filter(isCurrencyKind);
   const from = holdings.length ? `${windowStart(holdings, today)}-01` : today;
   const key = `${currencies.join(',')}:${from}:${today}`;
 

@@ -3,7 +3,7 @@
 
 const BASE = 'https://api.frankfurter.dev/v1';
 
-export type Currency = 'usd' | 'eur';
+export type Currency = 'usd' | 'eur' | 'gbp';
 
 const cache = new Map<string, number>();
 

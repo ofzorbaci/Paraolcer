@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Disclaimer, Field, IconButton, Pct, Row, Screen } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { isTlDeposit } from '@/lib/deposit';
 import { formatDate, formatLongDate, formatMonth, formatPct, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { priceLookup } from '@/lib/lookup';
 import { analyzeHolding, unitPrice } from '@/lib/returns';
@@ -101,7 +102,7 @@ export default function HoldingDetailScreen() {
         )}
       </Card>
 
-      {h.kind === 'deposit' && h.grossRate !== undefined && (
+      {isTlDeposit(h) && h.grossRate !== undefined && (
         <Button
           title="Yenilesem mi? Son dönemde dolar ve altınla kıyasla"
           kind="secondary"

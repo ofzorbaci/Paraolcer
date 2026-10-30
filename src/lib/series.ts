@@ -1,7 +1,7 @@
 import { daysBetween, monthOf, monthsBetween, type CpiIndex } from './cpi';
 import { depositValue } from './deposit';
 import { unitPrice } from './returns';
-import type { Holding, LivePrices, Settings } from './types';
+import { isCurrencyKind, type CurrencyKind, type Holding, type LivePrices, type Settings } from './types';
 
 export type PowerPoint = {
   /** 'YYYY-MM' */
@@ -20,7 +20,7 @@ export type PowerSeries = {
 };
 
 /** Daily FX rates per currency, keyed by 'YYYY-MM-DD' */
-export type FxHistory = Partial<Record<'usd' | 'eur', Map<string, number>>>;
+export type FxHistory = Partial<Record<CurrencyKind, Map<string, number>>>;
 
 export function addMonths(month: string, n: number): string {
   const [y, m] = month.split('-').map(Number);
@@ -48,9 +48,18 @@ export function windowStart(holdings: Holding[], today: string): string {
 }
 
 function valueOn(h: Holding, date: string, today: string, prices: LivePrices, fx: FxHistory): { v: number; est: boolean } {
-  if (h.kind === 'deposit') return { v: depositValue(h, date), est: false };
+  if (h.kind === 'deposit') {
+    const cur = h.depositCurrency;
+    if (!cur) return { v: depositValue(h, date), est: false };
+    // Foreign-currency deposit: that day's rate when known, else a line from the deposit-day rate to today's.
+    const past = fx[cur] && date < today ? rateOn(fx[cur]!, date) : undefined;
+    if (past !== undefined) return { v: depositValue(h, date, past), est: false };
+    const now = prices[cur] ?? h.unitCost;
+    const t = Math.min(1, Math.max(0, daysBetween(h.buyDate, date) / Math.max(1, daysBetween(h.buyDate, today))));
+    return { v: depositValue(h, date, h.unitCost + (now - h.unitCost) * t), est: date < today };
+  }
   const now = unitPrice(h, prices);
-  if (h.kind === 'usd' || h.kind === 'eur') {
+  if (isCurrencyKind(h.kind)) {
     const r = fx[h.kind] && date < today ? rateOn(fx[h.kind]!, date) : undefined;
     if (r !== undefined) return { v: h.quantity * r, est: false };
   }

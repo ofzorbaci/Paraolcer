@@ -3,7 +3,7 @@
 // measured against the same inflation. It describes the past; it never recommends.
 
 import { daysBetween, inflationFor, monthOf, type CpiIndex } from './cpi';
-import { defaultWithholding, netAnnualRate } from './deposit';
+import { defaultWithholding, isTlDeposit, netAnnualRate } from './deposit';
 import type { Feed } from './feed-types';
 import { GRAMS_PER_TROY_OUNCE } from './gold';
 import { addMonths } from './series';
@@ -52,7 +52,7 @@ export function renewComparison(
   settings: Settings,
   index: CpiIndex,
 ): RenewResult | undefined {
-  if (h.kind !== 'deposit' || h.grossRate === undefined) return undefined;
+  if (!isTlDeposit(h) || h.grossRate === undefined) return undefined;
   const startMonth = addMonths(monthOf(today), -months);
   const from = `${startMonth}-01`;
   const inflation = inflationFor(settings, index, from, today).factor;
