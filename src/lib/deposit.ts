@@ -44,3 +44,11 @@ export function depositValue(h: Holding, date: string): number {
   const net = netAnnualRate(h.grossRate, h.withholding ?? defaultWithholding(term));
   return h.unitCost * Math.pow(1 + (net / 100) * (term / 365), days / term);
 }
+
+/** One term's interest the way banks print it: gross interest, withholding and net, rounded to kuruş. */
+export function termInterest(principal: number, grossRate: number, termDays: number, withholding: number) {
+  const round = (x: number) => Math.round(x * 100) / 100;
+  const gross = round((principal * grossRate * termDays) / 36500);
+  const tax = round((gross * withholding) / 100);
+  return { gross, tax, net: round(gross - tax) };
+}

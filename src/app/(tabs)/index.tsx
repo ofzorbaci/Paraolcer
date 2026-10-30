@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { HeroCard } from '@/components/hero';
+import { staleHoldings } from '@/components/holding-card';
 import { MAIN_PORTFOLIO, NO_PORTFOLIOS } from '@/components/portfolios-card';
 import { QuickStart } from '@/components/quick-start';
 import { openPaywall, PremiumGate, usePremium } from '@/components/premium-gate';
@@ -17,7 +18,7 @@ import { nextCpiReleases, nextRateDecisions } from '@/lib/calendar';
 import { formatMonth, formatRate, formatTL, todayISO } from '@/lib/format';
 import { goalProgress, goalTarget } from '@/lib/alerts';
 import { currentPolicyRate } from '@/lib/feed';
-import { karneFresh } from '@/lib/karne';
+import { cpiPendingMonth, karneFresh, renewSavingsThisYear } from '@/lib/karne';
 import { nextMaturity } from '@/lib/renew';
 import type { CpiIndex } from '@/lib/cpi';
 import { analyzeHolding, analyzePortfolio } from '@/lib/returns';
@@ -41,6 +42,9 @@ export default function SummaryScreen() {
   const allHoldings = useStore((s) => s.allHoldings);
   const index = useStore((s) => s.cpi.index);
   const prices = useStore((s) => s.prices);
+  const renewLog = useStore((s) => s.settings.renewLog);
+  const pendingCpi = cpiPendingMonth(new Date(), lastCpi.month);
+  const savings = premium ? renewSavingsThisYear(renewLog, todayISO()) : 0;
   // A positive result on screen is the moment to ask for a review (rarely, after a few opens).
   const positive = !!total && total.real >= 0 && !items.some((i) => i.holding.sample);
   useEffect(() => {
@@ -132,10 +136,24 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
           own={ownTotal && ownRate ? { rate: ownRate, real: ownTotal.real } : undefined}
           // Free users see the total; the per-holding detail is Premium.
           onOwnPress={premium ? undefined : () => openPaywall('enagDetail')}
+          stale={staleHoldings(items.map((i) => i.holding), new Date()).length}
         />
       )}
 
-      {total && karneFresh(lastCpi.month, todayISO()) && (
+      {savings > 0 && (
+        <Card>
+          <ThemedText style={styles.cardTitle}>Vade günü sayacı</ThemedText>
+          <ThemedText>
+            Bu yıl vade günlerinde Paraölçer sana{' '}
+            <ThemedText style={[styles.bold, { color: theme.accent }]}>{formatTL(savings)}</ThemedText> fark gösterdi.
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Her vadede en iyi ve en kötü seçenek arasındaki fark, bugünün lirasıyla. Geçmişi gösterir, öneri değildir.
+          </ThemedText>
+        </Card>
+      )}
+
+      {total && !pendingCpi && karneFresh(lastCpi.month, todayISO()) && (
         <Pressable
           accessibilityRole="button"
           onPress={() => router.push('/karne')}
@@ -235,6 +253,13 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
             Yenilemeden önce son dönemde dolar ve altınla kıyasla ›
           </ThemedText>
         </Pressable>
+      )}
+
+      {pendingCpi && (
+        <InfoBanner
+          title={`${formatMonth(pendingCpi).split(' ')[0]} TÜFE’si güncelleniyor`}
+          body={`TÜİK veriyi açıkladı; birkaç dakika içinde hesaplarına yansıyacak. O zamana kadar sonuçlar ${formatMonth(lastCpi.month)} verisiyle.`}
+        />
       )}
 
       <InfoBanner

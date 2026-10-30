@@ -1,11 +1,16 @@
 // What Premium unlocks. The free tier answers the core question in full — every holding, the
-// real-return score, the ENAG/personal total in one line, one "Yenilesem mi?" a month — and
-// never locks the user's data. Premium sells depth: detail, history, scenarios and tools.
+// real-return score, the ENAG/personal total in one line, and at every maturity which of deposit,
+// dollar or gold protected best — and never locks the user's data. Premium sells the lira
+// amounts, the longer windows, the forward-looking estimate, history, scenarios and tools.
+
+import type { Holding } from './types';
 
 export type PremiumFeature =
   | 'enagDetail'
   | 'personalBasket'
   | 'renewUnlimited'
+  | 'renewForward'
+  | 'usdReal'
   | 'powerChart'
   | 'benchmarks'
   | 'scenario'
@@ -15,7 +20,9 @@ export type PremiumFeature =
   | 'portfolios';
 
 export const PREMIUM_FEATURES: { id: PremiumFeature; title: string; detail: string }[] = [
-  { id: 'renewUnlimited', title: 'Sınırsız “Yenilesem mi?”', detail: 'Ücretsiz sürümde ayda 1 kez' },
+  { id: 'renewUnlimited', title: 'Tam “Yenilesem mi?”', detail: 'Lira farkı, son 3 ve 12 ay; ücretsizde yalnızca sıralama' },
+  { id: 'renewForward', title: 'Vade günü ileriye dönük hesap', detail: 'Bu faizle yenilersen beklenen reel getiri' },
+  { id: 'usdReal', title: 'Dolar bazında reel getiri', detail: 'Varlıkların ABD enflasyonuna göre gerçek değeri' },
   { id: 'enagDetail', title: 'ENAG ve kendi enflasyonun', detail: 'Her varlık için ayrı ayrı' },
   { id: 'personalBasket', title: 'Kişisel enflasyon sepeti', detail: 'Kira, gıda, ulaşım… kendi ağırlıklarınla' },
   { id: 'powerChart', title: 'Alım gücü grafiği ve zaman makinesi', detail: 'Birikiminin ay ay gerçek değeri' },
@@ -27,9 +34,6 @@ export const PREMIUM_FEATURES: { id: PremiumFeature; title: string; detail: stri
   { id: 'portfolios', title: 'Çoklu portföy', detail: 'Senin, eşinin, çocuğunun birikimi ayrı' },
 ];
 
-/** "Yenilesem mi?" full results a free user gets per calendar month. */
-export const FREE_RENEW_CHECKS_PER_MONTH = 1;
-
 export function canUse(_feature: PremiumFeature, premium: boolean): boolean {
   return premium;
 }
@@ -39,11 +43,44 @@ export function canAddHolding(_currentCount: number, _premium: boolean): boolean
   return true;
 }
 
-/** Whether a free user still has a "Yenilesem mi?" result left this month. */
-export function renewCheckAllowed(premium: boolean, usedMonth: string | undefined, used: number, month: string): boolean {
-  if (premium) return true;
-  const count = usedMonth === month ? used : 0;
-  return count < FREE_RENEW_CHECKS_PER_MONTH;
+/** The one-time "Kurucu Üye" plan is sold only until this day (inclusive), to the first 500 buyers. */
+export const FOUNDER_UNTIL = '2027-01-31';
+export const FOUNDER_SEATS = 500;
+
+export function founderOfferOpen(today: string): boolean {
+  return today <= FOUNDER_UNTIL;
+}
+
+export type Showcase = { key: 'maturity' | 'wealth' | 'general'; title: string; subtitle: string; lead: PremiumFeature[] };
+
+/**
+ * The paywall leads with what fits the user's money: deposit holders get the maturity-day pack,
+ * people who only hold dollars or gold get the "real wealth" pack. Everything stays included.
+ */
+export function premiumShowcase(holdings: Holding[]): Showcase {
+  const own = holdings.filter((h) => !h.sample);
+  if (own.some((h) => h.kind === 'deposit')) {
+    return {
+      key: 'maturity',
+      title: 'Vade Günü Paketi',
+      subtitle: 'Her vadede paranın nerede daha iyi korunduğunu liralarla gör.',
+      lead: ['renewUnlimited', 'renewForward', 'goals'],
+    };
+  }
+  if (own.length > 0 && own.every((h) => h.kind === 'usd' || h.kind === 'eur' || h.kind === 'gold')) {
+    return {
+      key: 'wealth',
+      title: 'Gerçek Servet Paketi',
+      subtitle: 'Dövizin ve altının sadece TL’ye değil, kendi enflasyonuna karşı da ölçülsün.',
+      lead: ['usdReal', 'goals', 'personalBasket'],
+    };
+  }
+  return {
+    key: 'general',
+    title: 'Paraölçer Premium',
+    subtitle: 'Birikiminin gerçek değerini her açıdan gör.',
+    lead: ['renewUnlimited', 'benchmarks', 'enagDetail'],
+  };
 }
 
 export type PremiumStatus = {

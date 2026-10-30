@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { openPaywall, usePremium } from '@/components/premium-gate';
@@ -9,10 +9,10 @@ import { BrandFonts, Spacing } from '@/constants/theme';
 import { usePortfolio } from '@/hooks/use-portfolio';
 import { useTheme } from '@/hooks/use-theme';
 import { formatMonth, formatPct, formatRate } from '@/lib/format';
-import { gradeFor } from '@/lib/karne';
+import { cpiPendingMonth, gradeFor } from '@/lib/karne';
 import { shareViewImage } from '@/lib/share-image';
 import { KIND_LABELS } from '@/lib/types';
-import { useStore } from '@/state/store';
+import { maybeAskForReview, useStore } from '@/state/store';
 
 /** CPI-day report card. Ratios only, so the shareable image never shows amounts. */
 export default function KarneScreen() {
@@ -25,6 +25,12 @@ export default function KarneScreen() {
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const month = formatMonth(lastCpi.month).split(' ')[0];
   const grade = total ? gradeFor(total.real) : undefined;
+  const pending = cpiPendingMonth(new Date(), lastCpi.month);
+  // A good report card is the moment to ask for a store review (rarely; see review.ts).
+  const good = !!total && total.real >= 0;
+  useEffect(() => {
+    if (good) void maybeAskForReview(true);
+  }, [good]);
 
   const share = async () => {
     try {
@@ -40,6 +46,16 @@ export default function KarneScreen() {
         <IconButton name={{ ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' }} label="Geri" onPress={close} />
         <ThemedText style={styles.title}>{month} karnen</ThemedText>
       </View>
+
+      {pending && (
+        <Card>
+          <ThemedText type="smallBold">{formatMonth(pending)} TÜFE’si güncelleniyor</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Yeni veri birkaç dakika içinde gelecek. Aşağıdaki karne {formatMonth(lastCpi.month)} verisiyle; yeni karnen
+            hazır olunca burada görünecek.
+          </ThemedText>
+        </Card>
+      )}
 
       <View ref={card} collapsable={false} style={[styles.karne, { backgroundColor: theme.hero }]}>
         <ThemedText style={[styles.brand, { color: theme.heroText }]}>Paraölçer</ThemedText>

@@ -19,8 +19,15 @@ export type Basket = {
   rates: Record<BasketGroup, number>;
 };
 
-/** A starting point: a typical household split, every group at the official yearly CPI. */
-export function defaultBasket(officialYoy: number): Basket {
+/** Yearly change and TÜİK weight per group, from the data feed (Feed['cpiGroups']). */
+export type GroupData = { yoy: Record<BasketGroup, number>; weights: Record<BasketGroup, number> };
+
+/**
+ * A starting point: TÜİK's own weights and each group's official yearly change when the feed has
+ * them, otherwise a typical split with every group at the headline rate.
+ */
+export function defaultBasket(officialYoy: number, groups?: GroupData): Basket {
+  if (groups) return { weights: { ...groups.weights }, rates: { ...groups.yoy } };
   const weights = { housing: 20, food: 25, transport: 16, education: 3, health: 4, other: 32 };
   const rates = Object.fromEntries(BASKET_GROUPS.map((g) => [g.id, officialYoy])) as Basket['rates'];
   return { weights, rates };
@@ -36,4 +43,29 @@ export function basketRate(b: Basket): number | undefined {
     sum += w * (b.rates[id] ?? 0);
   }
   return total > 0 ? sum / total : undefined;
+}
+
+export type BasketAnswers = {
+  rents: boolean;
+  car: boolean;
+  schoolKids: boolean;
+  eatOut: 'rarely' | 'sometimes' | 'often';
+  healthHigh: boolean;
+};
+
+/**
+ * Five questions fill in the spending shares; the user can still adjust every number. Group
+ * price rises start at TÜİK's yearly change for that group (or the headline rate without data).
+ */
+export function basketFromAnswers(a: BasketAnswers, officialYoy: number, groups?: GroupData): Basket {
+  const weights: Basket['weights'] = {
+    housing: a.rents ? 32 : 15,
+    food: 25,
+    transport: a.car ? 18 : 9,
+    education: a.schoolKids ? 8 : 1,
+    health: a.healthHigh ? 7 : 3,
+    // restaurants and hotels sit under "other"
+    other: 22 + { rarely: 0, sometimes: 4, often: 9 }[a.eatOut],
+  };
+  return { weights, rates: defaultBasket(officialYoy, groups).rates };
 }

@@ -11,7 +11,19 @@ import * as XLSX from 'xlsx';
 
 import { parseTcmbCpiHtml, TCMB_CPI_URL } from '../src/lib/cpi-parse.ts';
 import { FEED_VERSION, type Feed } from '../src/lib/feed-types.ts';
-import { findPinkSheetUrl, findSebReportUrl, monthEnds, parsePinkSheetGold, parsePolicyRates, parsePpkYear, parseSebText } from './parse.ts';
+import {
+  findPinkSheetUrl,
+  findSebReportUrl,
+  monthEnds,
+  CPI_GROUP_CODES,
+  parseCpiGroups,
+  parseEvdsDepositRates,
+  parseFredMonthly,
+  parsePinkSheetGold,
+  parsePolicyRates,
+  parsePpkYear,
+  parseSebText,
+} from './parse.ts';
 import {
   checkCpi,
   checkDecisions,
@@ -126,6 +138,65 @@ const markets = await section(
   previous.markets,
 );
 
+const usCpi = await section(
+  'ABD TÜFE',
+  async () => {
+    // BLS CPI-U via FRED; public-domain data, cited in the app.
+    const rows = parseFredMonthly(await (await get('https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL')).text());
+    const from = `${Number(today.slice(0, 4)) - 6}-01`;
+    return { rows: rows.filter((r) => r.month >= from), source: 'ABD Çalışma İstatistikleri Bürosu (BLS) CPI-U, FRED üzerinden' };
+  },
+  previous.usCpi,
+);
+
+// TCMB EVDS needs a free API key (GitHub secret EVDS_API_KEY). Series: weighted average rates on
+// new TRY savings deposits (bie_mt100h, tasarruf mevduatı) by term: up to 1, 3, 6, 12 months, longer; override with EVDS_DEPOSIT_SERIES="CODE:maxDays,…" if TCMB renames them.
+const EVDS_KEY = process.env.EVDS_API_KEY;
+const DEPOSIT_SERIES: [string, number | null][] = (process.env.EVDS_DEPOSIT_SERIES ??
+  'TP.TRYTAS.MT01:31,TP.TRYTAS.MT02:92,TP.TRYTAS.MT03:183,TP.TRYTAS.MT04:365,TP.TRYTAS.MT05:')
+  .split(',')
+  .map((x) => {
+    const [code, days] = x.split(':');
+    return [code, days ? Number(days) : null];
+  });
+const depositRates = EVDS_KEY
+  ? await section(
+      'Mevduat faizi',
+      async () => {
+        const d = new Date(Date.now() - 60 * 86_400_000);
+        const fmt = (x: Date) => `${String(x.getUTCDate()).padStart(2, '0')}-${String(x.getUTCMonth() + 1).padStart(2, '0')}-${x.getUTCFullYear()}`;
+        const url = `https://evds3.tcmb.gov.tr/igmevdsms-dis/series=${DEPOSIT_SERIES.map(([c]) => c).join('-')}&startDate=${fmt(d)}&endDate=${fmt(new Date())}&type=json`;
+        const res = await fetch(url, { headers: { key: EVDS_KEY } });
+        if (!res.ok) throw new Error(`EVDS → HTTP ${res.status}`);
+        const { items } = (await res.json()) as { items: Record<string, unknown>[] };
+        return { ...parseEvdsDepositRates(items, DEPOSIT_SERIES), source: 'TCMB EVDS, yeni açılan TL tasarruf mevduatlarına uygulanan ağırlıklı ortalama faiz' };
+      },
+      previous.depositRates,
+    )
+  : previous.depositRates;
+
+const cpiGroups = EVDS_KEY
+  ? await section(
+      'TÜFE grupları',
+      async () => {
+        const evds = async (codes: string[], from: string) => {
+          const fmt = (x: Date) => `${String(x.getUTCDate()).padStart(2, '0')}-${String(x.getUTCMonth() + 1).padStart(2, '0')}-${x.getUTCFullYear()}`;
+          const url = `https://evds3.tcmb.gov.tr/igmevdsms-dis/series=${codes.join('-')}&startDate=${from}&endDate=${fmt(new Date())}&type=json`;
+          const res = await fetch(url, { headers: { key: EVDS_KEY } });
+          if (!res.ok) throw new Error(`EVDS → HTTP ${res.status}`);
+          return ((await res.json()) as { items: Record<string, unknown>[] }).items;
+        };
+        const groups = Object.values(CPI_GROUP_CODES);
+        const year = Number(today.slice(0, 4));
+        const indices = await evds(['GENEL', ...groups].map((c) => `TP.TUKFIY2025.${c}`), `01-01-${year - 2}`);
+        const weights = await evds(groups.map((c) => `TP.TUKFIYAGRLK.${c}`), `01-01-${year - 1}`);
+        const g = parseCpiGroups(indices, weights);
+        return { ...g, source: 'TÜİK TÜFE ana grupları ve ağırlıkları, TCMB EVDS üzerinden' } as Feed['cpiGroups'];
+      },
+      previous.cpiGroups,
+    )
+  : previous.cpiGroups;
+
 const withholding = JSON.parse(readFileSync(WITHHOLDING, 'utf8')) as Feed['withholding'];
 const warning = withholdingWarning(withholding.validUntil, today);
 if (warning) errors.push(`Stopaj: ${warning}`);
@@ -144,6 +215,9 @@ const feed: Feed = {
   expectations,
   withholding,
   ...(markets && { markets }),
+  ...(usCpi && { usCpi }),
+  ...(depositRates && { depositRates }),
+  ...(cpiGroups && { cpiGroups }),
   errors,
 };
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import feed from '../../data/feed-snapshot.json';
 import { checkAlerts, goalProgress, goalTarget } from '../alerts';
 import { buildCpiIndex } from '../cpi';
-import { gradeFor, karneFresh } from '../karne';
+import { cpiPendingMonth, gradeFor, karneFresh, renewSavingsThisYear } from '../karne';
 import type { Settings } from '../types';
 
 const index = buildCpiIndex(feed.cpi.rows);
@@ -55,5 +55,25 @@ describe('karne', () => {
     expect(karneFresh('2026-09', '2026-10-21')).toBe(false);
     expect(karneFresh('2026-12', '2027-01-05')).toBe(true);
     expect(karneFresh('2026-08', '2026-10-05')).toBe(false);
+  });
+});
+
+describe('CPI pending', () => {
+  it('flags the new month only after its release moment', () => {
+    // November 3, 2026 is a Tuesday: October CPI at 10:00.
+    expect(cpiPendingMonth(new Date(2026, 10, 3, 9, 0), '2026-09')).toBeUndefined();
+    expect(cpiPendingMonth(new Date(2026, 10, 3, 10, 30), '2026-09')).toBe('2026-10');
+    expect(cpiPendingMonth(new Date(2026, 10, 3, 10, 30), '2026-10')).toBeUndefined();
+    expect(cpiPendingMonth(new Date(2027, 0, 4, 11, 0), '2026-11')).toBe('2026-12');
+  });
+
+  it('adds up this year’s maturity gaps only', () => {
+    const log = [
+      { maturity: '2026-03-01', diff: 100 },
+      { maturity: '2026-11-01', diff: 50 },
+      { maturity: '2025-12-01', diff: 999 },
+    ];
+    expect(renewSavingsThisYear(log, '2026-11-15')).toBe(150);
+    expect(renewSavingsThisYear(undefined, '2026-11-15')).toBe(0);
   });
 });

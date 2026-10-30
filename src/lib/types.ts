@@ -60,8 +60,8 @@ export type Settings = {
   appLock?: boolean;
   /** print every TRY amount as dots */
   hideAmounts?: boolean;
-  /** free "Yenilesem mi?" results used this month: the month and the deposits already shown */
-  renewUsage?: { month: string; ids: string[] };
+  /** lira differences shown at maturities, for the "Paraölçer showed you ₺X" counter */
+  renewLog?: RenewLogEntry[];
   /** Premium: notify when the portfolio's real return turns negative */
   alertRealBelowZero?: boolean;
   /** Premium: a target in the purchasing power of the day it was set */
@@ -71,6 +71,9 @@ export type Settings = {
   /** extra portfolios besides the main one (Premium) */
   portfolios?: Portfolio[];
 };
+
+/** One maturity looked at in full: best option minus rolling over, in today's lira. */
+export type RenewLogEntry = { id: string; maturity: string; diff: number };
 
 export type Goal = { amount: number; /** 'YYYY-MM-DD' */ setAt: string };
 

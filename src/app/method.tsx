@@ -6,8 +6,10 @@ import { quoteLabel } from '@/components/source-line';
 import { ThemedText } from '@/components/themed-text';
 import { Card, Disclaimer, IconButton, Row, Screen } from '@/components/ui';
 import { Fonts, Spacing } from '@/constants/theme';
+import examples from '@/data/deposit-examples.json';
+import { termInterest } from '@/lib/deposit';
 import { currentPolicyRate } from '@/lib/feed';
-import { formatDate, formatMonth, formatRate, formatStamp } from '@/lib/format';
+import { formatDate, formatMonth, formatRate, formatStamp, formatTL } from '@/lib/format';
 import { useStore } from '@/state/store';
 
 function Formula({ children }: { children: ReactNode }) {
@@ -79,6 +81,57 @@ export default function MethodScreen() {
       </Card>
 
       <Card>
+        <ThemedText style={styles.h}>Örnek mevduat hesapları</ThemedText>
+        <Formula>brüt faiz = anapara × faiz × gün ÷ 36500 · net = brüt − stopaj</Formula>
+        <ThemedText type="small" themeColor="textSecondary">
+          Bankanın vade sonunda yazdığı tutarla karşılaştırabilmen için tek vade, kuruşa yuvarlanmış.
+        </ThemedText>
+        {examples.examples.map((e, i) => {
+          const r = termInterest(e.principal, e.grossRate, e.termDays, e.withholding);
+          return (
+            <View key={i} style={styles.example}>
+              <ThemedText type="smallBold">
+                {formatTL(e.principal)} · %{String(e.grossRate).replace('.', ',')} · {e.termDays} gün · %
+                {String(e.withholding).replace('.', ',')} stopaj
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Brüt {formatTL(r.gross, true)} − stopaj {formatTL(r.tax, true)} = net {formatTL(r.net, true)}
+                {e.statementNet !== null && e.statementNet === r.net ? ' · banka ekstresiyle aynı ✓' : ''}
+              </ThemedText>
+            </View>
+          );
+        })}
+      </Card>
+
+      <Card>
+        <ThemedText style={styles.h}>Vade günü: ileriye dönük hesap</ThemedText>
+        <Formula>yıllık getiri = (1 + net × vade ÷ 365) ^ (365 ÷ vade) − 1</Formula>
+        <Formula>beklenen reel = (1 + yıllık getiri) ÷ (1 + beklenen enflasyon) − 1</Formula>
+        <ThemedText type="small" themeColor="textSecondary">
+          Faiz, her vadede aynı oranla yenilenmiş sayılır; beklenen enflasyon TCMB Piyasa Katılımcıları Anketi’nin 12 ay
+          sonrası beklentisidir. Ortalama faiz, bankaların yeni açılan TL mevduatlara uyguladığı ağırlıklı ortalamadır
+          (TCMB EVDS). Bu bir beklenti hesabıdır, öneri değildir.
+        </ThemedText>
+        <Row label="Beklenen enflasyon" value={`${formatRate(feed.expectations.next12m.market)} · ${formatMonth(feed.expectations.month)}`} />
+        <Row
+          label="Ortalama mevduat faizi"
+          value={feed.depositRates ? `${formatDate(feed.depositRates.date)} haftası` : 'veri bekleniyor'}
+        />
+      </Card>
+
+      <Card>
+        <ThemedText style={styles.h}>Dolar bazında reel getiri</ThemedText>
+        <Formula>reel ($) = (bugünkü değer ÷ dolar kuru) ÷ (maliyet ÷ alış ayı kuru) ÷ (ABD TÜFE oranı) − 1</Formula>
+        <ThemedText type="small" themeColor="textSecondary">
+          Varlığın dolar olarak değişimi, ABD enflasyonuyla düzeltilir; yastık altındaki dolar da burada değer kaybeder.
+          Dolar varlıklarında maliyet, girdiğin dolar miktarıdır.
+        </ThemedText>
+        {feed.usCpi && (
+          <Row label="ABD TÜFE" value={`${formatMonth(feed.usCpi.rows[feed.usCpi.rows.length - 1].month)} · BLS (FRED)`} />
+        )}
+      </Card>
+
+      <Card>
         <ThemedText style={styles.h}>Döviz ve altın</ThemedText>
         <Formula>gram altın = ons fiyatı ÷ 31,1035 × USD/TRY</Formula>
         <ThemedText type="small" themeColor="textSecondary">
@@ -126,5 +179,6 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   title: { fontSize: 26, lineHeight: 32, fontWeight: 800, flex: 1 },
   h: { fontSize: 18, lineHeight: 24, fontWeight: 700 },
+  example: { gap: 2 },
   formula: { fontFamily: Fonts.mono, fontSize: 13, lineHeight: 19, opacity: 0.9 },
 });

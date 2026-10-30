@@ -125,3 +125,82 @@ export function parseSebText(text: string): { month: string; market: number; rea
     household: num(m[5]),
   };
 }
+
+/** FRED CSV ("observation_date,CPIAUCSL") → monthly index, keyed 'YYYY-MM'. */
+export function parseFredMonthly(csv: string): { month: string; value: number }[] {
+  const out: { month: string; value: number }[] = [];
+  for (const line of csv.trim().split(/\r?\n/).slice(1)) {
+    const [date, raw] = line.split(',');
+    const v = Number(raw);
+    if (/^\d{4}-\d{2}-01$/.test(date) && Number.isFinite(v) && v > 0) out.push({ month: date.slice(0, 7), value: v });
+  }
+  if (out.length < 24) throw new Error(`ABD TÜFE serisi kısa (${out.length})`);
+  for (let i = 1; i < out.length; i++) {
+    const change = out[i].value / out[i - 1].value - 1;
+    if (Math.abs(change) > 0.03) throw new Error(`ABD TÜFE ${out[i].month}: aylık %${(change * 100).toFixed(1)} olağan dışı`);
+  }
+  return out;
+}
+
+/**
+ * EVDS weekly items → the latest week with every series filled. `codes` pairs a series code
+ * with the longest term (days) it covers, e.g. ['TP.TRY.MT03', 92].
+ */
+export function parseEvdsDepositRates(
+  items: Record<string, unknown>[],
+  codes: [string, number | null][],
+): { date: string; byTerm: { maxDays: number | null; rate: number }[] } {
+  for (const item of [...items].reverse()) {
+    const rates = codes.map(([code]) => Number(item[code.replace(/\./g, '_')]));
+    if (rates.every((r) => Number.isFinite(r) && r > 0)) {
+      if (rates.some((r) => r < 1 || r > 150)) throw new Error(`Mevduat faizi olağan dışı: ${rates.join(', ')}`);
+      const [d, m, y] = String(item.Tarih).split('-');
+      return { date: `${y}-${m}-${d}`, byTerm: codes.map(([, maxDays], i) => ({ maxDays, rate: rates[i] })) };
+    }
+  }
+  throw new Error('EVDS: dolu mevduat faizi haftası yok');
+}
+
+/** TÜİK main-group codes behind the basket groups; everything else is "other". */
+export const CPI_GROUP_CODES = { food: '01', housing: '04', health: '06', transport: '07', education: '10' } as const;
+
+/**
+ * EVDS monthly CPI indices (GENEL and main groups) and the yearly main-group weights → each basket
+ * group's yearly change. "other" is the remainder, so the groups at TÜİK weights add up to the
+ * headline rate exactly.
+ */
+export function parseCpiGroups(
+  indexItems: Record<string, unknown>[],
+  weightItems: Record<string, unknown>[],
+): { month: string; yoy: Record<string, number>; weights: Record<string, number>; general: number } {
+  const rows = indexItems.filter((r) => Number(r.TP_TUKFIY2025_GENEL) > 0);
+  if (rows.length < 13) throw new Error(`TÜFE grupları: ${rows.length} ay`);
+  const last = rows[rows.length - 1];
+  const yearAgo = rows[rows.length - 13];
+  const [y, m] = String(last.Tarih).split('-');
+  const month = `${y}-${m.padStart(2, '0')}`;
+  const change = (code: string) => {
+    const now = Number(last[`TP_TUKFIY2025_${code}`]);
+    const then = Number(yearAgo[`TP_TUKFIY2025_${code}`]);
+    if (!(now > 0 && then > 0)) throw new Error(`TÜFE grubu ${code} eksik`);
+    return (now / then - 1) * 100;
+  };
+  const w = weightItems[weightItems.length - 1];
+  const weight = (code: string) => {
+    const v = Number(w[`TP_TUKFIYAGRLK_${code}`]);
+    if (!(v > 0 && v < 100)) throw new Error(`TÜFE ağırlığı ${code} eksik`);
+    return v;
+  };
+  const general = change('GENEL');
+  const yoy: Record<string, number> = {};
+  const weights: Record<string, number> = {};
+  for (const [key, code] of Object.entries(CPI_GROUP_CODES)) {
+    yoy[key] = change(code);
+    weights[key] = weight(code);
+  }
+  const named = Object.values(weights).reduce((a, b) => a + b, 0);
+  weights.other = 100 - named;
+  yoy.other = (general * 100 - Object.keys(CPI_GROUP_CODES).reduce((a, k) => a + weights[k] * yoy[k], 0)) / weights.other;
+  if (Math.abs(yoy.other) > 500) throw new Error(`TÜFE "diğer" grubu olağan dışı: ${yoy.other.toFixed(1)}`);
+  return { month, yoy, weights, general };
+}

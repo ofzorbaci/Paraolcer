@@ -43,6 +43,8 @@ jobs:
       - name: Feed derle
         id: build
         continue-on-error: true
+        env:
+          EVDS_API_KEY: ${{ secrets.EVDS_API_KEY }}
         run: node feed/build.mts
 
       - name: Değişen veriyi kaydet

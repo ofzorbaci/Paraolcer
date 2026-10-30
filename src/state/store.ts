@@ -356,12 +356,15 @@ export async function setMaturityReminders(on: boolean): Promise<boolean> {
   return ok;
 }
 
-/** Records that a free user saw the full "Yenilesem mi?" result for a deposit this month. */
-export function recordRenewCheck(id: string) {
-  if (state.premium.active) return;
-  const month = new Date().toISOString().slice(0, 7);
-  const usage = state.settings.renewUsage?.month === month ? state.settings.renewUsage : { month, ids: [] };
-  if (!usage.ids.includes(id)) updateSettings({ renewUsage: { month, ids: [...usage.ids, id] } });
+/**
+ * Remembers the lira gap a Premium user saw at a deposit's maturity, once per maturity, for the
+ * "Paraölçer showed you ₺X this year" counter.
+ */
+export function recordRenewView(id: string, maturity: string, diff: number) {
+  if (!state.premium.active || !(diff > 0) || state.allHoldings.find((h) => h.id === id)?.sample) return;
+  const log = state.settings.renewLog ?? [];
+  if (log.some((e) => e.id === id && e.maturity === maturity)) return;
+  updateSettings({ renewLog: [...log, { id, maturity, diff }].slice(-60) });
 }
 
 const SETTING: Record<ReminderKind, 'notifyCpi' | 'notifyRate'> = { cpi: 'notifyCpi', rate: 'notifyRate' };

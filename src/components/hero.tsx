@@ -21,12 +21,15 @@ export function HeroCard({
   inflationLabel,
   own,
   onOwnPress,
+  stale = 0,
 }: {
   total: PortfolioAnalysis;
   inflationLabel: string;
   /** the same portfolio against the user's ENAG/personal rate */
   own?: { rate: number; real: number };
   onOwnPress?: () => void;
+  /** hand-entered prices a week old or more */
+  stale?: number;
 }) {
   const theme = useTheme();
   const gain = total.realGain;
@@ -52,6 +55,13 @@ export function HeroCard({
               {formatPct(own.real)}
             </ThemedText>
             {onOwnPress ? '  ›' : ''}
+          </ThemedText>
+        </Pressable>
+      )}
+      {stale > 0 && (
+        <Pressable accessibilityRole="button" onPress={() => router.push('/holdings')} hitSlop={6}>
+          <ThemedText type="small" style={{ color: '#FDBA74' }}>
+            ⚠ {stale} varlığın fiyatı 7 günden eski; skor eksik olabilir · Fiyatları güncelle ›
           </ThemedText>
         </Pressable>
       )}

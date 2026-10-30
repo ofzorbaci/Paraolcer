@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { findSebReportUrl, parsePolicyRates, parsePpkYear, parseSebText } from '../parse';
+import { findSebReportUrl, parseCpiGroups, parsePolicyRates, parsePpkYear, parseSebText } from '../parse';
 import { checkCpi, checkDecisions, checkExpectations, checkPolicyRates, withholdingWarning } from '../validate';
 
 const ppkHtml = `
@@ -103,5 +103,19 @@ describe('build checks', () => {
     expect(withholdingWarning('2026-12-31', '2026-10-28')).toBeUndefined();
     expect(withholdingWarning('2026-12-31', '2026-12-10')).toMatch(/21 gün/);
     expect(withholdingWarning('2026-12-31', '2027-01-02')).toMatch(/doldu/);
+  });
+});
+
+describe('CPI groups from EVDS', () => {
+  it('derives "other" so the groups add up to the headline rate', () => {
+    const codes = ['GENEL', '01', '04', '06', '07', '10'];
+    const item = (t: string, lvl: number) => Object.fromEntries([['Tarih', t], ...codes.map((c) => [`TP_TUKFIY2025_${c}`, String(lvl)])]);
+    const items = Array.from({ length: 13 }, (_, i) => item(`2026-${i}`, 100 + i * 2.5));
+    const weights = [{ Tarih: 2026, TP_TUKFIYAGRLK_01: '25', TP_TUKFIYAGRLK_04: '15', TP_TUKFIYAGRLK_06: '3', TP_TUKFIYAGRLK_07: '17', TP_TUKFIYAGRLK_10: '2' }];
+    const g = parseCpiGroups(items, weights);
+    expect(g.general).toBeCloseTo(30, 6);
+    expect(g.weights.other).toBeCloseTo(38, 6);
+    const sum = Object.keys(g.yoy).reduce((a, k) => a + g.yoy[k] * g.weights[k], 0) / 100;
+    expect(sum).toBeCloseTo(g.general, 6);
   });
 });

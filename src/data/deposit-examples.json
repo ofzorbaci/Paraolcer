@@ -1,0 +1,10 @@
+{
+  "_comment": "Worked deposit examples shown on the method screen. Fill statementNet from a real bank statement (net interest credited, TL) to mark an example as verified; the test then requires the app's result to match to the kuruş.",
+  "examples": [
+    { "principal": 100000, "grossRate": 40, "termDays": 32, "withholding": 17.5, "statementNet": null },
+    { "principal": 250000, "grossRate": 42.5, "termDays": 35, "withholding": 17.5, "statementNet": null },
+    { "principal": 50000, "grossRate": 38, "termDays": 92, "withholding": 15, "statementNet": null },
+    { "principal": 500000, "grossRate": 36, "termDays": 181, "withholding": 12.5, "statementNet": null },
+    { "principal": 1000000, "grossRate": 33, "termDays": 365, "withholding": 10, "statementNet": null }
+  ]
+}

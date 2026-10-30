@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { basketRate, defaultBasket } from '../basket';
-import { canAddHolding, NO_PREMIUM, renewCheckAllowed, yearlySavings } from '../entitlements';
+import { canAddHolding, NO_PREMIUM, premiumShowcase, yearlySavings } from '../entitlements';
 import { shouldAskForReview } from '../review';
 import { freeTrialDays, statusFromCustomerInfo } from '../subscription-map';
 
@@ -11,12 +11,16 @@ describe('free tier', () => {
     expect(canAddHolding(250, false)).toBe(true);
   });
 
-  it('gives free users one "Yenilesem mi?" result a month', () => {
-    expect(renewCheckAllowed(false, undefined, 0, '2026-11')).toBe(true);
-    expect(renewCheckAllowed(false, '2026-11', 1, '2026-11')).toBe(false);
-    // A new month resets the counter.
-    expect(renewCheckAllowed(false, '2026-10', 1, '2026-11')).toBe(true);
-    expect(renewCheckAllowed(true, '2026-11', 9, '2026-11')).toBe(true);
+  it('leads the paywall with what fits the user’s money', () => {
+    const h = (kind: 'deposit' | 'usd' | 'gold' | 'stock', sample = false) =>
+      ({ id: kind, kind, name: kind, buyDate: '2026-01-01', quantity: 1, unitCost: 1, sample }) as const;
+    expect(premiumShowcase([h('deposit'), h('usd')]).key).toBe('maturity');
+    expect(premiumShowcase([h('usd'), h('gold')]).key).toBe('wealth');
+    expect(premiumShowcase([h('stock')]).key).toBe('general');
+    expect(premiumShowcase([]).key).toBe('general');
+    // Example holdings do not decide the pitch.
+    expect(premiumShowcase([h('deposit', true), h('gold')]).key).toBe('wealth');
+    expect(premiumShowcase([h('usd')]).title).not.toMatch(/Vade/);
   });
 
   it('expresses the yearly plan per month and as a saving', () => {
@@ -110,5 +114,25 @@ describe('review prompt', () => {
   it('asks at most once every four months', () => {
     expect(shouldAskForReview(9, '2026-09-01T00:00:00Z', now, true)).toBe(false);
     expect(shouldAskForReview(9, '2026-06-01T00:00:00Z', now, true)).toBe(true);
+  });
+});
+
+describe('basket questions', () => {
+  it('turns answers into spending shares at the official rate', async () => {
+    const { basketFromAnswers, basketRate } = await import('../basket');
+    const renter = basketFromAnswers({ rents: true, car: false, schoolKids: false, eatOut: 'rarely', healthHigh: false }, 30);
+    const owner = basketFromAnswers({ rents: false, car: true, schoolKids: true, eatOut: 'often', healthHigh: true }, 30);
+    expect(renter.weights.housing).toBeGreaterThan(owner.weights.housing);
+    expect(owner.weights.transport).toBeGreaterThan(renter.weights.transport);
+    // Until group rates are set, every group runs at the official rate.
+    expect(basketRate(renter)).toBeCloseTo(30, 8);
+  });
+});
+
+describe('basket from TÜİK groups', () => {
+  it('reproduces headline CPI at TÜİK weights', async () => {
+    const { basketRate, defaultBasket } = await import('../basket');
+    const groups = (await import('../../data/feed-snapshot.json')).default.cpiGroups;
+    expect(Math.abs(basketRate(defaultBasket(0, groups))! - groups.general)).toBeLessThan(0.1);
   });
 });

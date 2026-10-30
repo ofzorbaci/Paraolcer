@@ -9,8 +9,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Button, Icon, IconButton, Radius, Screen } from '@/components/ui';
 import { BrandFonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { PREMIUM_FEATURES, yearlySavings, type PremiumFeature } from '@/lib/entitlements';
-import { formatLongDate } from '@/lib/format';
+import { FOUNDER_SEATS, FOUNDER_UNTIL, founderOfferOpen, PREMIUM_FEATURES, premiumShowcase, yearlySavings, type PremiumFeature } from '@/lib/entitlements';
+import { formatLongDate, todayISO } from '@/lib/format';
 import { loadPlans, manageSubscriptionsUrl, purchasesAvailable, type Plan } from '@/lib/purchases';
 import { purchasePlan, restorePurchases, setDevPremium, useStore } from '@/state/store';
 
@@ -31,22 +31,28 @@ export default function PaywallScreen() {
   const theme = useTheme();
   const { feature } = useLocalSearchParams<{ feature?: PremiumFeature }>();
   const premium = useStore((s) => s.premium);
+  const holdings = useStore((s) => s.allHoldings);
+  const showcase = premiumShowcase(holdings);
   const [plans, setPlans] = useState<Plan[]>();
   const [selected, setSelected] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
+  const [allFeatures, setAllFeatures] = useState(false);
 
   useEffect(() => {
     loadPlans()
-      .then((p) => {
+      .then((all) => {
+        // The lifetime plan is a launch offer; after the founder period it is not shown.
+        const p = all.filter((x) => x.period !== 'lifetime' || founderOfferOpen(todayISO()));
         setPlans(p);
         setSelected(p[0]?.id);
       })
       .catch(() => setPlans([]));
   }, []);
 
-  // The feature that brought the user here is listed first.
-  const features = [...PREMIUM_FEATURES].sort((a, b) => Number(b.id === feature) - Number(a.id === feature));
+  // The feature that brought the user here comes first, then what fits their money.
+  const rank = (id: PremiumFeature) => (id === feature ? -1 : showcase.lead.includes(id) ? showcase.lead.indexOf(id) : 10);
+  const features = [...PREMIUM_FEATURES].sort((a, b) => rank(a.id) - rank(b.id));
   const plan = plans?.find((p) => p.id === selected);
   const monthly = plans?.find((p) => p.period === 'monthly');
 
@@ -74,14 +80,14 @@ export default function PaywallScreen() {
 
       <View style={styles.hero}>
         <Image source={require('@/assets/images/icon.png')} style={styles.logo} />
-        <ThemedText style={styles.brand}>Paraölçer Premium</ThemedText>
+        <ThemedText style={[styles.brand, styles.center]}>{showcase.title}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
-          Alım gücünü tam ölç: geçmişini, senaryolarını ve alternatiflerini gör.
+          {showcase.subtitle}
         </ThemedText>
       </View>
 
       <View style={[styles.features, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-        {features.map((f) => (
+        {features.slice(0, allFeatures ? undefined : 3).map((f) => (
           <View key={f.id} style={styles.feature}>
             <Icon name={{ ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' }} color={theme.accent} />
             <View style={styles.flex}>
@@ -92,6 +98,13 @@ export default function PaywallScreen() {
             </View>
           </View>
         ))}
+        {!allFeatures && (
+          <Pressable accessibilityRole="button" onPress={() => setAllFeatures(true)} hitSlop={6}>
+            <ThemedText type="small" style={{ color: theme.accent }}>
+              Ve {features.length - 3} özellik daha · tümünü gör ›
+            </ThemedText>
+          </Pressable>
+        )}
       </View>
 
       {premium.active ? (
@@ -148,7 +161,7 @@ export default function PaywallScreen() {
                     )}
                     {p.period === 'lifetime' && (
                       <ThemedText type="small" themeColor="textSecondary">
-                        Tek seferlik ödeme, yenileme yok
+                        Tek seferlik ödeme, abonelik yok · ilk {FOUNDER_SEATS} kişi, {formatLongDate(FOUNDER_UNTIL)} tarihine kadar
                       </ThemedText>
                     )}
                     {p.trialDays ? (
