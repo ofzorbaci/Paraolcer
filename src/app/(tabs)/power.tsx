@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { CompareCard } from '@/components/compare-card';
 import { DateField } from '@/components/date-field';
 import { PowerChart } from '@/components/power-chart';
 import { ThemedText } from '@/components/themed-text';
@@ -8,6 +9,7 @@ import { PremiumGate } from '@/components/premium-gate';
 import { Card, Disclaimer, Field, Pct, Radius, Row, Screen, ScreenHeader } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { usePowerSeries } from '@/hooks/use-portfolio';
+import { useMasked } from '@/hooks/use-masked';
 import { useTheme } from '@/hooks/use-theme';
 import { formatMonth, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { salaryErosion } from '@/lib/salary';
@@ -28,6 +30,9 @@ export default function PowerScreen() {
       ) : (
         <EmptyPower />
       )}
+      <PremiumGate feature="benchmarks" pitch="Birikimini dolar, gram altın, mevduat ve nakit TL ile bugünün lirasıyla aynı grafikte kıyasla; zaman makinesiyle geçmişteki birikimini bugünün fiyatlarıyla gör.">
+        <CompareCard />
+      </PremiumGate>
       <PremiumGate feature="scenario" pitch="Enflasyon piyasa beklentisi, bugünkü oran ya da hanehalkı beklentisi gibi gelirse mevduatının reel getirisini hesapla.">
         <ScenarioCard />
       </PremiumGate>
@@ -49,6 +54,7 @@ function EmptyPower() {
 
 function PowerCard({ series }: { series: NonNullable<ReturnType<typeof usePowerSeries>> }) {
   const theme = useTheme();
+  useMasked();
   const last = series.points[series.points.length - 1];
   return (
     <Card>
@@ -137,6 +143,7 @@ function ScenarioCard() {
 }
 
 function SalaryCard() {
+  useMasked();
   const settings = useStore((s) => s.calcSettings);
   const index = useStore((s) => s.cpi.index);
   const [salary, setSalary] = useState('');

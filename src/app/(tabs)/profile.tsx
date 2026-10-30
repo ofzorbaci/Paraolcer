@@ -6,19 +6,23 @@ import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { BackupCard } from '@/components/backup-card';
+import { InflationCard } from '@/components/inflation-card';
 import { PremiumCard } from '@/components/premium-card';
-import { openPaywall, usePremium } from '@/components/premium-gate';
 import { RemindersCard } from '@/components/reminders-card';
+import { DataCard } from '@/components/data-card';
+import { GoalsCard } from '@/components/goals-card';
+import { PortfoliosCard } from '@/components/portfolios-card';
+import { PremiumGate } from '@/components/premium-gate';
+import { SecurityCard } from '@/components/security-card';
 import { quoteLabel } from '@/components/source-line';
 
 import { ThemedText } from '@/components/themed-text';
-import { Button, Card, Choice, Disclaimer, Field, Row, Screen, ScreenHeader } from '@/components/ui';
+import { Button, Card, Disclaimer, Row, Screen, ScreenHeader } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { currentPolicyRate } from '@/lib/feed';
-import { formatDate, formatMonth, formatRate, formatStamp, formatTL, parseAmount } from '@/lib/format';
+import { formatDate, formatMonth, formatRate, formatStamp, formatTL } from '@/lib/format';
 import { bugReportUrl, SUPPORT_EMAIL } from '@/lib/support';
-import type { InflationSource } from '@/lib/types';
-import { refreshCpi, refreshFeed, refreshPrices, rescheduleReminders, updateSettings, useStore } from '@/state/store';
+import { refreshCpi, refreshFeed, refreshPrices, rescheduleReminders, useStore } from '@/state/store';
 
 const legal = (Constants.expoConfig?.extra?.legal ?? {}) as { privacyUrl?: string };
 
@@ -26,13 +30,11 @@ export default function ProfileScreen() {
   const settings = useStore((s) => s.settings);
   const cpi = useStore((s) => s.cpi);
   const priceBook = useStore((s) => s.priceBook);
-  const holdings = useStore((s) => s.holdings);
-  const premium = usePremium();
+  const holdings = useStore((s) => s.allHoldings);
   const feed = useStore((s) => s.feed);
   const feedOrigin = useStore((s) => s.feedOrigin);
   const policy = currentPolicyRate(feed);
   const priceError = useStore((s) => s.priceError);
-  const [rate, setRate] = useState(settings.customAnnualRate ? String(settings.customAnnualRate) : '');
   const [status, setStatus] = useState<string>();
   const last = cpi.rows[cpi.rows.length - 1];
 
@@ -50,41 +52,25 @@ export default function ProfileScreen() {
 
       <PremiumCard />
 
-      <Card>
-        <ThemedText style={styles.cardTitle}>Enflasyon kaynağı</ThemedText>
-        <Choice<InflationSource>
-          options={[
-            { value: 'tuik', label: 'TÜİK (resmi)' },
-            { value: 'custom', label: premium ? 'ENAG / kendi oranım' : 'ENAG / kendi oranım · Premium' },
-          ]}
-          value={premium ? settings.inflationSource : 'tuik'}
-          onChange={(inflationSource) =>
-            inflationSource === 'custom' && !premium ? openPaywall('customInflation') : updateSettings({ inflationSource })
-          }
-        />
-        {premium && settings.inflationSource === 'custom' && (
-          <Field
-            label="Yıllık enflasyon"
-            suffix="%"
-            keyboardType="decimal-pad"
-            placeholder="ör. 60"
-            value={rate}
-            onChangeText={(t) => {
-              setRate(t);
-              const n = parseAmount(t);
-              if (n !== undefined && n < 1000) updateSettings({ customAnnualRate: n });
-            }}
-            hint="ENAG’ın açıkladığı ya da kendi hissettiğin yıllık oranı gir. Her varlığın süresine göre bileşik uygulanır."
-          />
-        )}
-      </Card>
+      <InflationCard />
 
       <RemindersCard />
+
+      <PremiumGate feature="goals" pitch="“Reel getirim eksiye düşerse haber ver” alarmı ve bugünün lirasıyla bir hedef koy; ulaşınca bildirim gelsin.">
+        <GoalsCard />
+      </PremiumGate>
+
+      <PremiumGate feature="portfolios" pitch="Senin, eşinin, çocuğunun birikimini ayrı portföylerde izle.">
+        <PortfoliosCard />
+      </PremiumGate>
 
       <Card>
         <ThemedText style={styles.cardTitle}>Araçlar</ThemedText>
         <Button title="Hızlı reel getiri hesabı" kind="secondary" onPress={() => router.push('/tools/calculator')} />
+        <Button title="TÜFE karnem" kind="secondary" onPress={() => router.push('/karne')} />
       </Card>
+
+      <SecurityCard />
 
       <BackupCard />
 
@@ -181,11 +167,23 @@ export default function ProfileScreen() {
       <Card>
         <ThemedText style={styles.cardTitle}>Nasıl hesaplıyoruz?</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Reel getiri = (1 + nominal getiri) ÷ (1 + enflasyon) − 1. Enflasyon, alış ayının TÜFE endeksinden son açıklanan aya
-          kadar ölçülür (TÜİK hesaplayıcısıyla aynı yöntem). Mevduat her vade sonunda stopaj düşülerek bileşiklenir. Gram
-          altın, uluslararası ons fiyatı ve Avrupa Merkez Bankası dolar kurundan hesaplanır; Kapalıçarşı fiyatından biraz
-          farklı olabilir.
+          Her rakamın formülü, kaynağı ve veri tarihi tek ekranda.
         </ThemedText>
+        <Button title="Hesap yöntemini gör" kind="secondary" onPress={() => router.push('/method')} />
+      </Card>
+
+      <Card>
+        <ThemedText style={styles.cardTitle}>Paraölçer’i kim yaptı?</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Paraölçer’i, Serbest Piyasa Analiz YouTube kanalının sahibi Ömer Faruk Zorbacı yaptı. Amaç basit: birikimin
+          enflasyonun önünde mi, dürüstçe ölçmek. Soru ve önerilerini “Hata bildir” ile doğrudan bana yazabilirsin.
+        </ThemedText>
+        <Button
+          title="Kanalı aç"
+          kind="secondary"
+          icon={{ ios: 'play.rectangle', android: 'smart_display', web: 'smart_display' }}
+          onPress={() => WebBrowser.openBrowserAsync('https://www.youtube.com/@SerbestPiyasaAnaliz')}
+        />
       </Card>
 
       <Card>
@@ -197,6 +195,8 @@ export default function ProfileScreen() {
           <Button title="Gizlilik politikası" kind="secondary" onPress={() => WebBrowser.openBrowserAsync(legal.privacyUrl!)} />
         )}
       </Card>
+
+      <DataCard />
 
       <Disclaimer text="Kaynaklar: TÜİK ve TCMB, Avrupa Merkez Bankası, gold-api.com" />
       <Disclaimer

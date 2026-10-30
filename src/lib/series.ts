@@ -28,7 +28,7 @@ export function addMonths(month: string, n: number): string {
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, '0')}`;
 }
 
-function monthEnd(month: string): string {
+export function monthEnd(month: string): string {
   const [y, m] = month.split('-').map(Number);
   return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
 }
@@ -68,9 +68,10 @@ export function purchasingPowerSeries(
   fx: FxHistory,
   settings: Settings,
   index: CpiIndex,
+  from?: string,
 ): PowerSeries | undefined {
   if (holdings.length === 0) return undefined;
-  const start = windowStart(holdings, today);
+  const start = from ?? windowStart(holdings, today);
   const last = monthOf(today);
   const level = (month: string, date: string) => {
     if (settings.inflationSource === 'custom') {

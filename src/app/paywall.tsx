@@ -16,6 +16,8 @@ import { purchasePlan, restorePurchases, setDevPremium, useStore } from '@/state
 
 const legal = (Constants.expoConfig?.extra?.legal ?? {}) as { termsUrl?: string; privacyUrl?: string };
 const STORE = Platform.OS === 'android' ? 'Google Play' : 'App Store';
+const PLAN_LABEL: Record<Plan['period'], string> = { yearly: 'Yıllık', monthly: 'Aylık', lifetime: 'Kurucu Üye · ömür boyu' };
+const PER: Record<Plan['period'], string> = { yearly: ' / yıl', monthly: ' / ay', lifetime: '' };
 const money = (n: number, currency: string) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n);
 
@@ -135,10 +137,18 @@ export default function PaywallScreen() {
                     { borderColor: on ? theme.accent : theme.border, borderWidth: on ? 2 : 1, backgroundColor: on ? theme.info : theme.backgroundElement },
                   ]}>
                   <View style={styles.flex}>
-                    <ThemedText type="smallBold">{p.period === 'yearly' ? 'Yıllık' : 'Aylık'}</ThemedText>
+                    <ThemedText type="smallBold">{PLAN_LABEL[p.period]}</ThemedText>
                     {saving && (
+                      // The billed total stays the most prominent number (App Store rule 3.1.2);
+                      // the monthly equivalent is the strongest of the supporting lines.
+                      <ThemedText type="smallBold" style={{ color: theme.accent }}>
+                        Ayda {money(saving.perMonth, p.currencyCode)}
+                        {saving.savingPct > 0 ? ` · %${saving.savingPct} tasarruf` : ''}
+                      </ThemedText>
+                    )}
+                    {p.period === 'lifetime' && (
                       <ThemedText type="small" themeColor="textSecondary">
-                        Aylık {money(saving.perMonth, p.currencyCode)}’ye denk{saving.savingPct > 0 ? ` · %${saving.savingPct} tasarruf` : ''}
+                        Tek seferlik ödeme, yenileme yok
                       </ThemedText>
                     )}
                     {p.trialDays ? (
@@ -150,7 +160,7 @@ export default function PaywallScreen() {
                   <ThemedText style={styles.price}>
                     {p.priceString}
                     <ThemedText type="small" themeColor="textSecondary">
-                      {p.period === 'yearly' ? ' / yıl' : ' / ay'}
+                      {PER[p.period]}
                     </ThemedText>
                   </ThemedText>
                 </Pressable>
@@ -159,20 +169,22 @@ export default function PaywallScreen() {
           </View>
 
           <Button
-            title={plan?.trialDays ? `${plan.trialDays} gün ücretsiz başla` : 'Abone ol'}
+            title={plan?.period === 'lifetime' ? 'Kurucu Üye ol' : plan?.trialDays ? `${plan.trialDays} gün ücretsiz başla` : 'Abone ol'}
             disabled={!plan || busy}
             onPress={() => plan && run(() => purchasePlan(plan), 'Premium açıldı. Hoş geldin!')}
           />
           {plan && (
             <ThemedText type="small" themeColor="textSecondary" style={styles.fine}>
-              {plan.trialDays
-                ? `${plan.trialDays} gün ücretsiz, ardından ${plan.priceString} / ${plan.period === 'yearly' ? 'yıl' : 'ay'}. `
-                : `${plan.priceString} / ${plan.period === 'yearly' ? 'yıl' : 'ay'}. `}
-              Ödeme {STORE} hesabından alınır. Abonelik, dönem bitmeden en az 24 saat önce iptal edilmezse aynı fiyatla
-              otomatik yenilenir. {STORE} hesap ayarlarından istediğin zaman iptal edebilirsin
-              {plan.trialDays ? '; deneme süresinde iptal edersen ücret alınmaz' : ''}.
+              {plan.period === 'lifetime'
+                ? `${plan.priceString}, tek seferlik. Ödeme ${STORE} hesabından alınır; otomatik yenileme yoktur.`
+                : `${plan.trialDays ? `${plan.trialDays} gün ücretsiz, ardından ` : ''}${plan.priceString}${PER[plan.period]}. Ödeme ${STORE} hesabından alınır. Abonelik, dönem bitmeden en az 24 saat önce iptal edilmezse aynı fiyatla otomatik yenilenir. ${STORE} hesap ayarlarından istediğin zaman iptal edebilirsin${plan.trialDays ? '; deneme süresinde iptal edersen ücret alınmaz' : ''}.`}
             </ThemedText>
           )}
+          {plan?.trialDays && plan.period !== 'lifetime' ? (
+            <ThemedText type="small" style={[styles.center, { color: theme.accent }]}>
+              Sürpriz ücret yok: deneme bitmeden 2 gün önce sana hatırlatacağız.
+            </ThemedText>
+          ) : null}
         </>
       )}
 

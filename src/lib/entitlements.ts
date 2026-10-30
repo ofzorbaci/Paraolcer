@@ -1,35 +1,49 @@
-// What Premium unlocks. The free tier keeps the core answer (the real-return score) and
-// never locks the user's data: backups, existing holdings and CPI reminders stay free.
-
-export const FREE_HOLDING_LIMIT = 3;
+// What Premium unlocks. The free tier answers the core question in full — every holding, the
+// real-return score, the ENAG/personal total in one line, one "Yenilesem mi?" a month — and
+// never locks the user's data. Premium sells depth: detail, history, scenarios and tools.
 
 export type PremiumFeature =
-  | 'unlimitedHoldings'
+  | 'enagDetail'
+  | 'personalBasket'
+  | 'renewUnlimited'
   | 'powerChart'
+  | 'benchmarks'
   | 'scenario'
   | 'alternatives'
   | 'rateReminders'
-  | 'customInflation';
+  | 'goals'
+  | 'portfolios';
 
 export const PREMIUM_FEATURES: { id: PremiumFeature; title: string; detail: string }[] = [
-  { id: 'unlimitedHoldings', title: 'Sınırsız varlık', detail: `Ücretsiz sürümde ${FREE_HOLDING_LIMIT} varlık` },
-  { id: 'powerChart', title: 'Alım gücü grafiği', detail: 'Birikiminin ay ay gerçek değeri' },
+  { id: 'renewUnlimited', title: 'Sınırsız “Yenilesem mi?”', detail: 'Ücretsiz sürümde ayda 1 kez' },
+  { id: 'enagDetail', title: 'ENAG ve kendi enflasyonun', detail: 'Her varlık için ayrı ayrı' },
+  { id: 'personalBasket', title: 'Kişisel enflasyon sepeti', detail: 'Kira, gıda, ulaşım… kendi ağırlıklarınla' },
+  { id: 'powerChart', title: 'Alım gücü grafiği ve zaman makinesi', detail: 'Birikiminin ay ay gerçek değeri' },
+  { id: 'benchmarks', title: 'Kıyas grafiği', detail: 'Dolar, altın, mevduat ve TÜFE ile reel kıyas' },
   { id: 'scenario', title: 'Senaryo hesabı', detail: 'Enflasyon farklı gelirse ne olur' },
   { id: 'alternatives', title: 'Karşılaştırma', detail: 'Dolarda ya da mevduatta tutsaydın' },
+  { id: 'goals', title: 'Hedefler ve alarmlar', detail: '“Reel getirim sıfırın altına düşerse haber ver”' },
   { id: 'rateReminders', title: 'Faiz kararı bildirimi', detail: 'TCMB kararı açıklanınca haber' },
-  { id: 'customInflation', title: 'Kendi enflasyonun', detail: 'ENAG ya da kişisel oranla hesap' },
+  { id: 'portfolios', title: 'Çoklu portföy', detail: 'Senin, eşinin, çocuğunun birikimi ayrı' },
 ];
+
+/** "Yenilesem mi?" full results a free user gets per calendar month. */
+export const FREE_RENEW_CHECKS_PER_MONTH = 1;
 
 export function canUse(_feature: PremiumFeature, premium: boolean): boolean {
   return premium;
 }
 
-/**
- * Adding is limited, keeping is not: a lapsed subscriber keeps every holding they already
- * have and simply cannot add more until they are back under the limit or resubscribe.
- */
-export function canAddHolding(currentCount: number, premium: boolean): boolean {
-  return premium || currentCount < FREE_HOLDING_LIMIT;
+/** Every holding is free; the limit was removed because it left no reason to pay for depth. */
+export function canAddHolding(_currentCount: number, _premium: boolean): boolean {
+  return true;
+}
+
+/** Whether a free user still has a "Yenilesem mi?" result left this month. */
+export function renewCheckAllowed(premium: boolean, usedMonth: string | undefined, used: number, month: string): boolean {
+  if (premium) return true;
+  const count = usedMonth === month ? used : 0;
+  return count < FREE_RENEW_CHECKS_PER_MONTH;
 }
 
 export type PremiumStatus = {

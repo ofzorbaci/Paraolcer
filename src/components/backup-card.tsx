@@ -6,12 +6,15 @@ import { Button, Card, Field } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { decryptBackup, MIN_PASSWORD, type BackupData } from '@/lib/backup';
 import { exportBackup, pickBackupText } from '@/lib/backup-file';
-import { formatLongDate } from '@/lib/format';
+import { useTheme } from '@/hooks/use-theme';
+import { formatLongDate, formatStamp } from '@/lib/format';
 import { restoreData, useStore } from '@/state/store';
 
 /** Password-protected backup to a file the user keeps (Files, iCloud Drive, Google Drive). */
 export function BackupCard() {
-  const holdings = useStore((s) => s.holdings);
+  const theme = useTheme();
+  const holdings = useStore((s) => s.allHoldings);
+  const autoBackupAt = useStore((s) => s.autoBackupAt);
   const settings = useStore((s) => s.settings);
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -50,9 +53,14 @@ export function BackupCard() {
     <Card>
       <ThemedText style={styles.title}>Yedekleme</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        Veriler yalnızca bu telefonda durduğu için telefon değişince kaybolabilir. Şifreli bir yedek dosyası oluşturup
-        Dosyalar, iCloud Drive ya da Google Drive’a kaydet.
+        Verilerin her değişiklikte telefonunda otomatik yedeklenir; bu yedek telefonun iCloud ya da Google yedeğine
+        dahildir. Telefon değiştirirken ya da ekstra güvence için şifreli bir yedek dosyası da oluşturabilirsin.
       </ThemedText>
+      {autoBackupAt && (
+        <ThemedText type="smallBold" style={{ color: theme.accent }}>
+          Son otomatik yedek: {formatStamp(autoBackupAt)}
+        </ThemedText>
+      )}
       <Field
         label="Yedek şifresi"
         secureTextEntry

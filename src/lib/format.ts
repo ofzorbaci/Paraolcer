@@ -2,7 +2,15 @@ const tl = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', 
 const tlPrecise = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 2 });
 const pct = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 
+let masked = false;
+
+/** "Hide amounts": every TRY figure prints as dots; percentages stay visible. */
+export function setAmountsMasked(on: boolean) {
+  masked = on;
+}
+
 export function formatTL(n: number, precise = false): string {
+  if (masked) return '₺•••••';
   return (precise ? tlPrecise : tl).format(n);
 }
 
@@ -62,10 +70,12 @@ export function parseDate(text: string, today: string): string | undefined {
   return iso;
 }
 
-/** Accepts "1.234,56", "1234,56" and "1234.56". */
+/** Accepts "1.234,56", "1234,56", "1234.56" and Turkish thousands like "100.000". */
 export function parseAmount(text: string): number | undefined {
   let t = text.trim().replace(/\s|₺|TL/gi, '');
   if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+  // "100.000" and "1.250.000" are Turkish thousands, not decimals.
+  else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '');
   if (!/^\d+(\.\d+)?$/.test(t)) return undefined;
   return Number(t);
 }

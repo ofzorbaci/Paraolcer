@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { useMasked } from '@/hooks/use-masked';
 import { DateField } from '@/components/date-field';
 import { ThemedText } from '@/components/themed-text';
 import { Card, Disclaimer, Field, IconButton, Pct, Row, Screen } from '@/components/ui';
@@ -14,6 +15,7 @@ import { useStore } from '@/state/store';
 
 /** One-off check without saving anything: "I put X in on date D, it is worth Y now." */
 export default function CalculatorScreen() {
+  useMasked();
   const theme = useTheme();
   const settings = useStore((s) => s.calcSettings);
   const index = useStore((s) => s.cpi.index);

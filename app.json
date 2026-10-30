@@ -40,7 +40,13 @@
       ],
       "@react-native-community/datetimepicker",
       "expo-sharing",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Paraölçer, birikimlerini korumak için Face ID ile kilit açmayı kullanır."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -5,10 +5,12 @@ import { HoldingSource } from '@/components/source-line';
 import { ThemedText } from '@/components/themed-text';
 import { Card, Pct, StatStrip } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
+import { useMasked } from '@/hooks/use-masked';
 import { useTheme } from '@/hooks/use-theme';
 import { defaultWithholding } from '@/lib/deposit';
-import { formatPct, formatRate, formatTL } from '@/lib/format';
+import { formatDate, formatPct, formatRate, formatTL, todayISO } from '@/lib/format';
 import { priceAgeDays } from '@/lib/lookup';
+import { nextMaturity } from '@/lib/renew';
 import type { HoldingAnalysis } from '@/lib/returns';
 import { isLivePriced, KIND_LABELS, type Holding } from '@/lib/types';
 
@@ -37,7 +39,9 @@ export function holdingTitle(h: Holding): string {
 
 export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; analysis: HoldingAnalysis }) {
   const theme = useTheme();
+  useMasked();
   const losing = a.real !== undefined && a.real < 0;
+  const maturity = nextMaturity(h, todayISO());
   const age = h.kind !== 'deposit' && !isLivePriced(h.kind) ? priceAgeDays(h, new Date()) : undefined;
   const stats =
     h.kind === 'deposit' && h.grossRate !== undefined
@@ -87,6 +91,7 @@ export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; ana
           {h.kind === 'deposit' && h.grossRate !== undefined && (
             <ThemedText type="small" themeColor="textSecondary">
               {h.termDays} gün vade · %{String(h.withholding ?? defaultWithholding(h.termDays ?? 32)).replace('.', ',')} stopaj
+              {maturity ? ` · sonraki vade ${formatDate(maturity)}` : ''}
             </ThemedText>
           )}
         </Card>

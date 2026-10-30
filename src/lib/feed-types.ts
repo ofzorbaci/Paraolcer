@@ -25,6 +25,12 @@ export type Feed = {
     source: string;
   };
   withholding: { tiers: WithholdingTier[]; validUntil: string; source: string };
+  /** month-end USD/TRY (ECB) and monthly average gold, USD per troy ounce (World Bank), oldest first */
+  markets?: {
+    usdTry: { month: string; value: number }[];
+    goldUsdOz: { month: string; value: number }[];
+    source: string;
+  };
   /** problems the last build ran into; the affected sections keep their previous values */
   errors: string[];
 };

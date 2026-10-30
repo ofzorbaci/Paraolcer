@@ -26,7 +26,7 @@ const apiKey =
 
 export type Plan = {
   id: string;
-  period: 'monthly' | 'yearly';
+  period: 'monthly' | 'yearly' | 'lifetime';
   /** full renewal price as the store formats it, e.g. "₺999,99" */
   priceString: string;
   price: number;
@@ -75,7 +75,7 @@ export async function initPurchases(onChange: (status: PremiumStatus) => void): 
   }
 }
 
-/** Monthly and yearly plans from the current RevenueCat offering, yearly first. */
+/** Yearly, monthly and (if offered) lifetime plans from the current RevenueCat offering, yearly first. */
 export async function loadPlans(): Promise<Plan[]> {
   if (!configured) return [];
   const offering = (await Purchases.getOfferings()).current;
@@ -83,6 +83,8 @@ export async function loadPlans(): Promise<Plan[]> {
   const plans: Plan[] = [];
   if (offering.annual) plans.push(toPlan(offering.annual, 'yearly'));
   if (offering.monthly) plans.push(toPlan(offering.monthly, 'monthly'));
+  // A one-time "Kurucu Üye" offer, if the dashboard's offering includes a lifetime package.
+  if (offering.lifetime) plans.push(toPlan(offering.lifetime, 'lifetime'));
   return plans;
 }
 

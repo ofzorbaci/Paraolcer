@@ -7,10 +7,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { extractText, getDocumentProxy } from 'unpdf';
+import * as XLSX from 'xlsx';
 
 import { parseTcmbCpiHtml, TCMB_CPI_URL } from '../src/lib/cpi-parse.ts';
 import { FEED_VERSION, type Feed } from '../src/lib/feed-types.ts';
-import { findSebReportUrl, parsePolicyRates, parsePpkYear, parseSebText } from './parse.ts';
+import { findPinkSheetUrl, findSebReportUrl, monthEnds, parsePinkSheetGold, parsePolicyRates, parsePpkYear, parseSebText } from './parse.ts';
 import {
   checkCpi,
   checkDecisions,
@@ -102,6 +103,29 @@ const expectations = await section(
   previous.expectations,
 );
 
+const markets = await section(
+  'Piyasa geçmişi',
+  async () => {
+    // Six years of month-end USD/TRY (ECB via Frankfurter) and monthly gold (World Bank Pink Sheet).
+    const from = `${Number(today.slice(0, 4)) - 6}-01-01`;
+    const fx = (await (await get(`https://api.frankfurter.dev/v1/${from}..${today}?base=USD&symbols=TRY`)).json()) as {
+      rates: Record<string, { TRY: number }>;
+    };
+    const usdTry = monthEnds(Object.fromEntries(Object.entries(fx.rates).map(([d, r]) => [d, r.TRY])));
+    const pinkUrl = findPinkSheetUrl(await (await get('https://www.worldbank.org/en/research/commodity-markets')).text());
+    const wb = XLSX.read(new Uint8Array(await (await get(pinkUrl)).arrayBuffer()));
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets['Monthly Prices'], { header: 1 });
+    const goldUsdOz = parsePinkSheetGold(rows).filter((g) => g.month >= from.slice(0, 7));
+    if (usdTry.length < 24) throw new Error('Dolar kuru serisi kısa');
+    return {
+      usdTry,
+      goldUsdOz,
+      source: 'Avrupa Merkez Bankası (Frankfurter) · Dünya Bankası Pink Sheet (CC BY 4.0)',
+    };
+  },
+  previous.markets,
+);
+
 const withholding = JSON.parse(readFileSync(WITHHOLDING, 'utf8')) as Feed['withholding'];
 const warning = withholdingWarning(withholding.validUntil, today);
 if (warning) errors.push(`Stopaj: ${warning}`);
@@ -119,6 +143,7 @@ const feed: Feed = {
   rateDecisions,
   expectations,
   withholding,
+  ...(markets && { markets }),
   errors,
 };
 

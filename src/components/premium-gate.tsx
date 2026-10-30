@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Icon } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { canAddHolding, PREMIUM_FEATURES, type PremiumFeature } from '@/lib/entitlements';
+import { PREMIUM_FEATURES, type PremiumFeature } from '@/lib/entitlements';
 import { useStore } from '@/state/store';
 
 export function usePremium(): boolean {
@@ -17,11 +17,9 @@ export function openPaywall(feature?: PremiumFeature) {
   router.push({ pathname: '/paywall', params: feature ? { feature } : {} });
 }
 
-/** Opens the add form, or the paywall when the free holding limit is reached. */
+/** Opens the add form. Every holding is free; kept as one entry point for all "Ekle" buttons. */
 export function useAddHolding(): () => void {
-  const premium = usePremium();
-  const count = useStore((s) => s.holdings.length);
-  return () => (canAddHolding(count, premium) ? router.push('/holding/edit') : openPaywall('unlimitedHoldings'));
+  return () => router.push('/holding/edit');
 }
 
 /** Shows `children` to Premium users and a short invitation in their place to everyone else. */

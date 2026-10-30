@@ -1,7 +1,9 @@
-import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { useMasked } from '@/hooks/use-masked';
 import { useTheme } from '@/hooks/use-theme';
 import { formatPct, formatTL } from '@/lib/format';
 import type { PortfolioAnalysis } from '@/lib/returns';
@@ -14,9 +16,21 @@ function verdict(real: number): string {
 }
 
 /** Navy headline card: real return, the verdict, and the three numbers behind it. */
-export function HeroCard({ total, inflationLabel }: { total: PortfolioAnalysis; inflationLabel: string }) {
+export function HeroCard({
+  total,
+  inflationLabel,
+  own,
+  onOwnPress,
+}: {
+  total: PortfolioAnalysis;
+  inflationLabel: string;
+  /** the same portfolio against the user's ENAG/personal rate */
+  own?: { rate: number; real: number };
+  onOwnPress?: () => void;
+}) {
   const theme = useTheme();
   const gain = total.realGain;
+  useMasked();
   return (
     <View style={[styles.card, { backgroundColor: theme.hero }]}>
       <ThemedText style={[styles.label, { color: theme.heroMuted }]}>Birikimin enflasyona karşı</ThemedText>
@@ -30,12 +44,28 @@ export function HeroCard({ total, inflationLabel }: { total: PortfolioAnalysis; 
           Kâr görünüyor ama alım gücün azaldı.
         </ThemedText>
       ) : null}
+      {own && (
+        <Pressable accessibilityRole="button" onPress={onOwnPress} hitSlop={6}>
+          <ThemedText type="small" style={{ color: theme.heroMuted }}>
+            {inflationLabel}’ye göre {formatPct(total.real)} · senin oranınla (%{String(own.rate).replace('.', ',')}){' '}
+            <ThemedText type="smallBold" style={{ color: theme.heroText }}>
+              {formatPct(own.real)}
+            </ThemedText>
+            {onOwnPress ? '  ›' : ''}
+          </ThemedText>
+        </Pressable>
+      )}
       <View style={[styles.divider, { backgroundColor: theme.heroMuted }]} />
       <View style={styles.stats}>
         <Stat label="Nominal" value={formatPct(total.nominal, false)} />
         <Stat label={inflationLabel} value={formatPct(total.inflation, false)} />
         <Stat label="Alım gücü" value={`${gain >= 0 ? '+' : '−'}${formatTL(Math.abs(gain))}`} />
       </View>
+      <Pressable accessibilityRole="link" onPress={() => router.push('/method')} hitSlop={8}>
+        <ThemedText type="small" style={{ color: theme.heroAccent }}>
+          Nasıl hesaplandı? ›
+        </ThemedText>
+      </Pressable>
     </View>
   );
 }

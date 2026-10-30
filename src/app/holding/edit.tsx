@@ -5,12 +5,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { DateField } from '@/components/date-field';
 import { ThemedText } from '@/components/themed-text';
-import { openPaywall, usePremium } from '@/components/premium-gate';
 import { Button, Card, Choice, Field, Icon, IconButton, Pct, Row, Screen } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { defaultWithholding } from '@/lib/deposit';
-import { canAddHolding } from '@/lib/entitlements';
 import { formatPct, formatRate, parseAmount, todayISO } from '@/lib/format';
 import { fetchTryRate } from '@/lib/fx';
 import { priceLookup } from '@/lib/lookup';
@@ -41,14 +39,11 @@ function numText(n: number | undefined): string {
 export default function EditHoldingScreen() {
   const theme = useTheme();
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const existing = useStore((s) => s.holdings.find((h) => h.id === id));
+  const existing = useStore((s) => s.allHoldings.find((h) => h.id === id));
   const settings = useStore((s) => s.calcSettings);
   const index = useStore((s) => s.cpi.index);
   const prices = useStore((s) => s.prices);
   const today = todayISO();
-  const premium = usePremium();
-  const holdingCount = useStore((s) => s.holdings.length);
-  const overLimit = !existing && !canAddHolding(holdingCount, premium);
 
   const [group, setGroup] = useState<Group>(existing ? groupOf(existing.kind) : 'deposit');
   const [currency, setCurrency] = useState<'usd' | 'eur'>(existing?.kind === 'eur' ? 'eur' : 'usd');
@@ -146,7 +141,6 @@ export default function EditHoldingScreen() {
 
   const onSave = () => {
     setTried(true);
-    if (overLimit) return openPaywall('unlimitedHoldings');
     if (!holding) return;
     // First tap shows the warnings; a second tap on "Yine de kaydet" saves.
     if (needsConfirm) return setAcknowledged(warningKey);

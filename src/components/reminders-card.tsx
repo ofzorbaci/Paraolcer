@@ -8,7 +8,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { nextCpiReleases, nextRateDecisions } from '@/lib/calendar';
 import type { ReminderKind } from '@/lib/notify';
-import { setReminders, useStore } from '@/state/store';
+import { setMaturityReminders, setReminders, useStore } from '@/state/store';
 
 export const ANNOUNCEMENT_FMT = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
 
@@ -66,6 +66,21 @@ export function RemindersCard() {
         settings.notifyRate ?? false,
         nextRates.length === 0,
       )}
+      <View style={styles.row}>
+        <View style={styles.flex}>
+          <ThemedText type="smallBold">Mevduat vadem dolarken</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Vadeden 2 gün önce 10:00’da; dokununca “Yenilesem mi?” açılır.
+          </ThemedText>
+        </View>
+        <Switch
+          accessibilityLabel="Mevduat vadem dolarken"
+          value={settings.notifyMaturity ?? false}
+          disabled={Platform.OS === 'web'}
+          onValueChange={(on) => void setMaturityReminders(on)}
+          trackColor={{ true: theme.accent, false: theme.border }}
+        />
+      </View>
       {Platform.OS === 'web' && (
         <ThemedText type="small" themeColor="textSecondary">
           Bildirimler yalnızca telefonda çalışır.

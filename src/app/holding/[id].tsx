@@ -1,8 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useMasked } from '@/hooks/use-masked';
 import { holdingTitle } from '@/components/holding-card';
 import { HoldingSource } from '@/components/source-line';
 import { ThemedText } from '@/components/themed-text';
@@ -16,9 +17,10 @@ import { isLivePriced, KIND_LABELS } from '@/lib/types';
 import { deleteHolding, saveHolding, useStore } from '@/state/store';
 
 export default function HoldingDetailScreen() {
+  useMasked();
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
-  const h = useStore((s) => s.holdings.find((x) => x.id === id));
+  const h = useStore((s) => s.allHoldings.find((x) => x.id === id));
   const settings = useStore((s) => s.calcSettings);
   const index = useStore((s) => s.cpi.index);
   const prices = useStore((s) => s.prices);
@@ -74,6 +76,11 @@ export default function HoldingDetailScreen() {
         <Row label="Nominal getiri" value={a.nominal === undefined ? '—' : formatPct(a.nominal)} />
         <Row label="Dönem enflasyonu" value={formatPct(a.inflation.factor - 1)} />
         <Row label="Korunmak için gereken" value={formatTL(a.breakEven)} />
+        <Pressable accessibilityRole="link" onPress={() => router.push('/method')}>
+          <ThemedText type="small" style={{ color: theme.accent }}>
+            Nasıl hesaplandı? ›
+          </ThemedText>
+        </Pressable>
         {settings.inflationSource === 'tuik' && (
           <ThemedText type="small" themeColor="textSecondary">
             TÜFE: {formatMonth(a.inflation.fromMonth)} → {formatMonth(a.inflation.toMonth)}
@@ -93,6 +100,15 @@ export default function HoldingDetailScreen() {
           </ThemedText>
         )}
       </Card>
+
+      {h.kind === 'deposit' && h.grossRate !== undefined && (
+        <Button
+          title="Yenilesem mi? Son dönemde dolar ve altınla kıyasla"
+          kind="secondary"
+          icon={{ ios: 'arrow.triangle.2.circlepath', android: 'autorenew', web: 'autorenew' }}
+          onPress={() => router.push({ pathname: '/renew/[id]', params: { id: h.id } })}
+        />
+      )}
 
       {manual && (
         <Card>

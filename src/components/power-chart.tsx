@@ -4,6 +4,7 @@ import Svg, { Circle, Line, Path } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { useMasked } from '@/hooks/use-masked';
 import { useTheme } from '@/hooks/use-theme';
 import { formatMonth, formatTL } from '@/lib/format';
 import type { PowerPoint } from '@/lib/series';
@@ -20,6 +21,7 @@ function shortMonth(month: string): string {
 export function PowerChart({ points }: { points: PowerPoint[] }) {
   const theme = useTheme();
   const [width, setWidth] = useState(0);
+  useMasked();
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
 
   const values = points.flatMap((p) => [p.nominal, p.real]);

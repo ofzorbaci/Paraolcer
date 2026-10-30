@@ -11,6 +11,7 @@ import { useStore } from '@/state/store';
 export function usePortfolio() {
   const holdings = useStore((s) => s.holdings);
   const settings = useStore((s) => s.calcSettings);
+  const rawSettings = useStore((s) => s.settings);
   const index = useStore((s) => s.cpi.index);
   const prices = useStore((s) => s.prices);
   const today = todayISO();
@@ -19,14 +20,23 @@ export function usePortfolio() {
     const items = holdings
       .map((h) => ({ holding: h, analysis: analyzeHolding(h, today, prices, settings, index) }))
       .sort((a, b) => b.holding.buyDate.localeCompare(a.holding.buyDate));
+    // The user's ENAG/personal rate as a second yardstick, shown as one free line under the score.
+    const ownRate = rawSettings.customAnnualRate > 0 && settings.inflationSource === 'tuik';
+    const ownTotal = ownRate
+      ? analyzePortfolio(
+          holdings.map((h) => analyzeHolding(h, today, prices, { ...settings, inflationSource: 'custom', customAnnualRate: rawSettings.customAnnualRate }, index)),
+        )
+      : undefined;
     return {
       items,
+      ownTotal,
+      ownRate: ownRate ? rawSettings.customAnnualRate : undefined,
       total: analyzePortfolio(items.map((i) => i.analysis)),
       byKind: summarizeByKind(items),
       cpiLast: index.last,
       settings,
     };
-  }, [holdings, settings, index, prices, today]);
+  }, [holdings, settings, rawSettings, index, prices, today]);
 }
 
 /** Monthly "what the account shows" vs "what it buys", over the last 12 months. */

@@ -65,6 +65,39 @@ export function parsePolicyRates(html: string): { from: string; rate: number }[]
   return out;
 }
 
+/** Link to the World Bank "Pink Sheet" monthly prices workbook on its commodity markets page. */
+export function findPinkSheetUrl(html: string): string {
+  const m = /https:\/\/thedocs\.worldbank\.org[^"]*CMO-Historical-Data-Monthly\.xlsx/.exec(html);
+  if (!m) throw new Error('Dünya Bankası aylık fiyat dosyası bulunamadı');
+  return m[0];
+}
+
+/** Rows of the "Monthly Prices" sheet → gold, USD per troy ounce, keyed 'YYYY-MM'. */
+export function parsePinkSheetGold(rows: unknown[][]): { month: string; value: number }[] {
+  const header = rows.findIndex((r) => Array.isArray(r) && r.some((c) => String(c).trim() === 'Gold'));
+  if (header < 0) throw new Error('Pink Sheet: altın sütunu yok');
+  const col = rows[header].findIndex((c) => String(c).trim() === 'Gold');
+  const out: { month: string; value: number }[] = [];
+  for (const r of rows.slice(header + 1)) {
+    const m = /^(\d{4})M(\d{2})$/.exec(String(r?.[0] ?? ''));
+    const v = Number(r?.[col]);
+    if (m && Number.isFinite(v) && v > 0) out.push({ month: `${m[1]}-${m[2]}`, value: v });
+  }
+  if (out.length < 24) throw new Error(`Pink Sheet: altın serisi kısa (${out.length})`);
+  return out;
+}
+
+/** Last rate of each month from a daily series keyed 'YYYY-MM-DD'. */
+export function monthEnds(daily: Record<string, number>): { month: string; value: number }[] {
+  const last = new Map<string, { day: string; value: number }>();
+  for (const [day, value] of Object.entries(daily)) {
+    const month = day.slice(0, 7);
+    const prev = last.get(month);
+    if (!prev || day > prev.day) last.set(month, { day, value });
+  }
+  return [...last].sort(([a], [b]) => a.localeCompare(b)).map(([month, v]) => ({ month, value: v.value }));
+}
+
 /** Link to the latest "Sektörel Enflasyon Beklentileri" report PDF on its TCMB page. */
 export function findSebReportUrl(html: string): string {
   const m = /href="(\/wps\/wcm\/connect\/[0-9a-f-]{36}\/SEB-Rapor\.pdf[^"]*)"/.exec(html);

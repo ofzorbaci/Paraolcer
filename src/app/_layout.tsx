@@ -7,11 +7,13 @@ import {
 } from '@expo-google-fonts/inter';
 import { Sora_700Bold } from '@expo-google-fonts/sora';
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, router, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
 
+import { AppLock } from '@/components/app-lock';
+import { onNotificationOpen } from '@/lib/notify';
 import { loadStore } from '@/state/store';
 
 SplashScreen.preventAutoHideAsync();
@@ -30,6 +32,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     loadStore().finally(() => setDataLoaded(true));
+    // A tapped reminder opens the screen it is about, e.g. "Yenilesem mi?" for a maturing deposit.
+    return onNotificationOpen((url) => router.push(url as never));
   }, []);
 
   // A font that fails to load falls back to the system font rather than blocking the app.
@@ -42,13 +46,19 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <AppLock>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Özet' }} />
         <Stack.Screen name="holding/edit" options={{ headerShown: false }} />
         <Stack.Screen name="holding/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="tools/calculator" options={{ headerShown: false }} />
         <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="renew/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="method" options={{ headerShown: false }} />
+        <Stack.Screen name="import" options={{ headerShown: false }} />
+        <Stack.Screen name="karne" options={{ headerShown: false }} />
       </Stack>
+      </AppLock>
     </ThemeProvider>
   );
 }

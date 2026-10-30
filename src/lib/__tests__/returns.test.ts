@@ -137,6 +137,9 @@ describe('format', () => {
     expect(parseAmount('1.234,56')).toBe(1234.56);
     expect(parseAmount('2500')).toBe(2500);
     expect(parseAmount('12.5')).toBe(12.5);
+    expect(parseAmount('100.000')).toBe(100000);
+    expect(parseAmount('1.250.000')).toBe(1250000);
+    expect(parseAmount('38.25')).toBe(38.25);
     expect(parseAmount('abc')).toBeUndefined();
   });
 

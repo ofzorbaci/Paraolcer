@@ -7,7 +7,6 @@ import { ThemedText } from '@/components/themed-text';
 import { Button, Card } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { FREE_HOLDING_LIMIT } from '@/lib/entitlements';
 import { formatLongDate } from '@/lib/format';
 import { manageSubscriptionsUrl, purchasesAvailable } from '@/lib/purchases';
 import { restorePurchases, setDevPremium, useStore } from '@/state/store';
@@ -17,12 +16,11 @@ export function PremiumCard() {
   const theme = useTheme();
   const premium = useStore((s) => s.premium);
   const devPremium = useStore((s) => s.devPremium);
-  const count = useStore((s) => s.holdings.length);
   const [status, setStatus] = useState<string>();
   const until = premium.expiresAt ? formatLongDate(premium.expiresAt.slice(0, 10)) : undefined;
 
   const line = !premium.active
-    ? `Ücretsiz sürüm · ${Math.min(count, FREE_HOLDING_LIMIT)}/${FREE_HOLDING_LIMIT} varlık`
+    ? 'Ücretsiz sürüm · tüm varlıkların, reel skorun ve ENAG özeti ücretsiz'
     : premium.source === 'dev'
       ? 'Premium (geliştirici modu)'
       : premium.trial
