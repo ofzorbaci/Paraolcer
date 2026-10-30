@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { basketRate, defaultBasket } from '../basket';
 import { canAddHolding, NO_PREMIUM, premiumShowcase, yearlySavings } from '../entitlements';
 import { shouldAskForReview } from '../review';
-import { freeTrialDays, statusFromCustomerInfo } from '../subscription-map';
+import { freeTrialDays, planPeriod, statusFromCustomerInfo } from '../subscription-map';
 
 describe('free tier', () => {
   it('never limits holdings', () => {
@@ -134,5 +134,38 @@ describe('basket from TÜİK groups', () => {
     const { basketRate, defaultBasket } = await import('../basket');
     const groups = (await import('../../data/feed-snapshot.json')).default.cpiGroups;
     expect(Math.abs(basketRate(defaultBasket(0, groups))! - groups.general)).toBeLessThan(0.1);
+  });
+});
+
+describe('lifetime plan', () => {
+  it('recognises a lifetime package by type or by a one-time product', () => {
+    expect(planPeriod({ packageType: 'LIFETIME', product: {} })).toBe('lifetime');
+    expect(planPeriod({ packageType: 'CUSTOM', product: { subscriptionPeriod: null } })).toBe('lifetime');
+    expect(planPeriod({ packageType: 'ANNUAL', product: { subscriptionPeriod: 'P1Y' } })).toBe('yearly');
+    expect(planPeriod({ packageType: 'MONTHLY', product: { subscriptionPeriod: 'P1M' } })).toBe('monthly');
+    expect(planPeriod({ packageType: 'CUSTOM', product: { subscriptionPeriod: 'P1W' } })).toBeUndefined();
+  });
+
+  it('marks a purchase without expiry as lifetime', () => {
+    const s = statusFromCustomerInfo(
+      {
+        entitlements: {
+          active: {
+            'paraölçer_premium': {
+              isActive: true,
+              willRenew: false,
+              periodType: 'NORMAL',
+              expirationDate: null,
+              productIdentifier: 'paraolcer_lifetime',
+            },
+          },
+        },
+        managementURL: null,
+      },
+      'paraölçer_premium',
+    );
+    expect(s.active).toBe(true);
+    expect(s.lifetime).toBe(true);
+    expect(s.expiresAt).toBeUndefined();
   });
 });

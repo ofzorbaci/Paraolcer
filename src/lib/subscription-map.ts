@@ -33,10 +33,25 @@ export function statusFromCustomerInfo(info: CustomerInfoLike, entitlement: stri
     trial: e.periodType === 'TRIAL',
     expiresAt: e.expirationDate ?? undefined,
     willRenew: e.willRenew,
+    // RevenueCat gives a lifetime (non-subscription) purchase no expiration date.
+    ...(e.expirationDate === null && !e.willRenew && { lifetime: true }),
     productId: e.productIdentifier,
     source: 'store',
     managementUrl,
   };
+}
+
+type PackageLike = { packageType: string; product: { subscriptionPeriod?: string | null } };
+
+/**
+ * Which plan a package is. RevenueCat's standard packages say it directly; a package with a custom
+ * identifier is lifetime when its product has no subscription period (a one-time purchase).
+ */
+export function planPeriod(pkg: PackageLike): 'monthly' | 'yearly' | 'lifetime' | undefined {
+  if (pkg.packageType === 'ANNUAL') return 'yearly';
+  if (pkg.packageType === 'MONTHLY') return 'monthly';
+  if (pkg.packageType === 'LIFETIME' || !pkg.product.subscriptionPeriod) return 'lifetime';
+  return undefined;
 }
 
 /** Length of a free introductory offer in days; undefined for paid intro prices or none. */

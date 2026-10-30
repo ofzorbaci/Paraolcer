@@ -43,14 +43,6 @@ export function canAddHolding(_currentCount: number, _premium: boolean): boolean
   return true;
 }
 
-/** The one-time "Kurucu Üye" plan is sold only until this day (inclusive), to the first 500 buyers. */
-export const FOUNDER_UNTIL = '2027-01-31';
-export const FOUNDER_SEATS = 500;
-
-export function founderOfferOpen(today: string): boolean {
-  return today <= FOUNDER_UNTIL;
-}
-
 export type Showcase = { key: 'maturity' | 'wealth' | 'general'; title: string; subtitle: string; lead: PremiumFeature[] };
 
 /**
@@ -89,6 +81,8 @@ export type PremiumStatus = {
   trial: boolean;
   /** ISO time the current period ends; undefined for lifetime or unknown */
   expiresAt?: string;
+  /** a one-time "Kurucu Üye" purchase: never expires, nothing to manage or cancel */
+  lifetime?: boolean;
   willRenew: boolean;
   productId?: string;
   /** where the entitlement came from; 'dev' is the development-only switch */

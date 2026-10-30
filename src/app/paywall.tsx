@@ -9,8 +9,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Button, Icon, IconButton, Radius, Screen } from '@/components/ui';
 import { BrandFonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { FOUNDER_SEATS, FOUNDER_UNTIL, founderOfferOpen, PREMIUM_FEATURES, premiumShowcase, yearlySavings, type PremiumFeature } from '@/lib/entitlements';
-import { formatLongDate, todayISO } from '@/lib/format';
+import { PREMIUM_FEATURES, premiumShowcase, yearlySavings, type PremiumFeature } from '@/lib/entitlements';
+import { formatLongDate } from '@/lib/format';
 import { loadPlans, manageSubscriptionsUrl, purchasesAvailable, type Plan } from '@/lib/purchases';
 import { purchasePlan, restorePurchases, setDevPremium, useStore } from '@/state/store';
 
@@ -41,9 +41,7 @@ export default function PaywallScreen() {
 
   useEffect(() => {
     loadPlans()
-      .then((all) => {
-        // The lifetime plan is a launch offer; after the founder period it is not shown.
-        const p = all.filter((x) => x.period !== 'lifetime' || founderOfferOpen(todayISO()));
+      .then((p) => {
         setPlans(p);
         setSelected(p[0]?.id);
       })
@@ -114,9 +112,11 @@ export default function PaywallScreen() {
               ? 'Geliştirici modunda Premium açık.'
               : premium.trial
                 ? `Deneme süren devam ediyor${premium.expiresAt ? `, ${formatLongDate(premium.expiresAt.slice(0, 10))} tarihinde bitiyor` : ''}.`
-                : 'Premium abonesin. Teşekkürler!'}
+                : premium.lifetime
+                  ? 'Kurucu Üyesin: Premium ömür boyu açık. Teşekkürler!'
+                  : 'Premium abonesin. Teşekkürler!'}
           </ThemedText>
-          {premium.source === 'store' && (
+          {premium.source === 'store' && !premium.lifetime && (
             <Button title="Aboneliği yönet" kind="secondary" onPress={() => WebBrowser.openBrowserAsync(manageSubscriptionsUrl(premium))} />
           )}
         </View>
@@ -161,7 +161,7 @@ export default function PaywallScreen() {
                     )}
                     {p.period === 'lifetime' && (
                       <ThemedText type="small" themeColor="textSecondary">
-                        Tek seferlik ödeme, abonelik yok · ilk {FOUNDER_SEATS} kişi, {formatLongDate(FOUNDER_UNTIL)} tarihine kadar
+                        Tek seferlik ödeme, abonelik yok
                       </ThemedText>
                     )}
                     {p.trialDays ? (

@@ -23,7 +23,9 @@ export function PremiumCard() {
     ? 'Ücretsiz sürüm · tüm varlıkların, reel skorun ve ENAG özeti ücretsiz'
     : premium.source === 'dev'
       ? 'Premium (geliştirici modu)'
-      : premium.trial
+      : premium.lifetime
+        ? 'Kurucu Üye · ömür boyu Premium. Teşekkürler!'
+        : premium.trial
         ? `Ücretsiz deneme${until ? ` · ${until} tarihinde ${premium.willRenew ? 'ücretli aboneliğe geçer' : 'biter'}` : ''}`
         : premium.willRenew
           ? `Premium${until ? ` · ${until} tarihinde yenilenir` : ''}`
@@ -47,7 +49,7 @@ export function PremiumCard() {
       {!premium.active && (
         <Button title="Premium’u 7 gün ücretsiz dene" onPress={() => openPaywall()} />
       )}
-      {premium.active && premium.source === 'store' && (
+      {premium.active && premium.source === 'store' && !premium.lifetime && (
         <Button
           title="Aboneliği yönet"
           kind="secondary"

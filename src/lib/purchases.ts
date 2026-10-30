@@ -10,7 +10,7 @@ import { Platform } from 'react-native';
 import Purchases, { type CustomerInfo, type PurchasesPackage } from 'react-native-purchases';
 
 import { NO_PREMIUM, type PremiumStatus } from './entitlements';
-import { freeTrialDays, statusFromCustomerInfo } from './subscription-map';
+import { freeTrialDays, planPeriod, statusFromCustomerInfo } from './subscription-map';
 
 type Config = { testApiKey?: string; iosApiKey?: string; androidApiKey?: string; entitlement?: string };
 
@@ -80,12 +80,14 @@ export async function loadPlans(): Promise<Plan[]> {
   if (!configured) return [];
   const offering = (await Purchases.getOfferings()).current;
   if (!offering) return [];
-  const plans: Plan[] = [];
-  if (offering.annual) plans.push(toPlan(offering.annual, 'yearly'));
-  if (offering.monthly) plans.push(toPlan(offering.monthly, 'monthly'));
-  // A one-time "Kurucu Üye" offer, if the dashboard's offering includes a lifetime package.
-  if (offering.lifetime) plans.push(toPlan(offering.lifetime, 'lifetime'));
-  return plans;
+  // Yearly, monthly, then the one-time "Kurucu Üye" plan — whatever the packages are called.
+  const order: Plan['period'][] = ['yearly', 'monthly', 'lifetime'];
+  return offering.availablePackages
+    .map((pkg) => ({ pkg, period: planPeriod(pkg) }))
+    .filter((x): x is { pkg: PurchasesPackage; period: Plan['period'] } => !!x.period)
+    .filter((x, i, all) => all.findIndex((y) => y.period === x.period) === i)
+    .sort((a, b) => order.indexOf(a.period) - order.indexOf(b.period))
+    .map((x) => toPlan(x.pkg, x.period));
 }
 
 /** Starts the store purchase sheet; undefined when the user cancels. */
