@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-10-30T17:02:29.222Z",
+ "generatedAt": "2026-11-02T17:08:00.420Z",
  "cpi": {
   "rows": [
    {
@@ -1790,6 +1790,10 @@
    {
     "month": "2026-10",
     "value": 49.948
+   },
+   {
+    "month": "2026-11",
+    "value": 49.968
    }
   ],
   "goldUsdOz": [
@@ -2446,23 +2450,23 @@
   "source": "ABD Çalışma İstatistikleri Bürosu (BLS) CPI-U, FRED üzerinden"
  },
  "depositRates": {
-  "date": "2026-10-16",
+  "date": "2026-10-23",
   "byTerm": [
    {
     "maxDays": 31,
-    "rate": 43.86
+    "rate": 43.46
    },
    {
     "maxDays": 92,
-    "rate": 43.33
+    "rate": 43.41
    },
    {
     "maxDays": 183,
-    "rate": 41.01
+    "rate": 42.12
    },
    {
     "maxDays": 365,
-    "rate": 36.2
+    "rate": 35.17
    },
    {
     "maxDays": null,
