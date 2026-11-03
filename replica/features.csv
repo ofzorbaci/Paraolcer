@@ -1,0 +1,24 @@
+feature,area,priority,original,clone,notes
+Add income or expense with amount category account date note,transactions,must,yes,yes,
+Edit and delete a transaction,transactions,must,yes,yes,
+Transfer between own accounts without double counting,transactions,must,yes,yes,release note 1.0.4
+Accounts by type with balances (cash bank card investment wallet),accounts,must,yes,yes,
+Total balance across accounts,dashboard,must,yes,yes,
+Weekly spending with optional limit and progress bar,dashboard,must,yes,yes,
+Recent transactions list,dashboard,must,yes,yes,
+Default categories with icon and colour,categories,must,yes,yes,
+Spending by category for a period with percentages,analysis,must,yes,yes,
+Planned payments with due date and repeat,payments,should,yes,yes,
+Mark a planned payment as paid (creates a transaction),payments,should,yes,yes,
+Subscriptions list with monthly total,payments,should,yes,yes,
+Payment calendar,payments,should,yes,yes,
+Period filter (this week this month last month last 3 months),analysis,should,yes,yes,
+Daily spending heat map,analysis,should,yes,yes,
+Multi-currency accounts converted to TRY,accounts,should,yes,yes,uses Paraölçer live rates
+Account-based spending breakdown,analysis,could,yes,yes,
+Savings goal card,goals,could,yes,partial,Paraölçer goals live in Araçlar; not repeated in Bütçe
+Due-date reminder notifications,payments,could,yes,yes,Paraölçer local notifications
+Shared accounts with other users,accounts,could,yes,skip,needs user accounts and cloud sync; Paraölçer is account-free
+Financial literacy lessons and leagues,education,could,yes,skip,their content and not part of budgeting
+Mascot and brand visuals,brand,could,yes,skip,owned by the original
+Service logos on subscription chips,payments,could,yes,skip,trademarks; use plain names

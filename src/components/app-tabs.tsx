@@ -23,9 +23,9 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Icon sf="creditcard" md="credit_card" />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="power">
-        <NativeTabs.Trigger.Label>Alım gücü</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="chart.xyaxis.line" md="show_chart" />
+      <NativeTabs.Trigger name="butce">
+        <NativeTabs.Trigger.Label>Bütçe</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="wallet.pass" md="account_balance_wallet" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="araclar">

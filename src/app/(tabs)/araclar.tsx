@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { ImportButtons } from '@/components/import-buttons';
 import { GoalsCard } from '@/components/goals-card';
 import { InflationCard } from '@/components/inflation-card';
+import { PowerSection } from '@/components/power-section';
 import { PortfoliosCard } from '@/components/portfolios-card';
 import { PremiumGate } from '@/components/premium-gate';
 import { RemindersCard } from '@/components/reminders-card';
@@ -16,6 +17,10 @@ export default function ToolsScreen() {
   return (
     <Screen>
       <ScreenHeader eyebrow="Ölç, karşılaştır, takip et" title="Araçlar" />
+
+      <PowerSection />
+
+      <ThemedText style={styles.section}>Araçlar ve ayarlar</ThemedText>
 
       <Card>
         <View style={styles.grid}>
@@ -46,5 +51,6 @@ export default function ToolsScreen() {
 }
 
 const styles = StyleSheet.create({
+  section: { fontSize: 22, lineHeight: 28, fontWeight: 800, marginTop: Spacing.two },
   grid: { gap: Spacing.two },
 });

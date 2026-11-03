@@ -14,6 +14,7 @@ import { useColorScheme } from 'react-native';
 
 import { AppLock } from '@/components/app-lock';
 import { onNotificationOpen } from '@/lib/notify';
+import { loadBudget } from '@/state/budget';
 import { loadStore } from '@/state/store';
 
 SplashScreen.preventAutoHideAsync();
@@ -31,7 +32,7 @@ export default function RootLayout() {
   const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    loadStore().finally(() => setDataLoaded(true));
+    Promise.all([loadStore(), loadBudget()]).finally(() => setDataLoaded(true));
     // A tapped reminder opens the screen it is about, e.g. "Yenilesem mi?" for a maturing deposit.
     return onNotificationOpen((url) => router.push(url as never));
   }, []);
@@ -57,6 +58,11 @@ export default function RootLayout() {
         <Stack.Screen name="method" options={{ headerShown: false }} />
         <Stack.Screen name="import" options={{ headerShown: false }} />
         <Stack.Screen name="karne" options={{ headerShown: false }} />
+        <Stack.Screen name="budget/transaction" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="budget/account" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="budget/payment" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="budget/payments" options={{ headerShown: false }} />
+        <Stack.Screen name="budget/analysis" options={{ headerShown: false }} />
       </Stack>
       </AppLock>
     </ThemeProvider>

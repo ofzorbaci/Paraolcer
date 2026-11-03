@@ -150,3 +150,37 @@ export async function cancelTrialEndReminder(): Promise<void> {
       .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
   );
 }
+
+const BUDGET_TAG = 'budget-payment';
+
+export type PaymentReminder = { id: string; name: string; date: string; amount: string };
+
+/** One reminder per planned payment on its due date at 10:00; tapping opens the payments screen. */
+export async function scheduleBudgetReminders(items: PaymentReminder[]): Promise<boolean> {
+  if (!(await ensurePermission())) return false;
+  await cancelBudgetReminders();
+  const now = Date.now();
+  for (const p of items) {
+    const [y, m, d] = p.date.split('-').map(Number);
+    const at = new Date(y, m - 1, d, 10, 0, 0);
+    if (at.getTime() <= now) continue;
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: `Bugün ödeme günü: ${p.name}`,
+        body: `${p.amount} ödendiyse Paraölçer’de işaretle, bütçen güncel kalsın.`,
+        data: { tag: BUDGET_TAG, url: '/budget/payments' },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
+    });
+  }
+  return true;
+}
+
+export async function cancelBudgetReminders(): Promise<void> {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    scheduled
+      .filter((n) => n.content.data?.tag === BUDGET_TAG)
+      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
+  );
+}

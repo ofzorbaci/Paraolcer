@@ -12,3 +12,11 @@ export async function readSnapshot(): Promise<Snapshot | undefined> {
 }
 
 export function deleteSnapshot() {}
+
+export async function writeBudgetSnapshot(_data: unknown): Promise<void> {}
+
+export async function readBudgetSnapshot<T>(): Promise<T | undefined> {
+  return undefined;
+}
+
+export function deleteBudgetSnapshot() {}

@@ -17,7 +17,9 @@ export type PremiumFeature =
   | 'alternatives'
   | 'rateReminders'
   | 'goals'
-  | 'portfolios';
+  | 'portfolios'
+  | 'budgetAnalysis'
+  | 'budgetReminders';
 
 export const PREMIUM_FEATURES: { id: PremiumFeature; title: string; detail: string }[] = [
   { id: 'renewUnlimited', title: 'Tam “Yenilesem mi?”', detail: 'Lira farkı, son 3 ve 12 ay; ücretsizde yalnızca sıralama' },
@@ -32,6 +34,8 @@ export const PREMIUM_FEATURES: { id: PremiumFeature; title: string; detail: stri
   { id: 'goals', title: 'Hedefler ve alarmlar', detail: '“Reel getirim sıfırın altına düşerse haber ver”' },
   { id: 'rateReminders', title: 'Faiz kararı bildirimi', detail: 'TCMB kararı açıklanınca haber' },
   { id: 'portfolios', title: 'Çoklu portföy', detail: 'Senin, eşinin, çocuğunun birikimi ayrı' },
+  { id: 'budgetAnalysis', title: 'Bütçe analizleri', detail: 'Geçmiş dönemler, günlük harcama haritası, hesap bazında harcama' },
+  { id: 'budgetReminders', title: 'Ödeme günü hatırlatması', detail: 'Fatura ve üyeliklerin vadesinde bildirim' },
 ];
 
 export function canUse(_feature: PremiumFeature, premium: boolean): boolean {

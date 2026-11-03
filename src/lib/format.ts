@@ -23,6 +23,13 @@ export function formatTL(n: number, precise = false): string {
   return s.startsWith('-') ? `-₺${s.slice(1)}` : `₺${s}`;
 }
 
+/** Any currency with its sign, honouring "hide amounts": `formatMoney(12.5, '$', true)` → "$12,5". */
+export function formatMoney(n: number, sign = '₺', precise = false): string {
+  if (masked) return `${sign}•••••`;
+  const s = groupThousands(n, precise ? 2 : 0);
+  return s.startsWith('-') ? `-${sign}${s.slice(1)}` : `${sign}${s}`;
+}
+
 /**
  * What a money field shows while typing: dots every three digits, a comma for kuruş.
  * "1000000" → "1.000.000", "1234,5" → "1.234,5". While typing, dots are always our own separators

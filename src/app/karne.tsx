@@ -108,7 +108,7 @@ export default function KarneScreen() {
           <Button
             title={premium ? 'Kıyas grafiğini aç' : 'Kıyasla · Premium'}
             kind="secondary"
-            onPress={() => (premium ? router.push('/power') : openPaywall('benchmarks'))}
+            onPress={() => (premium ? router.push('/araclar') : openPaywall('benchmarks'))}
           />
         </Card>
       )}

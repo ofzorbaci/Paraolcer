@@ -18,8 +18,8 @@ export default function AppTabs() {
           <TabTrigger name="holdings" href="/holdings" asChild>
             <TabButton>Varlıklar</TabButton>
           </TabTrigger>
-          <TabTrigger name="power" href="/power" asChild>
-            <TabButton>Alım gücü</TabButton>
+          <TabTrigger name="butce" href="/butce" asChild>
+            <TabButton>Bütçe</TabButton>
           </TabTrigger>
           <TabTrigger name="araclar" href="/araclar" asChild>
             <TabButton>Araçlar</TabButton>

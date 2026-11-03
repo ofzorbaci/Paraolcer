@@ -6,7 +6,7 @@ import { DateField } from '@/components/date-field';
 import { PowerChart } from '@/components/power-chart';
 import { ThemedText } from '@/components/themed-text';
 import { PremiumGate } from '@/components/premium-gate';
-import { Card, Disclaimer, Field, Pct, Radius, Row, Screen, ScreenHeader } from '@/components/ui';
+import { Card, Field, Pct, Radius, Row } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { usePowerSeries } from '@/hooks/use-portfolio';
 import { useMasked } from '@/hooks/use-masked';
@@ -16,13 +16,17 @@ import { salaryErosion } from '@/lib/salary';
 import { depositTerms, scenarioReal } from '@/lib/scenario';
 import { useStore } from '@/state/store';
 
-export default function PowerScreen() {
+/** What used to be the Alım gücü tab: the purchasing-power chart, comparisons, scenario and salary. */
+export function PowerSection() {
   const series = usePowerSeries();
   const yearBack = series && series.points.length >= 12;
 
   return (
-    <Screen>
-      <ScreenHeader eyebrow={yearBack ? 'Son 12 ay' : 'İlk yatırımdan bu yana'} title="Alım gücün" />
+    <>
+      <ThemedText style={styles.section}>Alım gücün</ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        {yearBack ? 'Son 12 ay' : 'İlk yatırımdan bu yana'}
+      </ThemedText>
       {series ? (
         <PremiumGate feature="powerChart" pitch="Hesabında görünen tutarın, başlangıç fiyatlarıyla ay ay ne ettiğini grafikte gör.">
           <PowerCard series={series} />
@@ -37,8 +41,7 @@ export default function PowerScreen() {
         <ScenarioCard />
       </PremiumGate>
       <SalaryCard />
-      <Disclaimer />
-    </Screen>
+    </>
   );
 }
 
@@ -178,6 +181,7 @@ function SalaryCard() {
 }
 
 const styles = StyleSheet.create({
+  section: { fontSize: 22, lineHeight: 28, fontWeight: 800, marginTop: Spacing.two },
   sentence: { fontSize: 18, lineHeight: 27 },
   bold: { fontWeight: 700 },
   cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.two },

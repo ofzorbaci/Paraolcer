@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button, Card } from '@/components/ui';
 import { exportWorkbook } from '@/lib/spreadsheet';
 import { shareWorkbook } from '@/lib/spreadsheet-file';
+import { deleteBudget } from '@/state/budget';
 import { deleteAllData, useStore } from '@/state/store';
 
 /** "Tüm verimi sil": there is no account, so this removes everything kept on the phone. */
@@ -39,7 +40,7 @@ export function DataCard() {
           kind="danger"
           onPress={async () => {
             if (!confirming) return setConfirming(true);
-            await deleteAllData();
+            await Promise.all([deleteAllData(), deleteBudget()]);
             setDone(true);
           }}
         />

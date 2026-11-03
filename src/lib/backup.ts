@@ -8,6 +8,7 @@ import { pbkdf2Async } from '@noble/hashes/pbkdf2.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 
+import type { BudgetData } from './budget/types';
 import type { Holding, Settings } from './types';
 
 export const BACKUP_APP = 'paraolcer';
@@ -16,7 +17,8 @@ const LEGACY_APPS = ['reel-getiri-pusulasi'];
 const ITERATIONS = 100_000;
 export const MIN_PASSWORD = 8;
 
-export type BackupData = { holdings: Holding[]; settings: Settings; exportedAt: string };
+/** `budget` is absent in backups made before the Bütçe tab. */
+export type BackupData = { holdings: Holding[]; settings: Settings; budget?: BudgetData; exportedAt: string };
 
 type BackupFile = {
   app: string;

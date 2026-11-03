@@ -46,3 +46,39 @@ export function deleteSnapshot() {
     /* nothing to delete */
   }
 }
+
+const BUDGET_NAME = 'paraolcer-butce-yedek.json';
+
+function budgetFile(): File {
+  return new File(new Directory(Paths.document), BUDGET_NAME);
+}
+
+/** The budget's own snapshot, next to the holdings one. */
+export async function writeBudgetSnapshot(data: unknown): Promise<void> {
+  try {
+    const f = budgetFile();
+    f.create({ overwrite: true });
+    await f.write(JSON.stringify({ savedAt: new Date().toISOString(), data }));
+  } catch {
+    /* a failed snapshot must never break saving */
+  }
+}
+
+export async function readBudgetSnapshot<T>(): Promise<T | undefined> {
+  try {
+    const f = budgetFile();
+    if (!f.exists) return undefined;
+    return (JSON.parse(await f.text()) as { data: T }).data;
+  } catch {
+    return undefined;
+  }
+}
+
+export function deleteBudgetSnapshot() {
+  try {
+    const f = budgetFile();
+    if (f.exists) f.delete();
+  } catch {
+    /* nothing to delete */
+  }
+}

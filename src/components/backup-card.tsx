@@ -8,6 +8,7 @@ import { decryptBackup, MIN_PASSWORD, type BackupData } from '@/lib/backup';
 import { exportBackup, pickBackupText } from '@/lib/backup-file';
 import { useTheme } from '@/hooks/use-theme';
 import { formatLongDate, formatStamp } from '@/lib/format';
+import { budgetData, restoreBudget } from '@/state/budget';
 import { restoreData, useStore } from '@/state/store';
 
 /** Password-protected backup to a file the user keeps (Files, iCloud Drive, Google Drive). */
@@ -36,7 +37,7 @@ export function BackupCard() {
 
   const onExport = () =>
     run('Şifreleniyor…', async () => {
-      await exportBackup({ holdings, settings, exportedAt: new Date().toISOString() }, password);
+      await exportBackup({ holdings, settings, budget: budgetData(), exportedAt: new Date().toISOString() }, password);
       setStatus('Yedek hazır. Kaydettiğin yeri ve şifreni unutma; şifre olmadan açılamaz.');
     });
 
@@ -96,6 +97,7 @@ export function BackupCard() {
             kind="danger"
             onPress={() => {
               restoreData(pending.holdings, pending.settings);
+              if (pending.budget) restoreBudget(pending.budget);
               setPending(undefined);
               setStatus(`${pending.holdings.length} varlık geri yüklendi.`);
             }}

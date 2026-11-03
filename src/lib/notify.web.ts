@@ -29,3 +29,11 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function notifyNow(_title: string, _body: string, _url: string): Promise<void> {}
+
+export type PaymentReminder = { id: string; name: string; date: string; amount: string };
+
+export async function scheduleBudgetReminders(_items: PaymentReminder[]): Promise<boolean> {
+  return false;
+}
+
+export async function cancelBudgetReminders(): Promise<void> {}
