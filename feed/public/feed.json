@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-03T15:13:49.906Z",
+ "generatedAt": "2026-11-03T16:24:03.391Z",
  "cpi": {
   "rows": [
    {
@@ -1798,7 +1798,7 @@
    },
    {
     "month": "2026-11",
-    "value": 49.968
+    "value": 49.997
    }
   ],
   "goldUsdOz": [
