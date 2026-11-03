@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-02T17:08:00.420Z",
+ "generatedAt": "2026-11-03T15:13:49.906Z",
  "cpi": {
   "rows": [
    {
@@ -1307,6 +1307,11 @@
     "month": "2026-09",
     "yoy": 29.73,
     "mom": 1.84
+   },
+   {
+    "month": "2026-10",
+    "yoy": 29.77,
+    "mom": 2.58
    }
   ],
   "source": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Istatistikler/Enflasyon+Verileri/Tuketici+Fiyatlari"
@@ -2476,24 +2481,24 @@
   "source": "TCMB EVDS, yeni açılan TL tasarruf mevduatlarına uygulanan ağırlıklı ortalama faiz"
  },
  "cpiGroups": {
-  "month": "2026-09",
+  "month": "2026-10",
   "yoy": {
-   "food": 27.622874292211463,
-   "housing": 39.9854131702142,
-   "health": 43.26392018192114,
-   "transport": 35.103995702783195,
-   "education": 48.62172387814776,
-   "other": 24.333520758946506
+   "food": 27.731278066204613,
+   "housing": 40.24036653714229,
+   "health": 43.293348448442195,
+   "transport": 36.39473557157442,
+   "education": 48.85976153339151,
+   "other": 23.77759507284779
   },
   "weights": {
-   "food": 24.4444,
-   "housing": 11.402,
-   "health": 2.7923,
-   "transport": 16.6169,
-   "education": 2.0215,
-   "other": 42.722899999999996
+   "food": 24.44,
+   "housing": 11.4,
+   "health": 2.79,
+   "transport": 16.62,
+   "education": 2.02,
+   "other": 42.73
   },
-  "general": 29.731510886849442,
+  "general": 29.768749175924203,
   "source": "TÜİK TÜFE ana grupları ve ağırlıkları, TCMB EVDS üzerinden"
  },
  "errors": []
