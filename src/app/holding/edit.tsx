@@ -9,9 +9,10 @@ import { Button, Card, Choice, Field, Icon, IconButton, Pct, Row, Screen } from 
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { defaultWithholding } from '@/lib/deposit';
-import { formatPct, formatRate, parseAmount, todayISO } from '@/lib/format';
+import { formatDate, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { fetchTryRate } from '@/lib/fx';
 import { priceLookup } from '@/lib/lookup';
+import { feedQuote } from '@/lib/securities';
 import { analyzeHolding } from '@/lib/returns';
 import { CURRENCY_SYMBOL, GOLD_LABELS, isCurrencyKind, KIND_LABELS, type CurrencyKind, type GoldType, type Holding, type HoldingKind } from '@/lib/types';
 import { plausibilityWarnings } from '@/lib/validate';
@@ -73,7 +74,9 @@ export default function EditHoldingScreen() {
   // Which currency's rate on the purchase day to look up: cash or a foreign-currency deposit.
   const rateCurrency: CurrencyKind | undefined = isFx ? currency : fxDeposit;
   const isGold = kind === 'gold';
-  const manualPrice = !isDeposit && !isFx && !isGold;
+  // A fund or stock whose code the feed lists is priced automatically.
+  const autoQuote = feedQuote({ kind, name });
+  const manualPrice = !isDeposit && !isFx && !isGold && !autoQuote;
   const lookup = priceLookup(kind, name);
 
   // The ECB rate of the purchase day: pre-fills the cost and is the reference for the plausibility check.
@@ -293,7 +296,12 @@ export default function EditHoldingScreen() {
                 hint="Bu varlığın fiyatını şimdilik sen güncelliyorsun."
               />
             ) : null}
-            {lookup && (
+            {autoQuote && (
+              <ThemedText type="small" style={{ color: theme.accent }}>
+                Güncel fiyat otomatik: {formatTL(autoQuote.price, true)} ({autoQuote.source}, {formatDate(autoQuote.date)} kapanışı)
+              </ThemedText>
+            )}
+            {lookup && !autoQuote && (
               <Button
                 title={`Güncel fiyata bak · ${lookup.site}`}
                 kind="secondary"
@@ -302,7 +310,7 @@ export default function EditHoldingScreen() {
                 onPress={() => WebBrowser.openBrowserAsync(lookup.url)}
               />
             )}
-            {manualPrice ? null : (
+            {manualPrice || autoQuote ? null : (
               <ThemedText type="small" themeColor="textSecondary">
                 {isGold && goldType !== 'gram'
                   ? 'Güncel değer, içindeki saf altından otomatik hesaplanır. Kuyumcu fiyatına işçilik eklendiği için biraz düşük görünebilir.'

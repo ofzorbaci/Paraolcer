@@ -12,6 +12,8 @@ import { defaultWithholding } from '@/lib/deposit';
 import { formatDate, formatPct, formatRate, formatTL, groupThousands, todayISO } from '@/lib/format';
 import { usdReal } from '@/lib/usd-real';
 import { priceAgeDays } from '@/lib/lookup';
+import { feedQuote } from '@/lib/securities';
+import { STALE_DAYS } from '@/lib/stale';
 import { nextMaturity } from '@/lib/renew';
 import type { HoldingAnalysis } from '@/lib/returns';
 import { CURRENCY_SYMBOL, isLivePriced, KIND_LABELS, type Holding } from '@/lib/types';
@@ -19,13 +21,6 @@ import { useStore } from '@/state/store';
 
 const qty = { format: (n: number) => groupThousands(n, 2) };
 
-/** A hand-entered price older than this gets a reminder on the card and next to the score. */
-export const STALE_DAYS = 7;
-
-/** Hand-priced holdings whose price is a week old or more. */
-export function staleHoldings(holdings: Holding[], now: Date): Holding[] {
-  return holdings.filter((h) => h.kind !== 'deposit' && !isLivePriced(h.kind) && (priceAgeDays(h, now) ?? 0) >= STALE_DAYS);
-}
 
 /** "Gram altın · 20 gr", "Dolar · $2.000" */
 export function holdingTitle(h: Holding): string {
@@ -54,7 +49,8 @@ export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; ana
   useMasked();
   const losing = a.real !== undefined && a.real < 0;
   const maturity = nextMaturity(h, todayISO());
-  const age = h.kind !== 'deposit' && !isLivePriced(h.kind) ? priceAgeDays(h, new Date()) : undefined;
+  // Funds and stocks the feed prices need no hand-entered price, so no age warning either.
+  const age = h.kind !== 'deposit' && !isLivePriced(h.kind) && !feedQuote(h) ? priceAgeDays(h, new Date()) : undefined;
   const premium = usePremium();
   const prices = useStore((s) => s.prices);
   const feed = useStore((s) => s.feed);
@@ -99,7 +95,7 @@ export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; ana
               Güncel fiyatı girmek için dokun.
             </ThemedText>
           )}
-          <HoldingSource kind={h.kind} />
+          <HoldingSource holding={h} />
           {age !== undefined && h.priceUpdatedAt && (
             <ThemedText type="small" style={age >= STALE_DAYS ? { color: theme.negative } : undefined} themeColor="textSecondary">
               Fiyat: {formatDate(h.priceUpdatedAt.slice(0, 10))}

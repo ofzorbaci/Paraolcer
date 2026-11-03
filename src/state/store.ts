@@ -8,6 +8,7 @@ import { rateDecisionDates } from '@/lib/calendar';
 import { buildCpiIndex, type CpiIndex } from '@/lib/cpi';
 import { parseTcmbCpiHtml, TCMB_CPI_URL, type CpiRow } from '@/lib/cpi-parse';
 import { setWithholdingRules } from '@/lib/deposit';
+import { setSecurityPrices } from '@/lib/securities';
 import { checkAlerts, goalTarget, type AlertState } from '@/lib/alerts';
 import { NO_PREMIUM, type PremiumStatus } from '@/lib/entitlements';
 import { fetchFeed, isFeed, newerFeed } from '@/lib/feed';
@@ -85,6 +86,7 @@ const bundled = snapshot as Feed;
 /** Applies a feed; its CPI replaces the current series unless that one (read straight from TCMB) is newer. */
 function feedPatch(feed: Feed, origin: State['feedOrigin'], currentCpiMonth = '') {
   setWithholdingRules(feed.withholding);
+  setSecurityPrices(feed.securities);
   const rows = feed.cpi.rows;
   return {
     feed,

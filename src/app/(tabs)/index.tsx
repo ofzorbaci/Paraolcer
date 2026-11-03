@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { HeroCard } from '@/components/hero';
-import { staleHoldings } from '@/components/holding-card';
 import { MAIN_PORTFOLIO, NO_PORTFOLIOS } from '@/components/portfolios-card';
 import { QuickStart } from '@/components/quick-start';
 import { openPaywall, PremiumGate, usePremium } from '@/components/premium-gate';
@@ -20,6 +19,7 @@ import { goalProgress, goalTarget } from '@/lib/alerts';
 import { isTlDeposit } from '@/lib/deposit';
 import { currentPolicyRate } from '@/lib/feed';
 import { cpiPendingMonth, karneFresh, renewSavingsThisYear } from '@/lib/karne';
+import { staleHoldings } from '@/lib/stale';
 import { nextMaturity } from '@/lib/renew';
 import type { CpiIndex } from '@/lib/cpi';
 import { analyzeHolding, analyzePortfolio } from '@/lib/returns';

@@ -45,6 +45,10 @@ jobs:
         continue-on-error: true
         env:
           EVDS_API_KEY: ${{ secrets.EVDS_API_KEY }}
+          SECURITIES_FUNDS_URL: ${{ secrets.SECURITIES_FUNDS_URL }}
+          SECURITIES_STOCKS_URL: ${{ secrets.SECURITIES_STOCKS_URL }}
+          SECURITIES_API_KEY: ${{ secrets.SECURITIES_API_KEY }}
+          SECURITIES_SOURCE: ${{ vars.SECURITIES_SOURCE }}
         run: node feed/build.mts
 
       - name: Değişen veriyi kaydet

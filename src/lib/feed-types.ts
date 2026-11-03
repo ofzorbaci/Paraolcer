@@ -13,6 +13,9 @@ export type WithholdingTier = {
 
 export type CpiGroupKey = 'housing' | 'food' | 'transport' | 'education' | 'health' | 'other';
 
+/** One closing price: TRY per unit and the trading day it belongs to ('YYYY-MM-DD'). */
+export type SecurityPrice = { price: number; date: string };
+
 export type Feed = {
   version: typeof FEED_VERSION;
   generatedAt: string;
@@ -44,6 +47,15 @@ export type Feed = {
     weights: Record<CpiGroupKey, number>;
     /** headline yearly CPI the groups add up to */
     general: number;
+    source: string;
+  };
+  /**
+   * End-of-day fund (TEFAS code) and stock (BIST ticker) prices from a licensed data provider,
+   * TRY per unit, keyed by code. Absent until a provider is configured.
+   */
+  securities?: {
+    funds: Record<string, SecurityPrice>;
+    stocks: Record<string, SecurityPrice>;
     source: string;
   };
   /** problems the last build ran into; the affected sections keep their previous values */

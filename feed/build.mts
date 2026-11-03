@@ -10,7 +10,7 @@ import { extractText, getDocumentProxy } from 'unpdf';
 import * as XLSX from 'xlsx';
 
 import { parseTcmbCpiHtml, TCMB_CPI_URL } from '../src/lib/cpi-parse.ts';
-import { FEED_VERSION, type Feed } from '../src/lib/feed-types.ts';
+import { FEED_VERSION, type Feed, type SecurityPrice } from '../src/lib/feed-types.ts';
 import {
   findPinkSheetUrl,
   findSebReportUrl,
@@ -24,6 +24,7 @@ import {
   parsePpkYear,
   parseSebText,
 } from './parse.ts';
+import { fetchSecurityList, mergeSecurityPrices, securitiesConfig } from './securities.ts';
 import {
   checkCpi,
   checkDecisions,
@@ -197,6 +198,30 @@ const cpiGroups = EVDS_KEY
     )
   : previous.cpiGroups;
 
+// Fund and stock closing prices: only when a licensed provider is configured (see securities.ts).
+const securitiesCfg = securitiesConfig(process.env);
+const securities = securitiesCfg
+  ? await section(
+      'Fon ve hisse fiyatları',
+      async () => {
+        const list = async (url: string | undefined, prev: Record<string, SecurityPrice> | undefined, label: string) => {
+          if (!url) return {};
+          const fresh = await fetchSecurityList(url, securitiesCfg.apiKey, today);
+          if (Object.keys(fresh).length === 0) throw new Error(`${label}: liste boş`);
+          const { prices, warnings } = mergeSecurityPrices(fresh, prev, today);
+          if (warnings.length) errors.push(`${label}: büyük değişim, önceki fiyat korundu (${warnings.slice(0, 5).join('; ')})`);
+          return prices;
+        };
+        return {
+          funds: await list(securitiesCfg.fundsUrl, previous.securities?.funds, 'Fonlar'),
+          stocks: await list(securitiesCfg.stocksUrl, previous.securities?.stocks, 'Hisseler'),
+          source: securitiesCfg.source ?? 'Veri sağlayıcı',
+        };
+      },
+      previous.securities,
+    )
+  : previous.securities;
+
 const withholding = JSON.parse(readFileSync(WITHHOLDING, 'utf8')) as Feed['withholding'];
 const warning = withholdingWarning(withholding.validUntil, today);
 if (warning) errors.push(`Stopaj: ${warning}`);
@@ -218,6 +243,7 @@ const feed: Feed = {
   ...(usCpi && { usCpi }),
   ...(depositRates && { depositRates }),
   ...(cpiGroups && { cpiGroups }),
+  ...(securities && { securities }),
   errors,
 };
 

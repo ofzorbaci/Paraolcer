@@ -15,6 +15,8 @@ export function usePortfolio() {
   const rawSettings = useStore((s) => s.settings);
   const index = useStore((s) => s.cpi.index);
   const prices = useStore((s) => s.prices);
+  // Fund and stock prices come with the feed; a new feed must re-run the analysis.
+  const securities = useStore((s) => s.feed.securities);
   const today = todayISO();
 
   return useMemo(() => {
@@ -37,7 +39,8 @@ export function usePortfolio() {
       cpiLast: index.last,
       settings,
     };
-  }, [holdings, settings, rawSettings, index, prices, today]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holdings, settings, rawSettings, index, prices, securities, today]);
 }
 
 /** Monthly "what the account shows" vs "what it buys", over the last 12 months. */

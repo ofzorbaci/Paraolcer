@@ -1,7 +1,8 @@
 import { ThemedText } from '@/components/themed-text';
-import { formatMonth, formatStamp } from '@/lib/format';
+import { formatDate, formatMonth, formatStamp } from '@/lib/format';
 import type { PriceKey, PriceQuote } from '@/lib/prices';
-import { isCurrencyKind, type HoldingKind } from '@/lib/types';
+import { feedQuote } from '@/lib/securities';
+import { isCurrencyKind, type Holding } from '@/lib/types';
 import { useStore } from '@/state/store';
 
 /** "ECB · 28 Eki 14:32" */
@@ -9,9 +10,18 @@ export function quoteLabel(q: PriceQuote): string {
   return `${q.source} · ${formatStamp(q.fetchedAt)}`;
 }
 
-/** Where a live-priced holding's price came from and when; nothing for hand-entered prices. */
-export function HoldingSource({ kind }: { kind: HoldingKind }) {
+/** Where an automatically priced holding's price came from and when; nothing for hand-entered prices. */
+export function HoldingSource({ holding }: { holding: Pick<Holding, 'kind' | 'name'> }) {
+  const kind = holding.kind;
   const q = useStore((s) => (isCurrencyKind(kind) || kind === 'gold' ? s.priceBook[kind as PriceKey] : undefined));
+  const close = feedQuote(holding, useStore((s) => s.feed.securities));
+  if (close) {
+    return (
+      <ThemedText type="small" themeColor="textSecondary">
+        Fiyat: {close.source} · {formatDate(close.date)} kapanışı
+      </ThemedText>
+    );
+  }
   if (!q) return null;
   return (
     <ThemedText type="small" themeColor="textSecondary">

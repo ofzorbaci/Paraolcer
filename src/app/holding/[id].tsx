@@ -13,6 +13,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { isTlDeposit } from '@/lib/deposit';
 import { formatDate, formatLongDate, formatMonth, formatPct, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { priceLookup } from '@/lib/lookup';
+import { feedQuote } from '@/lib/securities';
 import { analyzeHolding, unitPrice } from '@/lib/returns';
 import { isLivePriced, KIND_LABELS } from '@/lib/types';
 import { deleteHolding, saveHolding, useStore } from '@/state/store';
@@ -47,7 +48,8 @@ export default function HoldingDetailScreen() {
   }
 
   const a = analyzeHolding(h, todayISO(), prices, settings, index);
-  const manual = h.kind !== 'deposit' && !isLivePriced(h.kind);
+  // A fund or stock the feed prices needs no hand-entered price.
+  const manual = h.kind !== 'deposit' && !isLivePriced(h.kind) && !feedQuote(h);
   const newPrice = parseAmount(price);
   const lookup = priceLookup(h.kind, h.name);
   const losing = a.real !== undefined && a.real < 0;
@@ -88,13 +90,21 @@ export default function HoldingDetailScreen() {
             {a.inflation.complete ? '' : ' (son açıklanan ay)'}
           </ThemedText>
         )}
-        {isLivePriced(h.kind) && unitPrice(h, prices) !== undefined && (
+        {(isLivePriced(h.kind) || !manual) && unitPrice(h, prices) !== undefined && (
           <ThemedText type="small" themeColor="textSecondary">
-            Güncel {h.kind === 'gold' ? (h.goldType && h.goldType !== 'gram' ? 'adet değeri' : 'gram fiyatı') : 'kur'}:{' '}
+            Güncel{' '}
+            {h.kind === 'gold'
+              ? h.goldType && h.goldType !== 'gram'
+                ? 'adet değeri'
+                : 'gram fiyatı'
+              : isLivePriced(h.kind)
+                ? 'kur'
+                : 'birim fiyat'}
+            :{' '}
             {formatTL(unitPrice(h, prices)!, true)}
           </ThemedText>
         )}
-        <HoldingSource kind={h.kind} />
+        <HoldingSource holding={h} />
         {h.kind === 'gold' && h.goldType && h.goldType !== 'gram' && (
           <ThemedText type="small" themeColor="textSecondary">
             İçindeki saf altından hesaplanır; kuyumcu fiyatına işçilik eklenir.
