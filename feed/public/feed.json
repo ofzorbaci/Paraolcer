@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-03T16:24:03.391Z",
+ "generatedAt": "2026-11-04T15:28:43.922Z",
  "cpi": {
   "rows": [
    {
@@ -1798,7 +1798,7 @@
    },
    {
     "month": "2026-11",
-    "value": 49.997
+    "value": 50.022
    }
   ],
   "goldUsdOz": [
@@ -2125,6 +2125,10 @@
    {
     "month": "2026-09",
     "value": 4319
+   },
+   {
+    "month": "2026-10",
+    "value": 4105
    }
   ],
   "source": "Avrupa Merkez Bankası (Frankfurter) · Dünya Bankası Pink Sheet (CC BY 4.0)"
