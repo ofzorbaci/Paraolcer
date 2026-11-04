@@ -9,14 +9,14 @@ import { ThemedText } from '@/components/themed-text';
 import { Button, Icon, IconButton, Radius, Screen } from '@/components/ui';
 import { BrandFonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { PREMIUM_FEATURES, premiumShowcase, yearlySavings, type PremiumFeature } from '@/lib/entitlements';
-import { formatLongDate } from '@/lib/format';
+import { FOUNDER_YEARLY_UNTIL, LIFETIME_SEATS, PREMIUM_FEATURES, YEARLY_AFTER_FOUNDER, premiumShowcase, yearlySavings, type PremiumFeature } from '@/lib/entitlements';
+import { formatLongDate, groupThousands } from '@/lib/format';
 import { loadPlans, manageSubscriptionsUrl, purchasesAvailable, type Plan } from '@/lib/purchases';
 import { purchasePlan, restorePurchases, setDevPremium, useStore } from '@/state/store';
 
 const legal = (Constants.expoConfig?.extra?.legal ?? {}) as { termsUrl?: string; privacyUrl?: string };
 const STORE = Platform.OS === 'android' ? 'Google Play' : 'App Store';
-const PLAN_LABEL: Record<Plan['period'], string> = { yearly: 'Yıllık', monthly: 'Aylık', lifetime: 'Kurucu Üye · ömür boyu' };
+const PLAN_LABEL: Record<Plan['period'], string> = { yearly: 'Yıllık · Kurucu fiyatı', monthly: 'Aylık', lifetime: 'Ömür boyu' };
 const PER: Record<Plan['period'], string> = { yearly: ' / yıl', monthly: ' / ay', lifetime: '' };
 const money = (n: number, currency: string) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n);
@@ -159,9 +159,14 @@ export default function PaywallScreen() {
                         {saving.savingPct > 0 ? ` · %${saving.savingPct} tasarruf` : ''}
                       </ThemedText>
                     )}
+                    {p.period === 'yearly' && (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {formatLongDate(FOUNDER_YEARLY_UNTIL)} tarihinden sonra {YEARLY_AFTER_FOUNDER} / yıl
+                      </ThemedText>
+                    )}
                     {p.period === 'lifetime' && (
                       <ThemedText type="small" themeColor="textSecondary">
-                        Tek seferlik ödeme, abonelik yok
+                        Tek seferlik ödeme, abonelik yok · ilk {groupThousands(LIFETIME_SEATS)} kişi
                       </ThemedText>
                     )}
                     {p.trialDays ? (
@@ -182,7 +187,7 @@ export default function PaywallScreen() {
           </View>
 
           <Button
-            title={plan?.period === 'lifetime' ? 'Kurucu Üye ol' : plan?.trialDays ? `${plan.trialDays} gün ücretsiz başla` : 'Abone ol'}
+            title={plan?.period === 'lifetime' ? 'Ömür boyu al' : plan?.trialDays ? `${plan.trialDays} gün ücretsiz başla` : 'Abone ol'}
             disabled={!plan || busy}
             onPress={() => plan && run(() => purchasePlan(plan), 'Premium açıldı. Hoş geldin!')}
           />
@@ -193,6 +198,7 @@ export default function PaywallScreen() {
                 : `${plan.trialDays ? `${plan.trialDays} gün ücretsiz, ardından ` : ''}${plan.priceString}${PER[plan.period]}. Ödeme ${STORE} hesabından alınır. Abonelik, dönem bitmeden en az 24 saat önce iptal edilmezse aynı fiyatla otomatik yenilenir. ${STORE} hesap ayarlarından istediğin zaman iptal edebilirsin${plan.trialDays ? '; deneme süresinde iptal edersen ücret alınmaz' : ''}.`}
             </ThemedText>
           )}
+          <Button title="Şimdilik ücretsiz devam et" kind="secondary" onPress={() => close()} />
           {plan?.trialDays && plan.period !== 'lifetime' ? (
             <ThemedText type="small" style={[styles.center, { color: theme.accent }]}>
               Sürpriz ücret yok: deneme bitmeden 2 gün önce sana hatırlatacağız.

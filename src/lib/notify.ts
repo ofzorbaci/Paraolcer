@@ -184,3 +184,26 @@ export async function cancelBudgetReminders(): Promise<void> {
       .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
   );
 }
+
+const NUDGE_TAG = 'budget-nudge';
+
+/**
+ * The day after the first result: one invitation to the budget, never on day one. Only when
+ * notifications are already allowed; this never asks for permission on its own.
+ */
+export async function scheduleBudgetNudge(): Promise<void> {
+  if (!(await Notifications.getPermissionsAsync()).granted) return;
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  if (scheduled.some((n) => n.content.data?.tag === NUDGE_TAG)) return;
+  const at = new Date();
+  at.setDate(at.getDate() + 1);
+  at.setHours(19, 0, 0, 0);
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Senin enflasyonun kaç?',
+      body: 'Kira, market, ulaşım… Harcamalarını yaz, TÜİK’in değil kendi enflasyonunu görelim.',
+      data: { tag: NUDGE_TAG, url: '/butce' },
+    },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
+  });
+}

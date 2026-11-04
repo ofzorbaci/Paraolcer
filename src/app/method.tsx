@@ -7,6 +7,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Card, Disclaimer, IconButton, Row, Screen } from '@/components/ui';
 import { Fonts, Spacing } from '@/constants/theme';
 import examples from '@/data/deposit-examples.json';
+import { category } from '@/lib/budget/categories';
+import { CATEGORY_GROUP, GROUP_LABEL, MIN_EXPENSES } from '@/lib/budget/personal-inflation';
 import { termInterest } from '@/lib/deposit';
 import { currentPolicyRate } from '@/lib/feed';
 import { formatDate, formatMonth, formatRate, formatStamp, formatTL } from '@/lib/format';
@@ -150,6 +152,24 @@ export default function MethodScreen() {
           Her varlık kendi alış tarihinden itibaren enflasyonla düzeltilir; böylece farklı tarihlerde alınanlar doğru
           toplanır.
         </ThemedText>
+      </Card>
+
+      <Card>
+        <ThemedText style={styles.h}>Senin enflasyonun</ThemedText>
+        <Formula>senin enflasyonun = Σ (grubun harcamandaki payı × grubun TÜİK yıllık artışı)</Formula>
+        <ThemedText type="small" themeColor="textSecondary">
+          Payları geçen tam ayın harcamalarından alırız; en az {MIN_EXPENSES} harcama ve ayın başından beri kullanılan bir
+          bütçe gerekir. O zamana kadar 5 soruluk tahmin kullanılır ve öyle yazılır. Kredi taksitleri ve yatırıma ayrılan para
+          tüketim olmadığı için hesaba girmez.
+        </ThemedText>
+        {Object.entries(CATEGORY_GROUP).map(([cat, group]) => (
+          <Row key={cat} label={category(cat).name} value={group ? GROUP_LABEL[group] : 'hesaba girmez'} />
+        ))}
+        {feed.cpiGroups && (
+          <ThemedText type="small" themeColor="textSecondary">
+            Grup artışları: TÜİK, {formatMonth(feed.cpiGroups.month)} · {feed.cpiGroups.source}
+          </ThemedText>
+        )}
       </Card>
 
       <Card>

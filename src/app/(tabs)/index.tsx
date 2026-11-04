@@ -2,6 +2,7 @@ import { Link, router } from 'expo-router';
 import { useEffect } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
+import { NetWorthCard } from '@/components/budget/net-worth-card';
 import { HeroCard } from '@/components/hero';
 import { MAIN_PORTFOLIO, NO_PORTFOLIOS } from '@/components/portfolios-card';
 import { QuickStart } from '@/components/quick-start';
@@ -24,6 +25,7 @@ import { nextMaturity } from '@/lib/renew';
 import type { CpiIndex } from '@/lib/cpi';
 import { analyzeHolding, analyzePortfolio } from '@/lib/returns';
 import { KIND_LABELS, type Holding, type LivePrices, type Settings } from '@/lib/types';
+import { useBudget } from '@/state/budget';
 import { maybeAskForReview, removeSamples, selectPortfolio, setReminders, updateSettings, useStore } from '@/state/store';
 
 const RELEASE_FMT = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' });
@@ -44,6 +46,10 @@ export default function SummaryScreen() {
   const index = useStore((s) => s.cpi.index);
   const prices = useStore((s) => s.prices);
   const renewLog = useStore((s) => s.settings.renewLog);
+  const opens = useStore((s) => s.meta.opens);
+  const budgetEmpty = useBudget((s) => s.ready && s.transactions.length === 0);
+  // Day two, not day one: once the first result has been seen, invite the budget.
+  const inviteBudget = opens >= 2 && budgetEmpty && items.some((i) => !i.holding.sample);
   const pendingCpi = cpiPendingMonth(new Date(), lastCpi.month);
   const savings = premium ? renewSavingsThisYear(renewLog, todayISO()) : 0;
   // A positive result on screen is the moment to ask for a review (rarely, after a few opens).
@@ -139,6 +145,26 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
           onOwnPress={premium ? undefined : () => openPaywall('enagDetail')}
           stale={staleHoldings(items.map((i) => i.holding), new Date()).length}
         />
+      )}
+
+      {total && (
+        <PremiumGate feature="netWorth" pitch="Tüm birikimin ve bütçe hesapların tek rakamda: bugünün lirasıyla ve dolarla net varlığın.">
+          <NetWorthCard />
+        </PremiumGate>
+      )}
+
+      {inviteBudget && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/butce')}
+          style={[styles.sample, { backgroundColor: theme.info }]}>
+          <ThemedText type="small" style={[styles.flex, { color: theme.infoText }]}>
+            <ThemedText type="smallBold" style={{ color: theme.infoText }}>
+              Senin enflasyonun kaç?
+            </ThemedText>{' '}
+            Harcamalarını yaz ya da ekstreni aktar; TÜİK’in değil kendi enflasyonunu görelim ›
+          </ThemedText>
+        </Pressable>
       )}
 
       {savings > 0 && (

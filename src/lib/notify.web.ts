@@ -37,3 +37,5 @@ export async function scheduleBudgetReminders(_items: PaymentReminder[]): Promis
 }
 
 export async function cancelBudgetReminders(): Promise<void> {}
+
+export async function scheduleBudgetNudge(): Promise<void> {}

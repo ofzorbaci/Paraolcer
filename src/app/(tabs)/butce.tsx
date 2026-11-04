@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Badge, money, TxRow } from '@/components/budget/parts';
+import { PersonalInflationCard } from '@/components/budget/personal-inflation-card';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Field, IconButton, Screen, ScreenHeader } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -62,6 +63,7 @@ export default function BudgetScreen() {
           <Button title="İlk harcamanı ekle" onPress={() => add()} />
           <Button title="Gelir ekle" kind="secondary" onPress={() => add('income')} />
           <Button title="Fatura ya da üyelik planla" kind="secondary" onPress={() => router.push('/budget/payment')} />
+          <Button title="Banka ya da kart ekstresi içe aktar" kind="secondary" onPress={() => router.push('/budget/statement')} />
         </Card>
       ) : (
         <>
@@ -92,6 +94,8 @@ export default function BudgetScreen() {
               </View>
             </View>
           </View>
+
+          <PersonalInflationCard />
 
           <WeekCard spent={week.expense} limit={prefs.weeklyLimit} />
 
@@ -169,6 +173,7 @@ export default function BudgetScreen() {
                 <Button title="Gelir ekle" kind="secondary" onPress={() => add('income')} />
               </View>
             </View>
+            <Button title="Ekstre içe aktar" kind="secondary" compact onPress={() => router.push('/budget/statement')} />
           </Card>
         </>
       )}

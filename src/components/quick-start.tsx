@@ -11,7 +11,8 @@ import { formatTL, parseAmount, todayISO } from '@/lib/format';
 import { analyzeHolding } from '@/lib/returns';
 import { QUICK_PERIODS, quickStartDate, samplePortfolio } from '@/lib/samples';
 import type { Holding } from '@/lib/types';
-import { addHoldings, newId, saveHolding, useStore } from '@/state/store';
+import { scheduleBudgetNudge } from '@/lib/notify';
+import { addHoldings, newId, saveHolding, updateSettings, useStore } from '@/state/store';
 
 /**
  * The first screen a new user sees: one deposit in three fields and the answer right away,
@@ -27,6 +28,8 @@ export function QuickStart() {
   const [gross, setGross] = useState('');
   const [term, setTerm] = useState('32');
   const [months, setMonths] = useState<string>('12');
+  const savedEnag = useStore((s) => s.settings.customAnnualRate);
+  const [enag, setEnag] = useState(savedEnag ? String(savedEnag).replace('.', ',') : '');
   const today = todayISO();
 
   const principal = parseAmount(amount);
@@ -46,12 +49,17 @@ export function QuickStart() {
         }
       : undefined;
   const result = holding ? analyzeHolding(holding, today, prices, settings, index) : undefined;
+  const enagRate = parseAmount(enag);
+  // The same deposit against ENAG (or the user's own rate): the second yardstick, free.
+  const enagResult =
+    holding && enagRate ? analyzeHolding(holding, today, prices, { ...settings, inflationSource: 'custom', customAnnualRate: enagRate }, index) : undefined;
 
   return (
     <Card>
-      <ThemedText style={styles.title}>Paran enflasyonu yeniyor mu?</ThemedText>
+      <ThemedText style={styles.title}>Senin enflasyonun kaç?</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        Sadece mevduatını gir, cevabı hemen görelim. Hesap açman gerekmez; veriler telefonunda kalır.
+        Önce paranı ölçelim: mevduatını gir, TÜFE’ye ve ENAG’a karşı gerçekte ne kazandığını 30 saniyede gör. Hesap
+        açman gerekmez; veriler telefonunda kalır.
       </ThemedText>
       <Field label="Mevduattaki tutar" prefix="₺" keyboardType="decimal-pad" placeholder="100.000" value={amount} onChangeText={setAmount} />
       <View style={styles.pair}>
@@ -62,6 +70,15 @@ export function QuickStart() {
         Ne zamandır bu hesapta?
       </ThemedText>
       <Choice options={QUICK_PERIODS.map((p) => ({ value: String(p.months), label: p.label }))} value={months} onChange={setMonths} />
+
+      <Field
+        label="ENAG ya da kendi yıllık oranın (isteğe bağlı)"
+        suffix="%"
+        keyboardType="decimal-pad"
+        placeholder="ör. 60"
+        value={enag}
+        onChangeText={setEnag}
+      />
 
       {result?.real !== undefined && result.realGain !== undefined && (
         <View style={[styles.result, { backgroundColor: theme.info }]}>
@@ -77,12 +94,30 @@ export function QuickStart() {
           <ThemedText type="small" style={{ color: theme.infoText }}>
             {result.realGain >= 0
               ? `Alım gücün ${formatTL(result.realGain)} arttı.`
-              : `Alım gücün ${formatTL(-result.realGain)} eridi; faiz enflasyonu karşılamadı.`}
+              : `Alım gücün ${formatTL(-result.realGain)} eridi; faiz enflasyonu karşılamadı.`}{' '}
+            (TÜFE’ye göre)
           </ThemedText>
+          {enagResult?.real !== undefined && (
+            <ThemedText type="small" style={{ color: theme.infoText }}>
+              ENAG / senin oranınla (%{String(enagRate).replace('.', ',')}):{' '}
+              <ThemedText type="smallBold" style={{ color: theme.infoText }}>
+                {enagResult.real >= 0 ? '+' : '−'}%{Math.abs(enagResult.real * 100).toFixed(1).replace('.', ',')}
+              </ThemedText>
+            </ThemedText>
+          )}
         </View>
       )}
 
-      <Button title="Kaydet ve devam et" disabled={!holding} onPress={() => holding && saveHolding(holding)} />
+      <Button
+        title="Kaydet ve devam et"
+        disabled={!holding}
+        onPress={() => {
+          if (!holding) return;
+          saveHolding(holding);
+          if (enagRate) updateSettings({ customAnnualRate: enagRate });
+          void scheduleBudgetNudge();
+        }}
+      />
       <ImportButtons />
       <Button
         title="Örnek birikimle dene"

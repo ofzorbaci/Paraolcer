@@ -90,6 +90,19 @@ export async function loadPlans(): Promise<Plan[]> {
     .map((x) => toPlan(x.pkg, x.period));
 }
 
+/**
+ * One non-personal flag on the RevenueCat customer, e.g. whether the user ever opened their personal
+ * inflation, so paying rates can be compared between the two groups. No amounts, no identifiers.
+ */
+export function markUsage(key: 'kisisel_enflasyon', value: string) {
+  if (!configured) return;
+  try {
+    void Purchases.setAttributes({ [key]: value });
+  } catch {
+    /* measurement must never break the app */
+  }
+}
+
 /** Starts the store purchase sheet; undefined when the user cancels. */
 export async function buy(plan: Plan): Promise<PremiumStatus | undefined> {
   try {

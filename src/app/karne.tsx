@@ -2,7 +2,8 @@ import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { openPaywall, usePremium } from '@/components/premium-gate';
+import { MonthEndCard } from '@/components/budget/month-end-card';
+import { openPaywall, PremiumGate, usePremium } from '@/components/premium-gate';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Disclaimer, IconButton, Screen } from '@/components/ui';
 import { BrandFonts, Spacing } from '@/constants/theme';
@@ -93,6 +94,10 @@ export default function KarneScreen() {
       </View>
 
       {total && <Button title="Karnemi paylaş" onPress={() => void share()} />}
+
+      <PremiumGate feature="netWorth" pitch="Ay sonunda enflasyonunu en çok hangi kalemin yükselttiğini ve maaşının alım gücünü gör.">
+        <MonthEndCard />
+      </PremiumGate>
       {status && (
         <ThemedText type="small" style={{ color: theme.negative }}>
           {status}
