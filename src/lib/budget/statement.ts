@@ -151,3 +151,49 @@ export function parseStatement(
   });
   return out;
 }
+
+/** A money amount with kuruş: "1.234,56", "-229,99", "45.000,00 TL", "850,50 B" (borç) / "A" (alacak). */
+const MONEY = /([+-]?)\s?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})(?:\s?(?:TL|TRY|₺))?(?:\s([BA])\b)?/g;
+const LINE_DATE = /^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?\s+/;
+/** Summary lines that look like transactions but are not. */
+const SKIP = /devir|onceki bakiye|önceki bakiye|toplam|donem borcu|dönem borcu|asgari odeme tutari|asgari ödeme tutarı|kullanilabilir limit|kullanılabilir limit/;
+
+/**
+ * Text lines of a PDF statement → candidate transactions. A line counts when it starts with a
+ * date and holds an amount with kuruş; the first such amount is the transaction, a later one on
+ * the same line is the running balance. "B"/"A" suffixes or a minus sign set the direction.
+ */
+export function parseStatementLines(
+  lines: string[],
+  existing: Pick<Transaction, 'date' | 'amount' | 'note'>[],
+  cardStatement = false,
+): StatementRow[] {
+  const seen = new Set(existing.map((t) => `${t.date}|${t.amount}|${norm(t.note)}`));
+  const out: StatementRow[] = [];
+  lines.forEach((raw, i) => {
+    const line = raw.replace(/\s+/g, ' ').trim();
+    const d = LINE_DATE.exec(line);
+    if (!d || SKIP.test(norm(line))) return;
+    const rest = line.slice(d[0].length);
+    const money = [...rest.matchAll(MONEY)];
+    if (money.length === 0) return;
+    const [m] = money;
+    const value = Number(m[2].replace(/\./g, '').replace(',', '.'));
+    if (!(value > 0)) return;
+    const explicit = m[1] === '-' || m[3] === 'B' ? -1 : m[1] === '+' || m[3] === 'A' ? 1 : 0;
+    // Without a sign, an account statement lists money in and a card statement lists purchases.
+    const sign = explicit || (cardStatement ? -1 : 1);
+    const amount = sign * value;
+    const description = rest.slice(0, m.index).trim();
+    const date = `${d[3]}-${d[2].padStart(2, '0')}-${d[1].padStart(2, '0')}`;
+    out.push({
+      line: i + 1,
+      date,
+      description,
+      amount,
+      categoryId: guessCategory(description, amount > 0),
+      duplicate: seen.has(`${date}|${Math.round(value * 100)}|${norm(description)}`),
+    });
+  });
+  return out;
+}

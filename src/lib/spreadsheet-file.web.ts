@@ -10,7 +10,7 @@ export async function shareWorkbook(bytes: Uint8Array, filename: string): Promis
 }
 
 export async function pickSpreadsheet(): Promise<{ name: string; data: Uint8Array | string } | undefined> {
-  const r = await DocumentPicker.getDocumentAsync({ type: ['.xlsx', '.xls', '.csv', 'text/csv'] });
+  const r = await DocumentPicker.getDocumentAsync({ type: ['.xlsx', '.xls', '.csv', 'text/csv', '.pdf', 'application/pdf'] });
   if (r.canceled) return undefined;
   const asset = r.assets[0];
   const res = await fetch(asset.uri);

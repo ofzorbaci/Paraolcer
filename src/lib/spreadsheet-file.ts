@@ -15,7 +15,7 @@ export async function shareWorkbook(bytes: Uint8Array, filename: string): Promis
 /** Lets the user pick an Excel or CSV file; CSV comes back as text, Excel as bytes. */
 export async function pickSpreadsheet(): Promise<{ name: string; data: Uint8Array | string } | undefined> {
   const r = await DocumentPicker.getDocumentAsync({
-    type: [XLSX_MIME, 'application/vnd.ms-excel', 'text/csv', 'text/comma-separated-values', 'text/plain', '*/*'],
+    type: [XLSX_MIME, 'application/vnd.ms-excel', 'application/pdf', 'text/csv', 'text/comma-separated-values', 'text/plain', '*/*'],
     copyToCacheDirectory: true,
   });
   if (r.canceled) return undefined;

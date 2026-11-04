@@ -9,7 +9,8 @@ import { Spacing } from '@/constants/theme';
 import { useMasked } from '@/hooks/use-masked';
 import { useTheme } from '@/hooks/use-theme';
 import { category } from '@/lib/budget/categories';
-import { parseStatement, type StatementRow } from '@/lib/budget/statement';
+import { parseStatement, parseStatementLines, type StatementRow } from '@/lib/budget/statement';
+import { pdfLines } from '@/lib/budget/statement-pdf';
 import { formatDate, formatMoney } from '@/lib/format';
 import { pickSpreadsheet } from '@/lib/spreadsheet-file';
 import { ensureDefaultAccount, newBudgetId, saveTransaction, useBudget } from '@/state/budget';
@@ -23,32 +24,42 @@ export default function StatementScreen() {
   const [accountId, setAccountId] = useState(accounts[0]?.id);
   const account = accounts.find((a) => a.id === accountId);
   const [card, setCard] = useState(account?.type === 'card');
-  const [file, setFile] = useState<{ name: string; data: Uint8Array | string }>();
+  // A PDF is read into text lines once; Excel and CSV are kept as they are.
+  const [file, setFile] = useState<{ name: string; data: Uint8Array | string; lines?: string[] }>();
   const [rows, setRows] = useState<StatementRow[]>();
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const close = () => (router.canGoBack() ? router.back() : router.replace('/butce'));
 
-  const read = (f: { name: string; data: Uint8Array | string }, asCard: boolean) => {
+  const read = (f: { name: string; data: Uint8Array | string; lines?: string[] }, asCard: boolean) => {
     try {
-      const parsed = parseStatement(f.data, txs, asCard);
+      const parsed = f.lines ? parseStatementLines(f.lines, txs, asCard) : parseStatement(f.data, txs, asCard);
       setRows(parsed);
       setError(parsed.length === 0 ? 'Dosyada okunacak hareket bulunamadı.' : undefined);
     } catch (e) {
       setRows(undefined);
-      setError(e instanceof Error ? `${e.message}. Bankanın “Excel’e aktar” ya da CSV dosyasını seç.` : 'Dosya okunamadı.');
+      setError(e instanceof Error ? `${e.message}. Bankanın PDF, Excel ya da CSV ekstresini seç.` : 'Dosya okunamadı.');
     }
   };
 
   const pick = async () => {
     setBusy(true);
     try {
-      const f = await pickSpreadsheet();
-      if (!f) return;
+      const picked = await pickSpreadsheet();
+      if (!picked) return;
+      const isPdf = /\.pdf$/i.test(picked.name) && typeof picked.data !== 'string';
+      const lines = isPdf ? await pdfLines(picked.data as Uint8Array) : undefined;
+      const f = { ...picked, lines };
+      if (lines && lines.length === 0) {
+        setFile(undefined);
+        setRows(undefined);
+        setError('Bu PDF’te okunabilir yazı yok (taranmış görüntü olabilir). Bankanın kendi ürettiği PDF’i ya da Excel’i dene.');
+        return;
+      }
       setFile(f);
       read(f, card);
     } catch {
-      setError('Dosya açılamadı.');
+      setError('Dosya açılamadı. PDF şifreliyse şifresiz halini, olmazsa Excel ya da CSV ekstreyi dene.');
     } finally {
       setBusy(false);
     }
@@ -107,7 +118,7 @@ export default function StatementScreen() {
         )}
         <View style={styles.row}>
           <ThemedText type="small" style={styles.flex}>
-            Kredi kartı ekstresi (harcamalar artı yazılı)
+            Kart ekstresi: işaretsiz tutarlar harcama
           </ThemedText>
           <Switch
             value={card}
@@ -123,10 +134,11 @@ export default function StatementScreen() {
       <Card>
         <ThemedText type="smallBold">2. Bankandan indirdiğin dosyayı seç</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          İnternet şubesi ya da mobil uygulamadan “hesap hareketleri” ya da “kart ekstresi”ni Excel veya CSV olarak indir.
-          Tarih, açıklama ve tutar sütunlarını kendimiz buluruz; kategoriyi açıklamadan tahmin ederiz.
+          İnternet şubesi ya da mobil uygulamadan “hesap hareketleri” ya da “kart ekstresi”ni PDF, Excel veya CSV olarak
+          indir. Tarih, açıklama ve tutarı kendimiz buluruz, satır sonundaki bakiyeyi atlarız; kategoriyi açıklamadan
+          tahmin ederiz. Kaydetmeden önce hepsini görürsün.
         </ThemedText>
-        <Button title={file ? 'Başka dosya seç' : 'Excel ya da CSV seç'} onPress={() => void pick()} disabled={busy} />
+        <Button title={file ? 'Başka dosya seç' : 'PDF, Excel ya da CSV seç'} onPress={() => void pick()} disabled={busy} />
         {busy && <ActivityIndicator />}
         {error && (
           <ThemedText type="small" style={{ color: theme.negative }}>
