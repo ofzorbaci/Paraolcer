@@ -18,6 +18,7 @@ import {
   CPI_GROUP_CODES,
   parseCpiGroups,
   parseEvdsDepositRates,
+  parseEvdsMonthly,
   parseFredMonthly,
   parsePinkSheetGold,
   parsePolicyRates,
@@ -125,13 +126,19 @@ const markets = await section(
       rates: Record<string, { TRY: number }>;
     };
     const usdTry = monthEnds(Object.fromEntries(Object.entries(fx.rates).map(([d, r]) => [d, r.TRY])));
+    const fxEur = (await (await get(`https://api.frankfurter.dev/v1/${from}..${today}?base=EUR&symbols=TRY`)).json()) as {
+      rates: Record<string, { TRY: number }>;
+    };
+    const eurTry = monthEnds(Object.fromEntries(Object.entries(fxEur.rates).map(([d, r]) => [d, r.TRY])));
     const pinkUrl = findPinkSheetUrl(await (await get('https://www.worldbank.org/en/research/commodity-markets')).text());
     const wb = XLSX.read(new Uint8Array(await (await get(pinkUrl)).arrayBuffer()));
     const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets['Monthly Prices'], { header: 1 });
     const goldUsdOz = parsePinkSheetGold(rows).filter((g) => g.month >= from.slice(0, 7));
     if (usdTry.length < 24) throw new Error('Dolar kuru serisi kısa');
+    if (eurTry.length < 24) throw new Error('Euro kuru serisi kısa');
     return {
       usdTry,
+      eurTry,
       goldUsdOz,
       source: 'Avrupa Merkez Bankası (Frankfurter) · Dünya Bankası Pink Sheet (CC BY 4.0)',
     };
@@ -222,6 +229,22 @@ const securities = securitiesCfg
     )
   : previous.securities;
 
+// BIST 100 total-return index, month-end, from EVDS (TCMB republishes Borsa İstanbul's closes).
+const bist100 = EVDS_KEY
+  ? await section(
+      'BIST 100',
+      async () => {
+        const from = `01-01-${Number(today.slice(0, 4)) - 6}`;
+        const url = `https://evds3.tcmb.gov.tr/igmevdsms-dis/series=TP.MK.G.BILESIK&startDate=${from}&endDate=${today.split('-').reverse().join('-')}&type=json&frequency=5&aggregationTypes=last`;
+        const res = await fetch(url, { headers: { key: EVDS_KEY } });
+        if (!res.ok) throw new Error(`EVDS → HTTP ${res.status}`);
+        const { items } = (await res.json()) as { items: Record<string, unknown>[] };
+        return { rows: parseEvdsMonthly(items, 'TP.MK.G.BILESIK'), source: 'Borsa İstanbul XU100 getiri endeksi, TCMB EVDS üzerinden' };
+      },
+      previous.bist100,
+    )
+  : previous.bist100;
+
 const withholding = JSON.parse(readFileSync(WITHHOLDING, 'utf8')) as Feed['withholding'];
 const warning = withholdingWarning(withholding.validUntil, today);
 if (warning) errors.push(`Stopaj: ${warning}`);
@@ -244,6 +267,7 @@ const feed: Feed = {
   ...(depositRates && { depositRates }),
   ...(cpiGroups && { cpiGroups }),
   ...(securities && { securities }),
+  ...(bist100 && { bist100 }),
   errors,
 };
 

@@ -30,7 +30,7 @@ export const PREMIUM_FEATURES: { id: PremiumFeature; title: string; detail: stri
   { id: 'enagDetail', title: 'ENAG ve kendi enflasyonun', detail: 'Her varlık için ayrı ayrı' },
   { id: 'personalBasket', title: 'Kişisel enflasyon sepeti', detail: 'Kira, gıda, ulaşım… kendi ağırlıklarınla' },
   { id: 'powerChart', title: 'Alım gücü grafiği ve zaman makinesi', detail: 'Birikiminin ay ay gerçek değeri' },
-  { id: 'benchmarks', title: 'Kıyas grafiği', detail: 'Dolar, altın, mevduat ve TÜFE ile reel kıyas' },
+  { id: 'benchmarks', title: 'Kıyas grafiği', detail: 'Dolar, euro, altın, BIST 100, mevduat ve TÜFE ile reel kıyas' },
   { id: 'scenario', title: 'Senaryo hesabı', detail: 'Enflasyon farklı gelirse ne olur' },
   { id: 'alternatives', title: 'Karşılaştırma', detail: 'Dolarda ya da mevduatta tutsaydın' },
   { id: 'goals', title: 'Hedefler ve alarmlar', detail: '“Reel getirim sıfırın altına düşerse haber ver”' },

@@ -17,11 +17,13 @@ export const COMPARE_PERIODS = [
   { months: 60, label: '5 yıl' },
 ] as const;
 
-export type CompareKey = 'portfolio' | 'usd' | 'gold' | 'deposit' | 'cash';
+export type CompareKey = 'portfolio' | 'usd' | 'eur' | 'gold' | 'bist100' | 'deposit' | 'cash';
 
 export const COMPARE_LABELS: Record<CompareKey, string> = {
   portfolio: 'Birikimin',
   usd: 'Dolar',
+  eur: 'Euro',
+  bist100: 'BIST 100',
   gold: 'Gram altın',
   deposit: 'Mevduat',
   cash: 'Nakit TL',
@@ -61,7 +63,7 @@ export function compareSeries(opts: {
   months: number;
   today: string;
   prices: LivePrices;
-  feed: Pick<Feed, 'markets' | 'policyRate'>;
+  feed: Pick<Feed, 'markets' | 'policyRate' | 'bist100'>;
   settings: Settings;
   index: CpiIndex;
 }): Comparison {
@@ -91,6 +93,9 @@ export function compareSeries(opts: {
 
   const markets = feed.markets;
   const usd = (m: string) => (m === last && prices.usd) || (markets && valueAt(markets.usdTry, m));
+  const eur = (m: string) => (m === last && prices.eur) || (markets?.eurTry && valueAt(markets.eurTry, m));
+  // Total-return index: dividends reinvested, so it compares fairly with a deposit that compounds.
+  const bist = (m: string) => (feed.bist100 ? valueAt(feed.bist100.rows, m) : undefined);
   const gold = (m: string) => {
     if (m === last && prices.gold) return prices.gold;
     const oz = markets && valueAt(markets.goldUsdOz, m);
@@ -114,6 +119,8 @@ export function compareSeries(opts: {
   const lines = [
     realLine('portfolio', (m) => nominalByMonth.get(m)),
     realLine('usd', usd),
+    realLine('eur', eur),
+    realLine('bist100', bist),
     realLine('gold', gold),
     realLine('deposit', (m) => depositLevels.get(m)),
     realLine('cash', () => 1),

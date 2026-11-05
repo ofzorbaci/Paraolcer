@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Line, Path } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
@@ -30,18 +30,30 @@ export function CompareCard() {
   const index = useStore((s) => s.cpi.index);
   const [months, setMonths] = useState('12');
   const [width, setWidth] = useState(0);
+  // Seven lines at once is a lot: any of them can be hidden by tapping its row.
+  const [hidden, setHidden] = useState<Set<CompareKey>>(new Set());
+  const toggle = (k: CompareKey) =>
+    setHidden((h) => {
+      const next = new Set(h);
+      if (next.has(k)) next.delete(k);
+      else next.add(k);
+      return next;
+    });
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
 
   const c = compareSeries({ holdings, months: Number(months), today: todayISO(), prices, feed, settings, index });
   const color: Record<CompareKey, string> = {
     portfolio: theme.accent,
     usd: theme.text,
+    eur: theme.chartEur,
+    bist100: theme.chartBist,
     gold: theme.chartGold,
     deposit: theme.chartMuted,
     cash: theme.negative,
   };
 
-  const values = c.lines.flatMap((l) => l.points.map((p) => p.value));
+  const visible = c.lines.filter((l) => !hidden.has(l.key));
+  const values = visible.flatMap((l) => l.points.map((p) => p.value));
   const min = Math.min(100, ...values);
   const max = Math.max(100, ...values);
   const span = max - min || 1;
@@ -65,7 +77,7 @@ export function CompareCard() {
         {width > 0 && count > 1 && (
           <Svg width={width} height={HEIGHT}>
             <Line x1={PAD.x} x2={width - PAD.x} y1={y(100)} y2={y(100)} stroke={theme.border} strokeDasharray="3 4" />
-            {c.lines
+            {visible
               .filter((l) => l.key !== 'portfolio')
               .map((l) => (
                 <Path
@@ -77,7 +89,7 @@ export function CompareCard() {
                   fill="none"
                 />
               ))}
-            {c.lines
+            {visible
               .filter((l) => l.key === 'portfolio')
               .map((l) => (
                 <Path key={l.key} d={path(l)} stroke={color.portfolio} strokeWidth={3.5} strokeLinejoin="round" fill="none" />
@@ -95,13 +107,25 @@ export function CompareCard() {
       </View>
 
       <View style={styles.rows}>
-        {sorted.map((l) => (
-          <View key={l.key} style={styles.row}>
-            <View style={[styles.swatch, { backgroundColor: color[l.key] }]} />
-            <ThemedText style={[styles.rowLabel, l.key === 'portfolio' && styles.bold]}>{COMPARE_LABELS[l.key]}</ThemedText>
-            <Pct ratio={l.real} size={16} />
-          </View>
-        ))}
+        {sorted.map((l) => {
+          const off = hidden.has(l.key);
+          return (
+            <Pressable
+              key={l.key}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: !off }}
+              accessibilityLabel={`${COMPARE_LABELS[l.key]} çizgisi`}
+              onPress={() => toggle(l.key)}
+              style={[styles.row, off && styles.off]}>
+              <View style={[styles.swatch, { backgroundColor: off ? theme.border : color[l.key] }]} />
+              <ThemedText style={[styles.rowLabel, l.key === 'portfolio' && styles.bold]}>{COMPARE_LABELS[l.key]}</ThemedText>
+              <Pct ratio={l.real} size={16} />
+            </Pressable>
+          );
+        })}
+        <ThemedText type="small" themeColor="textSecondary">
+          Bir satıra dokunarak çizgisini gizle ya da göster.
+        </ThemedText>
       </View>
 
       {tm && (
@@ -125,8 +149,8 @@ export function CompareCard() {
           : c.excluded > 0
             ? `Dönem içinde aldığın ${c.excluded} varlık, yeni para kazanç gibi görünmesin diye dışarıda. `
             : ''}
-        Dolar ve altın ay sonu fiyatları (ECB, Dünya Bankası), mevduat o ayki politika faiziyle aylık yenileme ve stopaj
-        varsayımıdır.{c.estimated ? ' Fiyat geçmişi olmayan varlıklarda ara aylar tahminidir.' : ''} Geçmiş, geleceği
+        Dolar, euro ve altın ay sonu fiyatları (ECB, Dünya Bankası); BIST 100 temettüler dahil getiri endeksi (Borsa
+        İstanbul, TCMB EVDS); mevduat o ayki politika faiziyle aylık yenileme ve stopaj varsayımıdır.{c.estimated ? ' Fiyat geçmişi olmayan varlıklarda ara aylar tahminidir.' : ''} Geçmiş, geleceği
         göstermez.
       </ThemedText>
     </Card>
@@ -140,6 +164,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   rowLabel: { flex: 1, fontSize: 15 },
   bold: { fontWeight: 700 },
+  off: { opacity: 0.45 },
   swatch: { width: 14, height: 4, borderRadius: 2 },
   machine: { borderRadius: 14, padding: Spacing.three, gap: 4 },
 });

@@ -34,7 +34,7 @@ export function PowerSection() {
       ) : (
         <EmptyPower />
       )}
-      <PremiumGate feature="benchmarks" pitch="Birikimini dolar, gram altın, mevduat ve nakit TL ile bugünün lirasıyla aynı grafikte kıyasla; zaman makinesiyle geçmişteki birikimini bugünün fiyatlarıyla gör.">
+      <PremiumGate feature="benchmarks" pitch="Birikimini dolar, euro, gram altın, BIST 100, mevduat ve nakit TL ile bugünün lirasıyla aynı grafikte kıyasla; zaman makinesiyle geçmişteki birikimini bugünün fiyatlarıyla gör.">
         <CompareCard />
       </PremiumGate>
       <PremiumGate feature="scenario" pitch="Enflasyon piyasa beklentisi, bugünkü oran ya da hanehalkı beklentisi gibi gelirse mevduatının reel getirisini hesapla.">

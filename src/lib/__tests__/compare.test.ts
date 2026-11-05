@@ -16,13 +16,24 @@ const markets: Feed['markets'] = {
     { month: '2026-04', value: 45 },
     { month: '2026-10', value: 50 },
   ],
+  eurTry: [
+    { month: '2025-10', value: 46 },
+    { month: '2026-10', value: 57.5 },
+  ],
   goldUsdOz: [
     { month: '2025-10', value: 3000 },
     { month: '2026-10', value: 3300 },
   ],
   source: 'test',
 };
-const testFeed = { markets, policyRate: { history: [{ from: '2020-01-01', rate: 36 }], source: 'test' } };
+const bist100 = {
+  rows: [
+    { month: '2025-10', value: 20_000 },
+    { month: '2026-10', value: 27_280 },
+  ],
+  source: 'test',
+};
+const testFeed = { markets, bist100, policyRate: { history: [{ from: '2020-01-01', rate: 36 }], source: 'test' } };
 
 function holding(over: Partial<Holding>): Holding {
   return { id: 'h', kind: 'other', name: 'x', buyDate: '2025-01-01', quantity: 1, unitCost: 100, ...over };
@@ -75,5 +86,16 @@ describe('compareSeries', () => {
     const c = run([holding({ buyDate: '2026-09-01', currentPrice: 110 })]);
     expect(c.lines.some((l) => l.key === 'portfolio')).toBe(false);
     expect(c.timeMachine).toBeUndefined();
+  });
+
+  it('adds euro and the BIST 100 total-return index, deflated like the rest', () => {
+    const c = run([]);
+    expect(c.lines.find((l) => l.key === 'eur')!.real).toBeCloseTo(57.5 / 46 / 1.24 - 1, 6);
+    expect(c.lines.find((l) => l.key === 'bist100')!.real).toBeCloseTo(27_280 / 20_000 / 1.24 - 1, 6);
+  });
+
+  it('leaves out a line its data does not cover', () => {
+    const c = compareSeries({ holdings: [], months: 12, today, prices: {}, feed: { ...testFeed, bist100: undefined }, settings: custom24, index });
+    expect(c.lines.some((l) => l.key === 'bist100')).toBe(false);
   });
 });

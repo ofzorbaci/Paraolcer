@@ -204,3 +204,17 @@ export function parseCpiGroups(
   if (Math.abs(yoy.other) > 500) throw new Error(`TÜFE "diğer" grubu olağan dışı: ${yoy.other.toFixed(1)}`);
   return { month, yoy, weights, general };
 }
+
+/** EVDS monthly items ('Tarih': '2026-9') → { month: '2026-09', value }, oldest first, gaps skipped. */
+export function parseEvdsMonthly(items: Record<string, unknown>[], code: string): { month: string; value: number }[] {
+  const key = code.replace(/\./g, '_');
+  const out = items
+    .map((it) => {
+      const [y, m] = String(it.Tarih).split('-');
+      return { month: `${y}-${String(m).padStart(2, '0')}`, value: Number(it[key]) };
+    })
+    .filter((r) => /^\d{4}-\d{2}$/.test(r.month) && Number.isFinite(r.value) && r.value > 0)
+    .sort((a, b) => a.month.localeCompare(b.month));
+  if (out.length < 24) throw new Error(`${code}: seri kısa (${out.length})`);
+  return out;
+}

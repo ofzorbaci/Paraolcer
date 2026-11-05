@@ -33,9 +33,13 @@ export type Feed = {
   /** month-end USD/TRY (ECB) and monthly average gold, USD per troy ounce (World Bank), oldest first */
   markets?: {
     usdTry: { month: string; value: number }[];
+    /** month-end EUR/TRY (ECB); absent in feeds built before it was added */
+    eurTry?: { month: string; value: number }[];
     goldUsdOz: { month: string; value: number }[];
     source: string;
   };
+  /** BIST 100 total-return index (XU100, dividends reinvested), month-end close, via TCMB EVDS */
+  bist100?: { rows: { month: string; value: number }[]; source: string };
   /** US CPI-U (all items, seasonally adjusted) index by month, for dollar-based real returns */
   usCpi?: { rows: { month: string; value: number }[]; source: string };
   /** banks' weighted average TRY deposit rates for new deposits, latest week, by term */

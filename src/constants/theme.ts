@@ -32,6 +32,8 @@ export const Colors = {
     onChip: '#FFFFFF',
     chartMuted: '#8A93A6',
     chartGold: '#A16207',
+    chartEur: '#0E7490',
+    chartBist: '#7C3AED',
   },
   dark: {
     text: '#E6EBF4',
@@ -56,6 +58,8 @@ export const Colors = {
     onChip: '#0A101C',
     chartMuted: '#7D879B',
     chartGold: '#E0B44C',
+    chartEur: '#22D3EE',
+    chartBist: '#A78BFA',
   },
 } as const;
 
