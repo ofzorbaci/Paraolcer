@@ -11,7 +11,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { defaultWithholding, depositValue } from '@/lib/deposit';
 import { formatDate, formatLongDate, formatMonth, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { nextMaturity, RENEW_WINDOWS, renewComparison, type RenewWindow } from '@/lib/renew';
-import { averageRateFor, forwardReal, lastTermReal, liraOutcomes, liraSpread, renewRanking } from '@/lib/renew-forward';
+import { averageRateFor, compoundToSimple, forwardReal, lastTermReal, liraOutcomes, liraSpread, renewRanking } from '@/lib/renew-forward';
 import type { Holding } from '@/lib/types';
 import { recordRenewView, setMaturityReminders, useStore } from '@/state/store';
 
@@ -164,7 +164,9 @@ function ForwardCard({ h }: { h: Holding }) {
   const term = h.termDays ?? 32;
   const withholding = h.withholding ?? defaultWithholding(term);
   const cpi = expectations.next12m.market;
-  const average = averageRateFor(depositRates, term);
+  // TCMB publishes compound rates; the bank quotes simple ones, and the user's own rate is simple too.
+  const averageCompound = averageRateFor(depositRates, term);
+  const average = averageCompound === undefined ? undefined : compoundToSimple(averageCompound, term);
   const offered = parseAmount(offer);
   const previous = lastTermReal(h, todayISO(), settings, index);
   // Real gain over 12 months on today's balance, in today's lira.
@@ -181,8 +183,8 @@ function ForwardCard({ h }: { h: Holding }) {
       </ThemedText>
       {average !== undefined && depositRates ? (
         <Line
-          label={`Ortalama mevduat faiziyle (${formatRate(average)})`}
-          detail={`TCMB, ${formatDate(depositRates.date)} haftası`}
+          label={`Ortalama mevduat faiziyle (yıllık basit ${formatRate(average)})`}
+          detail={`TCMB, ${formatDate(depositRates.date)} haftası · TCMB’nin yayımladığı yıllık bileşik oran ${formatRate(averageCompound!)}`}
           ratio={forwardReal(average, term, withholding, cpi)}
           lira={lira(forwardReal(average, term, withholding, cpi))}
         />

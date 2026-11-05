@@ -9,9 +9,18 @@ import type { RenewResult } from './renew';
 import { scenarioReal } from './scenario';
 import type { Holding, Settings } from './types';
 
-/** The published average rate for a term, or undefined when the feed has none. */
+/** TCMB's published average for a term, as TCMB publishes it: a yearly compound rate, %. */
 export function averageRateFor(rates: Feed['depositRates'], termDays: number): number | undefined {
   return rates?.byTerm.find((t) => t.maxDays === null || termDays <= t.maxDays)?.rate;
+}
+
+/**
+ * A yearly compound rate (TCMB's averages) → the yearly simple rate a bank would quote for a
+ * deposit of `termDays`: ((1 + c)^(t/365) − 1) × 365/t. 41,9% compound is ≈ 35,5% simple at 32 days.
+ */
+export function compoundToSimple(compound: number, termDays: number): number {
+  const t = Math.max(1, termDays);
+  return (Math.pow(1 + compound / 100, t / 365) - 1) * (365 / t) * 100;
 }
 
 /** Expected real return over 12 months when rolling over at `grossRate`. */

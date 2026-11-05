@@ -4,7 +4,7 @@ import feed from '../../data/feed-snapshot.json';
 import { buildCpiIndex } from '../cpi';
 import type { Feed } from '../feed-types';
 import type { RenewResult } from '../renew';
-import { averageRateFor, forwardReal, lastTermReal, liraOutcomes, liraSpread, renewRanking } from '../renew-forward';
+import { averageRateFor, compoundToSimple, forwardReal, lastTermReal, liraOutcomes, liraSpread, renewRanking } from '../renew-forward';
 import type { Holding, Settings } from '../types';
 import { usdReal } from '../usd-real';
 
@@ -44,6 +44,15 @@ describe('forward estimate', () => {
     expect(averageRateFor(rates, 32)).toBe(41);
     expect(averageRateFor(rates, 400)).toBe(35);
     expect(averageRateFor(undefined, 32)).toBeUndefined();
+  });
+
+  it('turns TCMB’s compound average into the simple rate a bank quotes', () => {
+    // TCMB’s own example: 8% simple at 33 days compounds to 8,30%.
+    expect(compoundToSimple(8.3, 33)).toBeCloseTo(8, 1);
+    expect(compoundToSimple(43.33, 32)).toBeLessThan(43.33);
+    // Rolled over at its own term, the simple rate gives back the compound rate.
+    const simple = compoundToSimple(41, 32);
+    expect((Math.pow(1 + simple / 100 * 32 / 365, 365 / 32) - 1) * 100).toBeCloseTo(41, 8);
   });
 
   it('measures the last completed term and nothing before the first rollover', () => {

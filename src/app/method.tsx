@@ -115,7 +115,8 @@ export default function MethodScreen() {
         <ThemedText type="small" themeColor="textSecondary">
           Faiz, her vadede aynı oranla yenilenmiş sayılır; beklenen enflasyon TCMB Piyasa Katılımcıları Anketi’nin 12 ay
           sonrası beklentisidir. Ortalama faiz, bankaların yeni açılan TL mevduatlara uyguladığı ağırlıklı ortalamadır
-          (TCMB EVDS). Bu bir beklenti hesabıdır, öneri değildir.
+          (TCMB EVDS). TCMB bu oranı yıllık bileşik olarak yayımlar; bankanın ilan ettiği yıllık basit faizle
+          karşılaştırılabilsin diye mevduatının vadesine göre basite çeviririz: basit = ((1 + bileşik)^(vade ÷ 365) − 1) × 365 ÷ vade. Bu bir beklenti hesabıdır, öneri değildir.
         </ThemedText>
         <Row label="Beklenen enflasyon" value={`${formatRate(feed.expectations.next12m.market)} · ${formatMonth(feed.expectations.month)}`} />
         <Row
