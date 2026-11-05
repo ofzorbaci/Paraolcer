@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ImportButtons } from '@/components/import-buttons';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card } from '@/components/ui';
+import { todayISO } from '@/lib/format';
 import { exportWorkbook } from '@/lib/spreadsheet';
 import { shareWorkbook } from '@/lib/spreadsheet-file';
 import { deleteBudget } from '@/state/budget';
@@ -23,7 +24,7 @@ export function DataCard() {
         title="Excel’e aktar"
         kind="secondary"
         disabled={holdings.length === 0}
-        onPress={() => shareWorkbook(exportWorkbook(holdings), `paraolcer-${new Date().toISOString().slice(0, 10)}.xlsx`)}
+        onPress={() => shareWorkbook(exportWorkbook(holdings), `paraolcer-${todayISO()}.xlsx`)}
       />
       <ImportButtons />
       <ThemedText type="small" themeColor="textSecondary">

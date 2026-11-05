@@ -11,6 +11,8 @@ describe('dates', () => {
   it('reads Excel serials and the common text formats', () => {
     expect(toISODateCell(45952)).toBe('2025-10-22');
     expect(toISODateCell('2025-10-22')).toBe('2025-10-22');
+    // A cell date is local midnight; it must not slip to the day before east of UTC.
+    expect(toISODateCell(new Date(2025, 9, 22))).toBe('2025-10-22');
     expect(toISODateCell('22.10.2025')).toBe('2025-10-22');
     expect(toISODateCell('5/3/2024')).toBe('2024-03-05');
     expect(toISODateCell('dün')).toBeUndefined();

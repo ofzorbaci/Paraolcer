@@ -4,7 +4,7 @@
 
 import * as XLSX from 'xlsx';
 
-import { parseAmount } from './format';
+import { parseAmount, toISODate } from './format';
 import { GOLD_LABELS, KIND_LABELS, type GoldType, type Holding, type HoldingKind } from './types';
 
 export const SHEET = 'İşlemler';
@@ -86,7 +86,8 @@ export function toISODateCell(v: unknown): string | undefined {
     const d = XLSX.SSF.parse_date_code(v);
     return d ? `${d.y}-${pad(d.m)}-${pad(d.d)}` : undefined;
   }
-  if (v instanceof Date && !Number.isNaN(v.getTime())) return v.toISOString().slice(0, 10);
+  // A cell date is local midnight; toISOString would move it to the day before in Turkey (UTC+3).
+  if (v instanceof Date && !Number.isNaN(v.getTime())) return toISODate(v);
   const s = String(v ?? '').trim();
   let m = /^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/.exec(s);
   if (m) return `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`;

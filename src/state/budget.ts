@@ -8,10 +8,12 @@ import { deleteBudgetSnapshot, readBudgetSnapshot, writeBudgetSnapshot } from '@
 import { afterPaying, occurrences } from '@/lib/budget/planned';
 import { addDays } from '@/lib/budget/calc';
 import { CURRENCY_SIGN, EMPTY_BUDGET, type Account, type BudgetData, type BudgetPrefs, type Planned, type Transaction } from '@/lib/budget/types';
-import { groupThousands } from '@/lib/format';
+import { groupThousands, todayISO } from '@/lib/format';
 import { cancelBudgetReminders, scheduleBudgetReminders } from '@/lib/notify';
 
 const KEY = 'gg.budget.v1';
+/** Soonest payment reminders kept scheduled (rolled forward at launch). */
+const BUDGET_REMINDER_LIMIT = 24;
 
 type BudgetState = BudgetData & { ready: boolean };
 
@@ -72,6 +74,8 @@ export function loadBudget(): Promise<void> {
     }
     state = { ...EMPTY_BUDGET, ...data, prefs: { ...data?.prefs }, ready: true };
     emit();
+    // Reminders cover the next 60 days; roll them forward on every launch.
+    if (state.prefs.remindPayments) void rescheduleBudgetReminders();
   })();
   return loading;
 }
@@ -177,15 +181,19 @@ export async function rescheduleBudgetReminders(): Promise<boolean> {
     await cancelBudgetReminders();
     return true;
   }
-  const today = new Date().toISOString().slice(0, 10);
-  const items = state.planned.flatMap((p) =>
-    occurrences(p, today, addDays(today, 60)).map((date) => ({
-      id: p.id,
-      name: p.name,
-      date,
-      amount: `${CURRENCY_SIGN[p.currency]}${groupThousands(p.amount / 100, 2)}`,
-    })),
-  );
+  const today = todayISO();
+  const items = state.planned
+    .flatMap((p) =>
+      occurrences(p, today, addDays(today, 60)).map((date) => ({
+        id: p.id,
+        name: p.name,
+        date,
+        amount: `${CURRENCY_SIGN[p.currency]}${groupThousands(p.amount / 100, 2)}`,
+      })),
+    )
+    .sort((a, b) => a.date.localeCompare(b.date))
+    // iOS keeps at most 64 scheduled notifications per app; leave room for the other reminders.
+    .slice(0, BUDGET_REMINDER_LIMIT);
   return scheduleBudgetReminders(items);
 }
 

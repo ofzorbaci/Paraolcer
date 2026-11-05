@@ -8,7 +8,7 @@ import { Button, Card, Choice, Disclaimer, Field, IconButton, Pct, Screen } from
 import { Spacing } from '@/constants/theme';
 import { useMasked } from '@/hooks/use-masked';
 import { useTheme } from '@/hooks/use-theme';
-import { defaultWithholding, depositValue } from '@/lib/deposit';
+import { defaultWithholding, depositValue, isTlDeposit } from '@/lib/deposit';
 import { formatDate, formatLongDate, formatMonth, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { nextMaturity, RENEW_WINDOWS, renewComparison, type RenewWindow } from '@/lib/renew';
 import { averageRateFor, compoundToSimple, forwardReal, lastTermReal, liraOutcomes, liraSpread, renewRanking } from '@/lib/renew-forward';
@@ -33,7 +33,9 @@ export default function RenewScreen() {
   const today = todayISO();
   const maturityDate = h ? nextMaturity(h, today) : undefined;
   // The first maturity a free user opens is shown in full, once; later ones are Premium.
-  const gift = !subscribed && !!h && (!freeRenew || (freeRenew.id === h.id && freeRenew.maturity === maturityDate));
+  // Only a real TL deposit with a maturity uses it: not the example portfolio, not an FX deposit.
+  const giftable = !!h && isTlDeposit(h) && !h.sample && !!maturityDate;
+  const gift = !subscribed && giftable && (!freeRenew || (freeRenew.id === h?.id && freeRenew.maturity === maturityDate));
   const premium = subscribed || gift;
   useEffect(() => {
     if (gift && !freeRenew && h && maturityDate) updateSettings({ freeRenew: { id: h.id, maturity: maturityDate } });

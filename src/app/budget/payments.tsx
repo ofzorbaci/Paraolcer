@@ -15,7 +15,7 @@ import { monthlyCost, occurrences, REPEAT_LABEL } from '@/lib/budget/planned';
 import type { Planned } from '@/lib/budget/types';
 import { formatDate, formatMonth, formatTL, todayISO } from '@/lib/format';
 import { requestNotificationPermission } from '@/lib/notify';
-import { ensureDefaultAccount, payPlanned, rescheduleBudgetReminders, setBudgetPrefs, skipPlanned, useBudget } from '@/state/budget';
+import { ensureDefaultAccount, payPlanned, setBudgetPrefs, skipPlanned, useBudget } from '@/state/budget';
 import { useStore } from '@/state/store';
 
 type Tab = 'upcoming' | 'subscriptions' | 'calendar';
@@ -41,8 +41,8 @@ export default function PaymentsScreen() {
   const toggleRemind = async (on: boolean) => {
     if (on && !premium) return openPaywall('budgetReminders');
     if (on && !(await requestNotificationPermission())) return;
+    // Saving the preference reschedules the reminders (state/budget.ts → commit).
     setBudgetPrefs({ remindPayments: on });
-    void rescheduleBudgetReminders();
   };
 
   return (

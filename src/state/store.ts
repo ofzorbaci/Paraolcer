@@ -25,7 +25,7 @@ import {
 } from '@/lib/notify';
 import { nextMaturity } from '@/lib/renew';
 import { deleteSnapshot, readSnapshot, writeSnapshot } from '@/lib/auto-backup';
-import { setAmountsMasked } from '@/lib/format';
+import { setAmountsMasked, todayISO } from '@/lib/format';
 import { shouldAskForReview } from '@/lib/review';
 import { requestReview } from '@/lib/store-review';
 import { refreshPriceBook, toLivePrices, type PriceBook } from '@/lib/prices';
@@ -271,10 +271,13 @@ function setHoldings(allHoldings: Holding[]) {
 }
 
 export function saveHolding(h: Holding) {
-  const exists = state.allHoldings.some((x) => x.id === h.id);
-  // A new holding goes into the portfolio on screen.
-  const saved = exists ? h : { ...h, portfolioId: state.settings.activePortfolio };
-  setHoldings(exists ? state.allHoldings.map((x) => (x.id === h.id ? h : x)) : [...state.allHoldings, saved]);
+  const old = state.allHoldings.find((x) => x.id === h.id);
+  // A new holding goes into the portfolio on screen; an edited one stays where it was (the edit
+  // form does not carry the portfolio or the example flag).
+  const saved = old
+    ? { ...h, portfolioId: h.portfolioId ?? old.portfolioId, sample: h.sample ?? old.sample }
+    : { ...h, portfolioId: state.settings.activePortfolio };
+  setHoldings(old ? state.allHoldings.map((x) => (x.id === h.id ? saved : x)) : [...state.allHoldings, saved]);
   if (state.settings.notifyMaturity && h.kind === 'deposit') void scheduleMaturityReminders(maturities());
 }
 
@@ -291,6 +294,8 @@ export function removeSamples() {
 
 export function deleteHolding(id: string) {
   setHoldings(state.allHoldings.filter((x) => x.id !== id));
+  // A deleted deposit must not keep its maturity reminder.
+  if (state.settings.notifyMaturity) void scheduleMaturityReminders(maturities());
 }
 
 export function updateSettings(patch: Partial<Settings>) {
@@ -340,7 +345,7 @@ export async function rescheduleReminders(): Promise<void> {
 }
 
 function maturities() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   return state.allHoldings
     .filter((h) => h.kind === 'deposit' && !h.sample)
     .map((h) => ({ id: h.id, name: h.name, date: nextMaturity(h, today) }))
@@ -387,9 +392,13 @@ export async function setReminders(kind: ReminderKind, on: boolean): Promise<boo
 /** Replaces all holdings and settings with a restored backup. */
 export function restoreData(holdings: Holding[], settings: Settings) {
   // Reminders belong to this phone's permissions, not to the backup.
-  set({ allHoldings: holdings, settings: { ...settings, notifyCpi: state.settings.notifyCpi, notifyRate: state.settings.notifyRate } });
+  set({
+    allHoldings: holdings,
+    settings: { ...settings, notifyCpi: state.settings.notifyCpi, notifyRate: state.settings.notifyRate, notifyMaturity: state.settings.notifyMaturity },
+  });
   persist(KEYS.holdings, holdings);
   persist(KEYS.settings, state.settings);
+  if (state.settings.notifyMaturity) void scheduleMaturityReminders(maturities());
 }
 
 /** After a good moment (a positive result on screen), ask for a store review if it is time. */
@@ -432,7 +441,7 @@ async function runAlertCheck(): Promise<void> {
   const { settings, calcSettings, premium, prices, cpi } = state;
   const enabled = { realBelowZero: !!settings.alertRealBelowZero, goal: !!settings.goal };
   if (!state.ready || !premium.active || (!enabled.realBelowZero && !enabled.goal)) return;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
   const own = state.allHoldings.filter((h) => !h.sample);
   const total = analyzePortfolio(own.map((h) => analyzeHolding(h, today, prices, calcSettings, cpi.index)));
   const target = settings.goal && goalTarget(settings.goal, today, calcSettings, cpi.index);
@@ -453,7 +462,7 @@ export function setRealAlert(on: boolean) {
 
 /** Premium: a goal in today's lira; undefined clears it. */
 export function setGoal(amount: number | undefined) {
-  updateSettings({ goal: amount ? { amount, setAt: new Date().toISOString().slice(0, 10) } : undefined });
+  updateSettings({ goal: amount ? { amount, setAt: todayISO() } : undefined });
   const meta = { ...state.meta, alerts: { ...state.meta.alerts, goalReached: undefined } };
   set({ meta });
   persist(KEYS.meta, meta);
@@ -487,4 +496,5 @@ export function deletePortfolio(id: string) {
   set({ allHoldings, settings });
   persist(KEYS.holdings, allHoldings);
   persist(KEYS.settings, settings);
+  if (settings.notifyMaturity) void scheduleMaturityReminders(maturities());
 }
