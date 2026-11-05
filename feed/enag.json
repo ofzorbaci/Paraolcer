@@ -1,0 +1,5 @@
+{
+  "_comment": "ENAG'ın açıkladığı son yıllık enflasyon. Her ay ENAG açıkladığında elle güncelle: month 'YYYY-AA', yoy yüzde (ör. 58.9). null iken paylaşım kartında ENAG satırı çıkmaz.",
+  "month": null,
+  "yoy": null
+}

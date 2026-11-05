@@ -13,7 +13,7 @@ import { formatDate, formatLongDate, formatMonth, formatPct, formatRate, formatT
 import { nextMaturity, RENEW_WINDOWS, renewComparison, type RenewWindow } from '@/lib/renew';
 import { averageRateFor, compoundToSimple, forwardReal, lastTermReal, liraOutcomes, liraSpread, renewRanking } from '@/lib/renew-forward';
 import type { Holding } from '@/lib/types';
-import { recordRenewView, setMaturityReminders, useStore } from '@/state/store';
+import { recordRenewView, setMaturityReminders, updateSettings, useStore } from '@/state/store';
 
 const WINDOW_LABEL: Record<RenewWindow, string> = { 1: 'Son 1 ay', 3: 'Son 3 ay', 12: 'Son 12 ay' };
 
@@ -27,13 +27,21 @@ export default function RenewScreen() {
   const index = useStore((s) => s.cpi.index);
   const prices = useStore((s) => s.prices);
   const markets = useStore((s) => s.feed.markets);
-  const premium = usePremium();
+  const subscribed = usePremium();
+  const freeRenew = useStore((s) => s.settings.freeRenew);
   const [chosen, setChosen] = useState<string>('12');
   const today = todayISO();
+  const maturityDate = h ? nextMaturity(h, today) : undefined;
+  // The first maturity a free user opens is shown in full, once; later ones are Premium.
+  const gift = !subscribed && !!h && (!freeRenew || (freeRenew.id === h.id && freeRenew.maturity === maturityDate));
+  const premium = subscribed || gift;
+  useEffect(() => {
+    if (gift && !freeRenew && h && maturityDate) updateSettings({ freeRenew: { id: h.id, maturity: maturityDate } });
+  }, [gift, freeRenew, h, maturityDate]);
   // Free users see the last month's ranking; the lira amounts and longer windows are Premium.
   const window = (premium ? Number(chosen) : 1) as RenewWindow;
   const result = h ? renewComparison(h, window, today, prices, markets, settings, index) : undefined;
-  const maturity = h ? nextMaturity(h, today) : undefined;
+  const maturity = maturityDate;
   const spread = h && result && maturity && premium ? liraSpread(result, h, today) : 0;
 
   useEffect(() => {
@@ -77,6 +85,17 @@ export default function RenewScreen() {
         value={String(window)}
         onChange={(v) => (premium ? setChosen(v) : v !== '1' && openPaywall('renewUnlimited'))}
       />
+
+      {gift && (
+        <View style={[styles.locked, { backgroundColor: theme.info }]}>
+          <ThemedText type="smallBold" style={{ color: theme.infoText }}>
+            İlk vaden bizden: lira farkını ücretsiz görüyorsun
+          </ThemedText>
+          <ThemedText type="small" style={{ color: theme.infoText }}>
+            Bu vadede her şey açık. Sonraki vadelerde lira farkı ve 12 aylık hesap Premium’la.
+          </ThemedText>
+        </View>
+      )}
 
       {result && premium && lira && (
         <Card>
@@ -126,9 +145,13 @@ export default function RenewScreen() {
         </Card>
       )}
 
-      <PremiumGate feature="renewForward" pitch="Bu vadede ortalama faizle ya da sana teklif edilen faizle yenilersen, önümüzdeki 12 ayda beklenen reel getirini gör.">
+      {gift ? (
         <ForwardCard h={h} />
-      </PremiumGate>
+      ) : (
+        <PremiumGate feature="renewForward" pitch="Bu vadede ortalama faizle ya da sana teklif edilen faizle yenilersen, önümüzdeki 12 ayda beklenen reel getirini gör.">
+          <ForwardCard h={h} />
+        </PremiumGate>
+      )}
 
       {Platform.OS !== 'web' && (
         <Card>

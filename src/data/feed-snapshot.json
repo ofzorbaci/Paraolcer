@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-05T16:57:53.228Z",
+ "generatedAt": "2026-11-05T20:55:32.276Z",
  "cpi": {
   "rows": [
    {
@@ -3179,6 +3179,9 @@
    }
   ],
   "source": "Borsa İstanbul XU100 getiri endeksi, TCMB EVDS üzerinden"
+ },
+ "offer": {
+  "lifetimeSeatsLeft": null
  },
  "errors": []
 }

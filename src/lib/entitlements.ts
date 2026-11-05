@@ -25,7 +25,7 @@ export type PremiumFeature =
 
 export const PREMIUM_FEATURES: { id: PremiumFeature; title: string; detail: string }[] = [
   { id: 'renewUnlimited', title: 'Tam “Yenilesem mi?”', detail: 'Lira farkı, son 3 ve 12 ay; ücretsizde yalnızca sıralama' },
-  { id: 'renewForward', title: 'Vade günü ileriye dönük hesap', detail: 'Bu faizle yenilersen beklenen reel getiri' },
+  { id: 'renewForward', title: 'Vade günü 12 aylık reel lira', detail: 'Bu faizle yenilersen 12 ayda bugünün lirasıyla ne kazanırsın' },
   { id: 'usdReal', title: 'Dolar bazında reel getiri', detail: 'Varlıkların ABD enflasyonuna göre gerçek değeri' },
   { id: 'enagDetail', title: 'ENAG ve kendi enflasyonun', detail: 'Her varlık için ayrı ayrı' },
   { id: 'personalBasket', title: 'Kişisel enflasyon sepeti', detail: 'Kira, gıda, ulaşım… kendi ağırlıklarınla' },
@@ -70,7 +70,7 @@ export function premiumShowcase(holdings: Holding[]): Showcase {
       key: 'maturity',
       title: 'Paraölçer Premium',
       subtitle: 'Her vadede paranın nerede daha iyi korunduğunu liralarla gör.',
-      lead: ['renewUnlimited', 'personalInflation', 'renewForward'],
+      lead: ['personalInflation', 'renewForward', 'usdReal'],
     };
   }
   if (own.length > 0 && own.every((h) => h.kind === 'usd' || h.kind === 'eur' || h.kind === 'gbp' || h.kind === 'gold')) {
@@ -78,14 +78,14 @@ export function premiumShowcase(holdings: Holding[]): Showcase {
       key: 'wealth',
       title: 'Paraölçer Premium',
       subtitle: 'Dövizin ve altının sadece TL’ye değil, kendi enflasyonuna karşı da ölçülsün.',
-      lead: ['usdReal', 'personalInflation', 'goals'],
+      lead: ['usdReal', 'personalInflation', 'renewForward'],
     };
   }
   return {
     key: 'general',
     title: 'Paraölçer Premium',
     subtitle: 'Senin enflasyonun kaç? Harcamandan hesaplar, birikimini ona karşı ölçer.',
-    lead: ['personalInflation', 'renewUnlimited', 'usdReal'],
+    lead: ['personalInflation', 'renewForward', 'usdReal'],
   };
 }
 

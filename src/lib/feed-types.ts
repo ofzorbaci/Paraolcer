@@ -62,6 +62,10 @@ export type Feed = {
     stocks: Record<string, SecurityPrice>;
     source: string;
   };
+  /** ENAG's latest yearly rate, kept by hand in feed/enag.json; absent until set */
+  enag?: { month: string; yoy: number };
+  /** lifetime seats left, from feed/offer.json; shown only when set */
+  offer?: { lifetimeSeatsLeft: number | null };
   /** problems the last build ran into; the affected sections keep their previous values */
   errors: string[];
 };

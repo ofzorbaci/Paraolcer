@@ -32,6 +32,8 @@ export default function PaywallScreen() {
   const { feature } = useLocalSearchParams<{ feature?: PremiumFeature }>();
   const premium = useStore((s) => s.premium);
   const holdings = useStore((s) => s.allHoldings);
+  // Real seats left from the published feed; never a made-up countdown.
+  const seatsLeft = useStore((s) => s.feed.offer?.lifetimeSeatsLeft);
   const showcase = premiumShowcase(holdings);
   const [plans, setPlans] = useState<Plan[]>();
   const [selected, setSelected] = useState<string>();
@@ -167,6 +169,7 @@ export default function PaywallScreen() {
                     {p.period === 'lifetime' && (
                       <ThemedText type="small" themeColor="textSecondary">
                         Tek seferlik ödeme, abonelik yok · ilk {groupThousands(LIFETIME_SEATS)} kişi
+                        {seatsLeft !== null && seatsLeft !== undefined ? ` · ${groupThousands(seatsLeft)} koltuk kaldı` : ''}
                       </ThemedText>
                     )}
                     {p.trialDays ? (

@@ -245,6 +245,17 @@ const bist100 = EVDS_KEY
     )
   : previous.bist100;
 
+const ENAG = fileURLToPath(new URL('./enag.json', import.meta.url));
+const enagFile = existsSync(ENAG) ? (JSON.parse(readFileSync(ENAG, 'utf8')) as { month?: string | null; yoy?: number | null }) : undefined;
+const enag =
+  enagFile && typeof enagFile.month === 'string' && typeof enagFile.yoy === 'number' && enagFile.yoy > 0 && enagFile.yoy < 500
+    ? { month: enagFile.month, yoy: enagFile.yoy }
+    : undefined;
+
+const OFFER = fileURLToPath(new URL('./offer.json', import.meta.url));
+const offerFile = existsSync(OFFER) ? (JSON.parse(readFileSync(OFFER, 'utf8')) as { lifetimeSeatsLeft?: number | null }) : undefined;
+const offer = offerFile && { lifetimeSeatsLeft: typeof offerFile.lifetimeSeatsLeft === 'number' ? offerFile.lifetimeSeatsLeft : null };
+
 const withholding = JSON.parse(readFileSync(WITHHOLDING, 'utf8')) as Feed['withholding'];
 const warning = withholdingWarning(withholding.validUntil, today);
 if (warning) errors.push(`Stopaj: ${warning}`);
@@ -268,6 +279,8 @@ const feed: Feed = {
   ...(cpiGroups && { cpiGroups }),
   ...(securities && { securities }),
   ...(bist100 && { bist100 }),
+  ...(offer && { offer }),
+  ...(enag && { enag }),
   errors,
 };
 

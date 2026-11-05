@@ -76,6 +76,8 @@ export type Settings = {
   hideAmounts?: boolean;
   /** lira differences shown at maturities, for the "Paraölçer showed you ₺X" counter */
   renewLog?: RenewLogEntry[];
+  /** the one maturity a free user saw in full ("Yenilesem mi?" lira amounts, every window) */
+  freeRenew?: { id: string; maturity: string };
   /** Premium: notify when the portfolio's real return turns negative */
   alertRealBelowZero?: boolean;
   /** Premium: a target in the purchasing power of the day it was set */

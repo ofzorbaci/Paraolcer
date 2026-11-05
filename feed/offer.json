@@ -1,0 +1,4 @@
+{
+  "_comment": "Ömür boyu planın kalan koltuk sayısı. RevenueCat panelindeki satış sayısına göre elle güncelle (2000 - satılan). null iken uygulama sayı göstermez.",
+  "lifetimeSeatsLeft": null
+}

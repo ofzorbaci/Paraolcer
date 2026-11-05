@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ShareInflationCard } from '@/components/budget/share-inflation-card';
 import { openPaywall, useTasteDaysLeft, useUnlocked } from '@/components/premium-gate';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card } from '@/components/ui';
@@ -90,6 +91,8 @@ export function PersonalInflationCard() {
       ) : (
         <Button title="Kalem kalem gör · Premium" kind="secondary" compact onPress={() => openPaywall('personalInflation')} />
       )}
+
+      <ShareInflationCard rate={p.rate} official={p.official} month={p.source === 'spending' ? p.month : undefined} />
 
       <Button
         title={applied ? 'Özet’te bu oranla da ölçülüyor ✓' : 'Birikimimi bu orana karşı da ölç'}
