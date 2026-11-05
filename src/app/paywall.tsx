@@ -217,6 +217,13 @@ export default function PaywallScreen() {
         </ThemedText>
       )}
 
+      {!!legal.termsUrl && (
+        <ThemedText type="small" themeColor="textSecondary" style={[styles.center, styles.fine]}>
+          Satın alarak Kullanım Koşulları’nı kabul etmiş olursun. Dijital içerik hemen kullanıma açıldığı için cayma
+          hakkı yoktur; iade talepleri {STORE} üzerinden değerlendirilir.
+        </ThemedText>
+      )}
+
       <View style={styles.links}>
         {!premium.active && purchasesAvailable() && (
           <Pressable

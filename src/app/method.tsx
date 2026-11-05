@@ -191,6 +191,12 @@ export default function MethodScreen() {
         <Row label="TÜFE" value={`TÜİK, TCMB aracılığıyla · ${formatMonth(last.month)}`} />
         <Row label="Politika faizi" value={`TCMB · ${formatRate(policy.rate)} (${formatDate(policy.from)})`} />
         <Row label="Beklentiler" value={`TCMB anketi · ${formatMonth(feed.expectations.month)}`} />
+        {feed.depositRates && <Row label="Ortalama mevduat faizi" value="TCMB EVDS" />}
+        {feed.cpiGroups && <Row label="Harcama grupları" value="TÜİK, TCMB EVDS aracılığıyla" />}
+        {feed.bist100 && <Row label="BIST 100 getiri endeksi" value="Borsa İstanbul, TCMB EVDS aracılığıyla" />}
+        <Row label="Döviz kurları" value="Avrupa Merkez Bankası, yedek TCMB" />
+        <Row label="Altın" value="gold-api.com" />
+        {feed.enag && <Row label="ENAG" value={`ENAG açıklaması · ${formatMonth(feed.enag.month)}`} />}
         <Row label="Veri akışı" value={`son derleme ${formatStamp(feed.generatedAt)}`} />
       </Card>
 

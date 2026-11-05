@@ -41,7 +41,7 @@
 <header>
   <div class="wrap">
     <h1>Gizlilik Politikası</h1>
-    <p>Paraölçer · Son güncelleme: 4 Kasım 2026</p>
+    <p>Paraölçer · Son güncelleme: 6 Kasım 2026</p>
   </div>
 </header>
 <main class="wrap">
@@ -49,7 +49,7 @@
   <section>
     <h2>Kısaca</h2>
     <ul>
-      <li>Birikimlerin, varlıkların ve ayarların <strong>yalnızca kendi telefonunda</strong> saklanır. Bize ya da başka bir sunucuya gönderilmez.</li>
+      <li>Birikimlerin, varlıkların, bütçe kayıtların (hesaplar, harcamalar, ödemeler) ve ayarların <strong>yalnızca kendi telefonunda</strong> saklanır. Bize ya da başka bir sunucuya gönderilmez.</li>
       <li>Hesap açman gerekmez. Adını, e-posta adresini ya da telefon numaranı istemeyiz.</li>
       <li>Banka hesabı bağlantısı istemez, şifreni sormayız.</li>
       <li>Reklam göstermeyiz; reklam ya da analiz amaçlı takip aracı kullanmayız.</li>
@@ -59,7 +59,9 @@
 
   <section>
     <h2>Telefonunda tutulan bilgiler</h2>
-    <p>Uygulamaya girdiğin varlıklar (tür, tutar, alış tarihi, faiz oranı gibi), ayarların, son indirilen enflasyon ve fiyat verileri telefonunun uygulamaya ayrılmış alanında saklanır. Uygulamayı sildiğinde bu bilgiler de silinir. Bu bilgilere bizim erişimimiz yoktur.</p>
+    <p>Uygulamaya girdiğin varlıklar (tür, tutar, alış tarihi, faiz oranı gibi), bütçe kayıtların (hesap adları ve bakiyeleri, gelir ve harcamalar, kategoriler, notlar, planlı ödemeler), harcama sepeti cevapların, ayarların, son indirilen enflasyon ve fiyat verileri telefonunun uygulamaya ayrılmış alanında saklanır. Uygulamayı sildiğinde ya da Profil → “Tüm verileri sil” ile bu bilgiler silinir. Bu bilgilere bizim erişimimiz yoktur.</p>
+    <p><strong>Banka ve kart ekstresi aktarma:</strong> Seçtiğin Excel, CSV ya da PDF dosyası yalnızca telefonunda okunur; dosya ya da içindeki işlemler hiçbir sunucuya yüklenmez. Ekstrede yer alabilecek kart numarası, IBAN, ad ve adres gibi bilgiler kaydedilmez; yalnızca seçtiğin işlemlerin tarihi, tutarı ve açıklaması bütçene eklenir.</p>
+    <p><strong>Paylaşım kartları:</strong> “Benim enflasyonum” gibi bir kartı paylaştığında görsel telefonunda oluşturulur ve yalnızca senin seçtiğin uygulamaya gönderilir. Kartta tutar yer almaz.</p>
   </section>
 
   <section>
@@ -68,7 +70,7 @@
     <div class="table-scroll">
     <table>
       <tr><th>Kaynak</th><th>Ne için</th></tr>
-      <tr><td>Paraölçer veri akışı (GitHub Pages, ofzorbaci.github.io)</td><td>TÜFE, politika faizi, faiz kararı takvimi, enflasyon beklentileri, stopaj oranları</td></tr>
+      <tr><td>Paraölçer veri akışı (GitHub Pages, ofzorbaci.github.io)</td><td>TÜFE ve harcama grupları, politika faizi, faiz kararı takvimi, enflasyon beklentileri, ortalama mevduat faizleri, BIST 100, stopaj oranları (kaynakları TÜİK, TCMB EVDS ve ilgili resmi kurumlardır)</td></tr>
       <tr><td>Türkiye Cumhuriyet Merkez Bankası (tcmb.gov.tr)</td><td>TÜFE tablosu ve yedek döviz kurları</td></tr>
       <tr><td>Frankfurter (Avrupa Merkez Bankası kurları)</td><td>Dolar ve euro kurları</td></tr>
       <tr><td>gold-api.com</td><td>Uluslararası altın fiyatı</td></tr>
@@ -91,9 +93,44 @@
     <p>RevenueCat bu bilgileri aboneliğini doğrulamak, satın alımlarını geri yüklemek ve kişisel enflasyonu görenlerle görmeyenlerin Premium’a geçme oranını toplu olarak karşılaştırmamız için işler. Ayrıntılar: <a href="https://www.revenuecat.com/privacy" rel="noopener">RevenueCat Gizlilik Politikası</a>.</p>
   </section>
 
+
+  <section>
+    <h2>Kişisel veri işleme: amaç ve hukuki sebep</h2>
+    <p>Bu bölüm 6698 sayılı Kişisel Verilerin Korunması Kanunu’nun (KVKK) 10. maddesi uyarınca aydınlatma metni niteliğindedir.</p>
+    <div class="table-scroll">
+    <table>
+      <tr><th>Veri</th><th>Amaç</th><th>Hukuki sebep (KVKK m.5/2)</th></tr>
+      <tr><td>Telefonunda tutulan varlık ve bütçe bilgileri</td><td>Hesaplamaları senin cihazında yapmak</td><td>Bu veriler bize ulaşmaz; Paraölçer geliştiricisi tarafından işlenmez.</td></tr>
+      <tr><td>Rastgele kullanıcı kimliği, abonelik ve işlem durumu, cihaz teknik bilgileri (RevenueCat)</td><td>Aboneliği doğrulamak, satın alımları geri yüklemek</td><td>(c) sözleşmenin kurulması ve ifası</td></tr>
+      <tr><td>Kişisel enflasyon ekranını açtı işareti (RevenueCat)</td><td>Özelliklerin Premium’a geçişe etkisini toplu olarak ölçmek</td><td>(f) meşru menfaat</td></tr>
+      <tr><td>Hata bildirimi ve destek e-postaları</td><td>Sana yanıt vermek, hatayı gidermek</td><td>(c) sözleşmenin ifası, (f) meşru menfaat</td></tr>
+    </table>
+    </div>
+    <p>Veriler, uygulama içindeki satın alma ve bağlantı istekleri sırasında elektronik ortamda, otomatik yollarla; e-posta yazdığında ise senin göndermenle toplanır.</p>
+  </section>
+
+  <section>
+    <h2>Yurt dışına aktarım</h2>
+    <p>Abonelik altyapısı RevenueCat, Inc. (ABD), uygulama mağazaları Apple ve Google, veri akışını barındıran GitHub (ABD) ile fiyat servisleri yurt dışında bulunan sunuculardır. Bu nedenle yukarıdaki abonelik bilgileri ve internet isteklerinde görünen IP adresi yurt dışına aktarılabilir. Aktarımlar KVKK’nın 9. maddesine uygun güvencelere (Kurul’un yayımladığı standart sözleşmeler ya da kanunda sayılan diğer yollar) dayanılarak yapılır. Varlık ve bütçe bilgilerin yurt dışına ya da başka bir yere aktarılmaz.</p>
+  </section>
+
+  <section>
+    <h2>Saklama süresi</h2>
+    <ul>
+      <li>Telefonundaki veriler: sen silene ya da uygulamayı kaldırana kadar.</li>
+      <li>Abonelik kayıtları: abonelik ilişkisi süresince ve vergi ile tüketici mevzuatının öngördüğü süreler boyunca; RevenueCat kendi politikasına göre saklar.</li>
+      <li>Destek e-postaları: konu çözüldükten sonra en fazla 2 yıl.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Web sayfası</h2>
+    <p>ofzorbaci.github.io/Paraolcer adresindeki ücretsiz enflasyon testi ve reel getiri hesaplayıcı tarayıcında çalışır. Cevapların ve girdiğin tutarlar hiçbir yere gönderilmez; çerez ya da takip kodu kullanılmaz. Sayfayı barındıran GitHub, her web sunucusu gibi erişim kayıtlarını kendi politikasına göre tutabilir.</p>
+  </section>
+
   <section>
     <h2>Bildirimler</h2>
-    <p>Enflasyon ve faiz kararı hatırlatmaları telefonunda yerel olarak kurulur. Bunun için bir bildirim kimliği oluşturmayız ve sunucuya göndermeyiz. Hatırlatmaları uygulamadan ya da telefon ayarlarından kapatabilirsin.</p>
+    <p>Enflasyon, faiz kararı, mevduat vadesi ve bütçe ödeme hatırlatmaları telefonunda yerel olarak kurulur. Bunun için bir bildirim kimliği oluşturmayız ve sunucuya göndermeyiz. Hatırlatmaları uygulamadan ya da telefon ayarlarından kapatabilirsin.</p>
   </section>
 
   <section>
@@ -113,7 +150,9 @@
 
   <section>
     <h2>KVKK kapsamındaki hakların</h2>
-    <p>6698 sayılı Kişisel Verilerin Korunması Kanunu’nun 11. maddesi uyarınca kişisel verilerinin işlenip işlenmediğini öğrenme, işlenmişse bilgi talep etme, düzeltilmesini ya da silinmesini isteme ve diğer haklarını kullanmak için bize e-postayla başvurabilirsin. Telefonunda tutulan verileri uygulamayı silerek dilediğin zaman tamamen kaldırabilirsin.</p>
+    <p>KVKK’nın 11. maddesi uyarınca şu haklara sahipsin: kişisel verilerinin işlenip işlenmediğini öğrenme; işlenmişse bilgi talep etme; işlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme; yurt içinde ya da yurt dışında aktarıldığı üçüncü kişileri bilme; eksik ya da yanlış işlenmişse düzeltilmesini isteme; KVKK’nın 7. maddesindeki şartlar çerçevesinde silinmesini ya da yok edilmesini isteme; bu işlemlerin aktarıldığı üçüncü kişilere bildirilmesini isteme; münhasıran otomatik sistemlerle analiz edilmesi sonucu aleyhine bir sonuç çıkmasına itiraz etme; kanuna aykırı işleme nedeniyle zarara uğrarsan zararın giderilmesini talep etme.</p>
+    <p>Başvurunu, Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ’e uygun olarak kimliğini doğrulayacak bilgilerle birlikte <a href="mailto:ofzorbaci@gmail.com">ofzorbaci@gmail.com</a> adresine e-postayla iletebilirsin. Başvurular en geç 30 gün içinde ücretsiz yanıtlanır. Yanıtı yeterli bulmazsan Kişisel Verileri Koruma Kurulu’na şikâyette bulunabilirsin.</p>
+    <p>Telefonunda tutulan verileri Profil → “Tüm verileri sil” ile ya da uygulamayı silerek dilediğin zaman tamamen kaldırabilirsin.</p>
   </section>
 
   <section>
@@ -121,6 +160,7 @@
     <p>Bu politikayı güncellersek bu sayfadaki “Son güncelleme” tarihini değiştiririz.</p>
     <p>Soruların için: <a href="mailto:ofzorbaci@gmail.com">ofzorbaci@gmail.com</a></p>
     <p class="muted">Veri sorumlusu: Ömer Faruk Zorbacı (Paraölçer geliştiricisi) · <a href="mailto:ofzorbaci@gmail.com">ofzorbaci@gmail.com</a></p>
+    <p class="muted"><a href="kosullar.html">Kullanım koşulları</a> · <a href="lisanslar.html">Açık kaynak lisansları</a></p>
   </section>
 
 </main>

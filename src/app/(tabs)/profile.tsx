@@ -19,7 +19,7 @@ import { formatDate, formatMonth, formatRate, formatStamp, formatTL } from '@/li
 import { bugReportUrl, SUPPORT_EMAIL } from '@/lib/support';
 import { refreshCpi, refreshFeed, refreshPrices, rescheduleReminders, useStore } from '@/state/store';
 
-const legal = (Constants.expoConfig?.extra?.legal ?? {}) as { privacyUrl?: string };
+const legal = (Constants.expoConfig?.extra?.legal ?? {}) as { termsUrl?: string; privacyUrl?: string; licensesUrl?: string };
 
 export default function ProfileScreen() {
   const settings = useStore((s) => s.settings);
@@ -174,14 +174,32 @@ export default function ProfileScreen() {
           Varlıkların yalnızca bu telefonda saklanır. Hesap açman gerekmez, hiçbir sunucuya gönderilmez.
         </ThemedText>
         <Button title="Verin nerede? Kanıtını gör" kind="secondary" onPress={() => router.push('/privacy-proof')} />
+      </Card>
+
+      <Card>
+        <ThemedText style={styles.cardTitle}>Yasal</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Paraölçer bir hesaplama ve bilgi aracıdır; yatırım danışmanlığı yapmaz, alım satım önermez. Geçmiş veriler
+          gelecekteki sonuçları garanti etmez.
+        </ThemedText>
+        {!!legal.termsUrl && (
+          <Button title="Kullanım koşulları" kind="secondary" onPress={() => WebBrowser.openBrowserAsync(legal.termsUrl!)} />
+        )}
         {!!legal.privacyUrl && (
-          <Button title="Gizlilik politikası" kind="secondary" onPress={() => WebBrowser.openBrowserAsync(legal.privacyUrl!)} />
+          <Button
+            title="Gizlilik politikası ve KVKK aydınlatma metni"
+            kind="secondary"
+            onPress={() => WebBrowser.openBrowserAsync(legal.privacyUrl!)}
+          />
+        )}
+        {!!legal.licensesUrl && (
+          <Button title="Açık kaynak lisansları" kind="secondary" onPress={() => WebBrowser.openBrowserAsync(legal.licensesUrl!)} />
         )}
       </Card>
 
       <DataCard />
 
-      <Disclaimer text="Kaynaklar: TÜİK ve TCMB, Avrupa Merkez Bankası, gold-api.com" />
+      <Disclaimer text="Kaynaklar: TÜİK, TCMB (EVDS), Avrupa Merkez Bankası, gold-api.com, ENAG · Ayrıntı: Yöntem" />
       <Disclaimer
         text={`Paraölçer ${Constants.expoConfig?.version ?? ''} · Alım gücünü ölç · Bir hesaplama aracıdır, yatırım tavsiyesi vermez.`}
       />

@@ -62,7 +62,8 @@
     "lint": "expo lint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "feed": "node feed/build.mts"
+    "feed": "node feed/build.mts",
+    "licenses": "node scripts/build-licenses.mjs"
   },
   "private": true
 }
