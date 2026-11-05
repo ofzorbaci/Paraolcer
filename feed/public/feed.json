@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-04T15:28:43.922Z",
+ "generatedAt": "2026-11-05T15:30:29.454Z",
  "cpi": {
   "rows": [
    {
@@ -1798,7 +1798,7 @@
    },
    {
     "month": "2026-11",
-    "value": 50.022
+    "value": 50.047
    }
   ],
   "goldUsdOz": [
@@ -2459,27 +2459,27 @@
   "source": "ABD Çalışma İstatistikleri Bürosu (BLS) CPI-U, FRED üzerinden"
  },
  "depositRates": {
-  "date": "2026-10-23",
+  "date": "2026-10-30",
   "byTerm": [
    {
     "maxDays": 31,
-    "rate": 43.46
+    "rate": 43.14
    },
    {
     "maxDays": 92,
-    "rate": 43.41
+    "rate": 42.54
    },
    {
     "maxDays": 183,
-    "rate": 42.12
+    "rate": 39.3
    },
    {
     "maxDays": 365,
-    "rate": 35.17
+    "rate": 31.9
    },
    {
     "maxDays": null,
-    "rate": 32.08
+    "rate": 33.26
    }
   ],
   "source": "TCMB EVDS, yeni açılan TL tasarruf mevduatlarına uygulanan ağırlıklı ortalama faiz"
