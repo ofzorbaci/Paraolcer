@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { openPaywall, usePremium } from '@/components/premium-gate';
+import { openPaywall, useTasteDaysLeft, useUnlocked } from '@/components/premium-gate';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -16,7 +16,8 @@ import { updateSettings, useStore } from '@/state/store';
 /** "Senin enflasyonun kaç?": one free line, item by item with Premium. */
 export function PersonalInflationCard() {
   const theme = useTheme();
-  const premium = usePremium();
+  const premium = useUnlocked('personalInflation');
+  const tasteLeft = useTasteDaysLeft();
   const txs = useBudget((s) => s.transactions);
   const accounts = useBudget((s) => s.accounts);
   const rates = useStore((s) => s.prices);
@@ -42,6 +43,7 @@ export function PersonalInflationCard() {
           Harcamalarını yazdıkça kira, market, ulaşım paylarından sana özel enflasyonu TÜİK’in grup verisiyle hesaplarız.
           {txs.length > 0 ? ` İlk tam ayın ${days} gün sonra doluyor.` : ''} Beklemeden 5 soruyla tahmini görebilirsin.
         </ThemedText>
+        <Button title="Geçen ayın ekstresini aktar: hemen gerçek sonuç" onPress={() => router.push('/budget/statement')} />
         <Button title="5 soruyla tahmin et" kind="secondary" onPress={() => router.push('/my-inflation')} />
       </Card>
     );
@@ -56,6 +58,11 @@ export function PersonalInflationCard() {
   return (
     <Card>
       <ThemedText style={styles.title}>Senin enflasyonun</ThemedText>
+      {tasteLeft > 0 && (
+        <ThemedText type="small" style={{ color: theme.accent }}>
+          Ücretsiz tadımlık: kalem kalem döküm {tasteLeft} gün daha açık.
+        </ThemedText>
+      )}
       <View style={styles.line}>
         <ThemedText style={[styles.big, { color: gap > 0 ? theme.negative : theme.accent }]}>{formatRate(p.rate)}</ThemedText>
         <ThemedText themeColor="textSecondary">— TÜFE {formatRate(p.official)}</ThemedText>

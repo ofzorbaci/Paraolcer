@@ -76,7 +76,8 @@ const KEYS = {
   meta: 'gg.meta.v1',
 };
 
-type Meta = { opens: number; reviewAskedAt?: string; alerts?: AlertState };
+/** `firstOpenAt` starts the 14-day free taste (lib/taste.ts). */
+type Meta = { opens: number; firstOpenAt?: string; reviewAskedAt?: string; alerts?: AlertState };
 
 /** GitHub Pages address of feed.json, set in app.json → expo.extra.feedUrl. */
 const FEED_URL = Constants.expoConfig?.extra?.feedUrl as string | undefined;
@@ -198,7 +199,7 @@ export function loadStore(): Promise<void> {
       persist(KEYS.settings, patch.settings);
     }
     if (snapshot) patch.autoBackupAt = snapshot.savedAt;
-    patch.meta = { ...meta, opens: (meta?.opens ?? 0) + 1 };
+    patch.meta = { ...meta, opens: (meta?.opens ?? 0) + 1, firstOpenAt: meta?.firstOpenAt ?? new Date().toISOString() };
     persist(KEYS.meta, patch.meta);
     if (devPremium) patch.devPremium = true;
     // Last good prices, so the app still works offline; their time shows how old they are.
@@ -411,10 +412,12 @@ export async function deleteAllData(): Promise<void> {
     devPremium: false,
     autoBackupAt: undefined,
     restoredFromSnapshot: false,
-    meta: { opens: 0 },
+    // The taste is per install: deleting data does not start a new one.
+    meta: { opens: 0, firstOpenAt: state.meta.firstOpenAt },
     priceBook: {},
     prices: {},
   });
+  persist(KEYS.meta, state.meta);
 }
 
 export function newId(): string {

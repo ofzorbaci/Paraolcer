@@ -94,7 +94,10 @@ export default function StatementScreen() {
       <View style={[styles.trust, { backgroundColor: theme.info }]}>
         <Icon name={{ ios: 'airplane', android: 'airplanemode_active', web: 'airplanemode_active' }} size={20} color={theme.infoText} />
         <ThemedText type="small" style={[styles.flex, { color: theme.infoText }]}>
-          Dosyan bu telefonda okunur, internete gönderilmez. İstersen uçak modunu açıp dene: içe aktarma yine çalışır.
+          Dosyan bu telefonda okunur, internete gönderilmez. İstersen uçak modunu açıp dene: içe aktarma yine çalışır.{' '}
+          <ThemedText type="smallBold" style={{ color: theme.infoText }} onPress={() => router.push('/privacy-proof')}>
+            Uygulama internete ne gönderir? ›
+          </ThemedText>
         </ThemedText>
       </View>
 

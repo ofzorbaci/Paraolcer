@@ -173,6 +173,7 @@ export default function ProfileScreen() {
         <ThemedText type="small" themeColor="textSecondary">
           Varlıkların yalnızca bu telefonda saklanır. Hesap açman gerekmez, hiçbir sunucuya gönderilmez.
         </ThemedText>
+        <Button title="Verin nerede? Kanıtını gör" kind="secondary" onPress={() => router.push('/privacy-proof')} />
         {!!legal.privacyUrl && (
           <Button title="Gizlilik politikası" kind="secondary" onPress={() => WebBrowser.openBrowserAsync(legal.privacyUrl!)} />
         )}

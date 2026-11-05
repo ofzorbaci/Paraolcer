@@ -8,7 +8,7 @@ import { Button, Card, Choice, Disclaimer, Field, IconButton, Pct, Screen } from
 import { Spacing } from '@/constants/theme';
 import { useMasked } from '@/hooks/use-masked';
 import { useTheme } from '@/hooks/use-theme';
-import { defaultWithholding } from '@/lib/deposit';
+import { defaultWithholding, depositValue } from '@/lib/deposit';
 import { formatDate, formatLongDate, formatMonth, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { nextMaturity, RENEW_WINDOWS, renewComparison, type RenewWindow } from '@/lib/renew';
 import { averageRateFor, forwardReal, lastTermReal, liraOutcomes, liraSpread, renewRanking } from '@/lib/renew-forward';
@@ -167,6 +167,10 @@ function ForwardCard({ h }: { h: Holding }) {
   const average = averageRateFor(depositRates, term);
   const offered = parseAmount(offer);
   const previous = lastTermReal(h, todayISO(), settings, index);
+  // Real gain over 12 months on today's balance, in today's lira.
+  const amount = depositValue(h, todayISO());
+  const lira = (ratio: number) => amount * ratio;
+  const current = h.grossRate !== undefined ? forwardReal(h.grossRate, term, withholding, cpi) : undefined;
 
   return (
     <Card>
@@ -180,6 +184,7 @@ function ForwardCard({ h }: { h: Holding }) {
           label={`Ortalama mevduat faiziyle (${formatRate(average)})`}
           detail={`TCMB, ${formatDate(depositRates.date)} haftası`}
           ratio={forwardReal(average, term, withholding, cpi)}
+          lira={lira(forwardReal(average, term, withholding, cpi))}
         />
       ) : (
         <ThemedText type="small" themeColor="textSecondary">
@@ -187,21 +192,31 @@ function ForwardCard({ h }: { h: Holding }) {
         </ThemedText>
       )}
       {h.grossRate !== undefined && (
-        <Line label={`Şu anki faizinle (${formatRate(h.grossRate)})`} ratio={forwardReal(h.grossRate, term, withholding, cpi)} />
+        <Line label={`Şu anki faizinle (${formatRate(h.grossRate)})`} ratio={current!} lira={lira(current!)} />
       )}
       <Field label="Sana teklif edilen faiz" prefix="%" keyboardType="decimal-pad" placeholder="ör. 42" value={offer} onChangeText={setOffer} />
       {offered !== undefined && offered > 0 && (
-        <Line label={`Teklifle (${formatRate(offered)})`} ratio={forwardReal(offered, term, withholding, cpi)} />
+        <Line
+          label={`Teklifle (${formatRate(offered)})`}
+          ratio={forwardReal(offered, term, withholding, cpi)}
+          lira={lira(forwardReal(offered, term, withholding, cpi))}
+          detail={
+            current !== undefined
+              ? `Şu anki faizine göre 12 ayda bugünün lirasıyla ${signedTL(lira(forwardReal(offered, term, withholding, cpi) - current))}`
+              : undefined
+          }
+        />
       )}
       {previous !== undefined && <Line label="Geçen vadede gerçekleşen" ratio={previous} />}
       <ThemedText type="small" themeColor="textSecondary">
-        Beklenti hesabıdır; enflasyon farklı gelirse sonuç değişir. Yatırım tavsiyesi değildir.
+        Sağdaki lira, bugünkü bakiyenin 12 ayda bugünün lirasıyla kazanacağı ya da kaybedeceği alım gücü. Beklenti
+        hesabıdır; enflasyon farklı gelirse sonuç değişir. Yatırım tavsiyesi değildir.
       </ThemedText>
     </Card>
   );
 }
 
-function Line({ label, detail, ratio }: { label: string; detail?: string; ratio: number }) {
+function Line({ label, detail, ratio, lira }: { label: string; detail?: string; ratio: number; lira?: number }) {
   return (
     <View style={styles.option}>
       <View style={styles.flex}>
@@ -212,7 +227,14 @@ function Line({ label, detail, ratio }: { label: string; detail?: string; ratio:
           </ThemedText>
         )}
       </View>
-      <Pct ratio={ratio} size={20} />
+      <View style={styles.right}>
+        <Pct ratio={ratio} size={20} />
+        {lira !== undefined && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {signedTL(lira)}
+          </ThemedText>
+        )}
+      </View>
     </View>
   );
 }
@@ -225,6 +247,7 @@ const styles = StyleSheet.create({
   option: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingVertical: 6 },
   optionLabel: { fontSize: 17, lineHeight: 23, fontWeight: 600 },
   lineLabel: { fontSize: 16, lineHeight: 22 },
+  right: { alignItems: 'flex-end' },
   rank: { fontSize: 20, lineHeight: 26, fontWeight: 800, width: 28 },
   locked: { borderRadius: 14, padding: Spacing.three, gap: 4, marginTop: Spacing.one },
 });

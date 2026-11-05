@@ -65,6 +65,7 @@ export default function RootLayout() {
         <Stack.Screen name="budget/analysis" options={{ headerShown: false }} />
         <Stack.Screen name="budget/statement" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="my-inflation" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="privacy-proof" options={{ headerShown: false }} />
       </Stack>
       </AppLock>
     </ThemeProvider>

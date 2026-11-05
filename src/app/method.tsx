@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { OwnDepositCheck } from '@/components/own-deposit-check';
 import { quoteLabel } from '@/components/source-line';
 import { ThemedText } from '@/components/themed-text';
 import { Card, Disclaimer, IconButton, Row, Screen } from '@/components/ui';
@@ -81,6 +82,8 @@ export default function MethodScreen() {
           {formatDate(feed.withholding.validUntil)} tarihine kadar geçerli · {feed.withholding.source}
         </ThemedText>
       </Card>
+
+      <OwnDepositCheck />
 
       <Card>
         <ThemedText style={styles.h}>Örnek mevduat hesapları</ThemedText>

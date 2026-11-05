@@ -7,10 +7,25 @@ import { Button, Card, Icon } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { PREMIUM_FEATURES, type PremiumFeature } from '@/lib/entitlements';
+import { tasteDaysLeft, tasteUnlocks } from '@/lib/taste';
 import { useStore } from '@/state/store';
 
 export function usePremium(): boolean {
   return useStore((s) => s.premium.active);
+}
+
+/** Premium, or one of the personal-inflation features during the 14-day free taste. */
+export function useUnlocked(feature: PremiumFeature): boolean {
+  const premium = usePremium();
+  const firstOpenAt = useStore((s) => s.meta.firstOpenAt);
+  return premium || tasteUnlocks(feature, firstOpenAt, new Date());
+}
+
+/** Days left of the free taste; 0 for subscribers and once it is over. */
+export function useTasteDaysLeft(): number {
+  const premium = usePremium();
+  const firstOpenAt = useStore((s) => s.meta.firstOpenAt);
+  return premium ? 0 : tasteDaysLeft(firstOpenAt, new Date());
 }
 
 export function openPaywall(feature?: PremiumFeature) {
@@ -25,8 +40,8 @@ export function useAddHolding(): () => void {
 /** Shows `children` to Premium users and a short invitation in their place to everyone else. */
 export function PremiumGate({ feature, pitch, children }: { feature: PremiumFeature; pitch: string; children: ReactNode }) {
   const theme = useTheme();
-  const premium = usePremium();
-  if (premium) return <>{children}</>;
+  const unlocked = useUnlocked(feature);
+  if (unlocked) return <>{children}</>;
   const f = PREMIUM_FEATURES.find((x) => x.id === feature)!;
   return (
     <Card>

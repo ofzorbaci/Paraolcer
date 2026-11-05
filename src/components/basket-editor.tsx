@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { openPaywall, usePremium } from '@/components/premium-gate';
+import { openPaywall, usePremium, useUnlocked } from '@/components/premium-gate';
 import { ThemedText } from '@/components/themed-text';
 import { Button, Card, Choice, Field } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -19,6 +19,7 @@ const num = (n: number | undefined) => (n === undefined ? '' : String(Math.round
 export function BasketEditor({ onSaved }: { onSaved?: () => void }) {
   const theme = useTheme();
   const premium = usePremium();
+  const fineTune = useUnlocked('personalBasket');
   const saved = useStore((s) => s.settings.basket);
   const officialYoy = useStore((s) => s.cpi.rows[s.cpi.rows.length - 1].yoy);
   const groups = useStore((s) => s.feed.cpiGroups);
@@ -79,7 +80,7 @@ export function BasketEditor({ onSaved }: { onSaved?: () => void }) {
       </Card>
 
       <Card>
-        <ThemedText type="smallBold">Payları ve artışları düzenle{premium ? '' : ' · Premium'}</ThemedText>
+        <ThemedText type="smallBold">Payları ve artışları düzenle{fineTune ? '' : ' · Premium'}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           Kiran ya da okul ücretin TÜİK ortalamasından farklı arttıysa kendi rakamını yaz.
         </ThemedText>
@@ -87,7 +88,7 @@ export function BasketEditor({ onSaved }: { onSaved?: () => void }) {
           <Button
             title="Kalem kalem düzenle"
             kind="secondary"
-            onPress={() => (premium ? setEditing(true) : openPaywall('personalBasket'))}
+            onPress={() => (fineTune ? setEditing(true) : openPaywall('personalBasket'))}
           />
         ) : (
           <View style={styles.basket}>

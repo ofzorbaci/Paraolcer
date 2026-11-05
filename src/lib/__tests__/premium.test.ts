@@ -169,3 +169,18 @@ describe('lifetime plan', () => {
     expect(s.expiresAt).toBeUndefined();
   });
 });
+
+describe('free taste', () => {
+  it('opens the personal-inflation features for the first 14 days only', async () => {
+    const { tasteDaysLeft, tasteUnlocks } = await import('../taste');
+    const first = '2026-11-01T10:00:00Z';
+    expect(tasteDaysLeft(first, new Date('2026-11-01T10:00:00Z'))).toBe(14);
+    expect(tasteDaysLeft(first, new Date('2026-11-14T11:00:00Z'))).toBe(1);
+    expect(tasteDaysLeft(first, new Date('2026-11-15T11:00:00Z'))).toBe(0);
+    expect(tasteDaysLeft(undefined, new Date())).toBe(0);
+    expect(tasteUnlocks('personalInflation', first, new Date('2026-11-05'))).toBe(true);
+    expect(tasteUnlocks('netWorth', first, new Date('2026-11-05'))).toBe(true);
+    // Everything else stays Premium during the taste.
+    expect(tasteUnlocks('benchmarks', first, new Date('2026-11-05'))).toBe(false);
+  });
+});
