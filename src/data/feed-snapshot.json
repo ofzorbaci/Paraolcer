@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-06T15:06:44.922Z",
+ "generatedAt": "2026-11-09T17:33:58.900Z",
  "cpi": {
   "rows": [
    {
@@ -1798,7 +1798,7 @@
    },
    {
     "month": "2026-11",
-    "value": 50.153
+    "value": 50.138
    }
   ],
   "eurTry": [
@@ -2136,7 +2136,7 @@
    },
    {
     "month": "2026-11",
-    "value": 55.9957
+    "value": 56.1199
    }
   ],
   "goldUsdOz": [
@@ -3175,7 +3175,7 @@
    },
    {
     "month": "2026-11",
-    "value": 22630.24
+    "value": 22928.42
    }
   ],
   "source": "Borsa İstanbul XU100 getiri endeksi, TCMB EVDS üzerinden"
