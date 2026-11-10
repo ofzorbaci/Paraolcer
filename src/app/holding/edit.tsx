@@ -76,6 +76,29 @@ export default function EditHoldingScreen() {
   const [tried, setTried] = useState(false);
   const [acknowledged, setAcknowledged] = useState<string>();
 
+  // Another asset type is another asset: start its fields empty (the purchase date stays).
+  const changeGroup = (g: Group) => {
+    if (g === group) return;
+    setGroup(g);
+    setName('');
+    setQuantity('');
+    setUnitCost('');
+    setCurrent('');
+    setPrincipal('');
+    setGross('');
+    setTerm('32');
+    setWithholding('');
+    setUsdCost('');
+    setUsdRate('');
+    setCurrentUsd('');
+    setGoldType('gram');
+    setDepositCurrency('try');
+    setRateNote(undefined);
+    setRefRate(undefined);
+    setTried(false);
+    setAcknowledged(undefined);
+  };
+
   const kind: HoldingKind = group === 'fx' ? currency : group;
   const isDeposit = kind === 'deposit';
   const usdKind = isUsdPriced(kind);
@@ -230,7 +253,7 @@ export default function EditHoldingScreen() {
         <ThemedText type="small" themeColor="textSecondary">
           Varlık türü
         </ThemedText>
-        <Choice options={GROUPS} value={group} onChange={(g) => { setGroup(g); setRateNote(undefined); }} />
+        <Choice options={GROUPS} value={group} onChange={changeGroup} />
         {isFx && (
           <Choice
             options={[

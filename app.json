@@ -94,7 +94,17 @@
         "termsUrl": "https://ofzorbaci.github.io/Paraolcer/kosullar.html",
         "privacyUrl": "https://ofzorbaci.github.io/Paraolcer/gizlilik.html",
         "licensesUrl": "https://ofzorbaci.github.io/Paraolcer/lisanslar.html"
+      },
+      "eas": {
+        "projectId": "82c4c360-1fc4-4f6e-b1ac-ba9c7c98a5f8"
       }
+    },
+    "owner": "ofzorbaci",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/82c4c360-1fc4-4f6e-b1ac-ba9c7c98a5f8"
     }
   }
 }
