@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-09T17:33:58.900Z",
+ "generatedAt": "2026-11-10T15:38:10.724Z",
  "cpi": {
   "rows": [
    {
@@ -1798,7 +1798,7 @@
    },
    {
     "month": "2026-11",
-    "value": 50.138
+    "value": 50.224
    }
   ],
   "eurTry": [
@@ -2136,7 +2136,7 @@
    },
    {
     "month": "2026-11",
-    "value": 56.1199
+    "value": 56.3207
    }
   ],
   "goldUsdOz": [
@@ -2792,6 +2792,10 @@
    {
     "month": "2026-09",
     "value": 336.298
+   },
+   {
+    "month": "2026-10",
+    "value": 337.476
    }
   ],
   "source": "ABD Çalışma İstatistikleri Bürosu (BLS) CPI-U, FRED üzerinden"
@@ -3175,7 +3179,7 @@
    },
    {
     "month": "2026-11",
-    "value": 22928.42
+    "value": 23387.81
    }
   ],
   "source": "Borsa İstanbul XU100 getiri endeksi, TCMB EVDS üzerinden"
