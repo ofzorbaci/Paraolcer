@@ -10,6 +10,14 @@ export function assetCode(name: string): string | undefined {
 
 /** Public page where the user can read today's price: TradingView for BIST, TEFAS for funds. */
 export function priceLookup(kind: HoldingKind, name: string): { url: string; site: string } | undefined {
+  if (kind === 'usStock' || kind === 'etf') {
+    const sym = name.trim().toUpperCase().replace(/-/g, '.');
+    return /^[A-Z][A-Z0-9.]{0,9}$/.test(sym) ? { url: `https://www.tradingview.com/symbols/${sym.replace('.', '-')}/`, site: 'TradingView' } : undefined;
+  }
+  if (kind === 'crypto') {
+    const sym = name.trim().toUpperCase();
+    return /^[A-Z0-9]{2,10}$/.test(sym) ? { url: `https://www.tradingview.com/symbols/${sym}USD/`, site: 'TradingView' } : undefined;
+  }
   const code = assetCode(name);
   if (!code) return undefined;
   if (kind === 'stock') return { url: `https://www.tradingview.com/symbols/BIST-${code}/`, site: 'TradingView' };

@@ -19,7 +19,8 @@ export function usdReal(
   const buyMonth = monthOf(h.buyDate);
   // A dollar holding's cost in dollars is exact; anything else is converted at the buy month's rate.
   const usdThen = h.kind === 'usd' ? undefined : feed.markets && valueAt(feed.markets.usdTry, buyMonth);
-  const costUsd = h.kind === 'usd' ? h.quantity : usdThen ? a.cost / usdThen : undefined;
+  // US stocks, ETFs and crypto bought in dollars: the dollar cost is known exactly too.
+  const costUsd = h.kind === 'usd' ? h.quantity : h.usdUnitCost ? h.quantity * h.usdUnitCost : usdThen ? a.cost / usdThen : undefined;
   if (!costUsd) return undefined;
   const cpiThen = valueAt(cpi, buyMonth) ?? cpi[0].value;
   const cpiNow = cpi[cpi.length - 1].value;

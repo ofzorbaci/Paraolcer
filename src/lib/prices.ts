@@ -70,9 +70,59 @@ async function fromTcmb(): Promise<FxQuote> {
   return { usd, eur, gbp, asOf, source: 'TCMB' };
 }
 
+/** fawazahmed0/currency-api (CC0, daily, keyless; jsDelivr with a Cloudflare mirror): USD base. */
+export function parseCurrencyApi(body: unknown): (FxQuote & { goldUsdOz?: number }) | undefined {
+  const b = body as { date?: string; usd?: Record<string, number> };
+  const r = b?.usd;
+  const usd = r?.try;
+  if (!r || !(usd && usd > 0) || !(r.eur > 0)) return undefined;
+  return {
+    usd,
+    eur: usd / r.eur,
+    gbp: r.gbp > 0 ? usd / r.gbp : undefined,
+    asOf: b.date,
+    source: 'currency-api',
+    // xau is ounces per dollar
+    goldUsdOz: r.xau > 0 ? 1 / r.xau : undefined,
+  };
+}
+
+const CURRENCY_API = [
+  'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json',
+  'https://latest.currency-api.pages.dev/v1/currencies/usd.json',
+];
+
+async function fromCurrencyApi(): Promise<FxQuote & { goldUsdOz?: number }> {
+  for (const url of CURRENCY_API) {
+    try {
+      const res = await fetch(url);
+      const q = res.ok ? parseCurrencyApi(await res.json()) : undefined;
+      if (q) return q;
+    } catch {
+      // try the mirror
+    }
+  }
+  throw new Error('Yedek kur kaynağı (currency-api) yanıt vermedi');
+}
+
+/** goldprice.dev keyless spot (15 minutes delayed), USD per troy ounce. */
+export function parseGoldpriceDev(body: unknown): number | undefined {
+  const s = (body as { symbols?: { symbol?: string; price?: string | number; is_stale?: boolean }[] })?.symbols?.find((x) => x.symbol === 'XAU');
+  const price = Number(s?.price);
+  return s && !s.is_stale && price > 0 ? price : undefined;
+}
+
+async function goldFromGoldpriceDev(): Promise<number> {
+  const res = await fetch('https://api.goldprice.dev/v1/prices?symbol=XAU-USD-SPOT');
+  const price = res.ok ? parseGoldpriceDev(await res.json()) : undefined;
+  if (!price) throw new Error('goldprice.dev yanıtı geçersiz');
+  return price;
+}
+
 /**
- * Refreshes USD, EUR, GBP and gram gold. ECB first, TCMB as the fallback for currencies
- * (`useTcmb` is false on web, where TCMB blocks cross-origin requests).
+ * Refreshes USD, EUR, GBP and gram gold. Currencies: ECB first, then TCMB (`useTcmb` is false on
+ * web, where TCMB blocks cross-origin requests), then currency-api. Gold: gold-api.com, then
+ * goldprice.dev, then currency-api's ounce price.
  */
 export async function refreshPriceBook(prev: PriceBook, useTcmb: boolean): Promise<{ book: PriceBook; errors: string[] }> {
   const errors: string[] = [];
@@ -80,6 +130,11 @@ export async function refreshPriceBook(prev: PriceBook, useTcmb: boolean): Promi
   const fetchedAt = new Date().toISOString();
 
   let fx: FxQuote | undefined;
+  let backup: (FxQuote & { goldUsdOz?: number }) | undefined;
+  const loadBackup = async () => {
+    backup ??= await fromCurrencyApi();
+    return backup;
+  };
   try {
     fx = await fromEcb();
   } catch (e) {
@@ -89,6 +144,13 @@ export async function refreshPriceBook(prev: PriceBook, useTcmb: boolean): Promi
         fx = await fromTcmb();
       } catch (e2) {
         errors.push(e2 instanceof Error ? e2.message : 'TCMB kuru alınamadı');
+      }
+    }
+    if (!fx) {
+      try {
+        fx = await loadBackup();
+      } catch (e3) {
+        errors.push(e3 instanceof Error ? e3.message : 'Yedek kur alınamadı');
       }
     }
   }
@@ -107,11 +169,30 @@ export async function refreshPriceBook(prev: PriceBook, useTcmb: boolean): Promi
 
   const usd = book.usd?.value;
   if (usd) {
-    try {
-      accept('gold', gramGoldTry(await fetchGoldUsdPerOunce(), usd), 'gold-api × ' + (book.usd?.source ?? 'ECB'));
-    } catch (e) {
-      errors.push(e instanceof Error ? e.message : 'Altın fiyatı alınamadı');
+    const fxSource = book.usd?.source ?? 'ECB';
+    const sources: [string, () => Promise<number>][] = [
+      ['gold-api', fetchGoldUsdPerOunce],
+      ['goldprice.dev', goldFromGoldpriceDev],
+      [
+        'currency-api',
+        async () => {
+          const oz = (await loadBackup()).goldUsdOz;
+          if (!oz) throw new Error('currency-api altın fiyatı yok');
+          return oz;
+        },
+      ],
+    ];
+    let lastError: unknown;
+    for (const [name, load] of sources) {
+      try {
+        accept('gold', gramGoldTry(await load(), usd), `${name} × ${fxSource}`);
+        lastError = undefined;
+        break;
+      } catch (e) {
+        lastError = e;
+      }
     }
+    if (lastError) errors.push(lastError instanceof Error ? lastError.message : 'Altın fiyatı alınamadı');
   }
   return { book, errors };
 }

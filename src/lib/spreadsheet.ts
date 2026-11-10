@@ -62,6 +62,9 @@ const KIND_ALIASES: Record<string, HoldingKind> = {
   'yarim altin': 'gold', tam: 'gold', 'tam altin': 'gold', cumhuriyet: 'gold', 'cumhuriyet altini': 'gold',
   hisse: 'stock', 'hisse senedi': 'stock', bist: 'stock', stock: 'stock',
   fon: 'fund', 'yatirim fonu': 'fund', tefas: 'fund', fund: 'fund',
+  'abd hissesi': 'usStock', 'abd hisse': 'usStock', 'us stock': 'usStock', 'yabanci hisse': 'usStock', nasdaq: 'usStock', nyse: 'usStock',
+  etf: 'etf', 'borsa yatirim fonu': 'etf',
+  kripto: 'crypto', 'kripto para': 'crypto', crypto: 'crypto', coin: 'crypto',
   diger: 'other', other: 'other',
 };
 
@@ -155,7 +158,7 @@ export function rowsToHoldings(rows: unknown[][], today: string, id: () => strin
       holding: {
         id: id(),
         kind,
-        name: kind === 'stock' || kind === 'fund' ? name.toLocaleUpperCase('tr-TR') : name,
+        name: kind === 'stock' || kind === 'fund' ? name.toLocaleUpperCase('tr-TR') : kind === 'usStock' || kind === 'etf' || kind === 'crypto' ? name.toUpperCase() : name,
         buyDate,
         quantity,
         unitCost: cost,

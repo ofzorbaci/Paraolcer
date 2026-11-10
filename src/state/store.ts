@@ -7,6 +7,7 @@ import snapshot from '@/data/feed-snapshot.json';
 import { rateDecisionDates } from '@/lib/calendar';
 import { buildCpiIndex, type CpiIndex } from '@/lib/cpi';
 import { parseTcmbCpiHtml, TCMB_CPI_URL, type CpiRow } from '@/lib/cpi-parse';
+import { payout, setHolidays } from '@/lib/business-day';
 import { setWithholdingRules } from '@/lib/deposit';
 import { setSecurityPrices } from '@/lib/securities';
 import { checkAlerts, goalTarget, type AlertState } from '@/lib/alerts';
@@ -25,7 +26,7 @@ import {
 } from '@/lib/notify';
 import { nextMaturity } from '@/lib/renew';
 import { deleteSnapshot, readSnapshot, writeSnapshot } from '@/lib/auto-backup';
-import { setAmountsMasked, todayISO } from '@/lib/format';
+import { formatLongDate, setAmountsMasked, todayISO } from '@/lib/format';
 import { shouldAskForReview } from '@/lib/review';
 import { requestReview } from '@/lib/store-review';
 import { refreshPriceBook, toLivePrices, type PriceBook } from '@/lib/prices';
@@ -87,7 +88,8 @@ const bundled = snapshot as Feed;
 /** Applies a feed; its CPI replaces the current series unless that one (read straight from TCMB) is newer. */
 function feedPatch(feed: Feed, origin: State['feedOrigin'], currentCpiMonth = '') {
   setWithholdingRules(feed.withholding);
-  setSecurityPrices(feed.securities);
+  setSecurityPrices(feed.securities, feed.usQuotes);
+  setHolidays(feed.holidays);
   const rows = feed.cpi.rows;
   return {
     feed,
@@ -348,8 +350,17 @@ function maturities() {
   const today = todayISO();
   return state.allHoldings
     .filter((h) => h.kind === 'deposit' && !h.sample)
-    .map((h) => ({ id: h.id, name: h.name, date: nextMaturity(h, today) }))
-    .filter((m): m is { id: string; name: string; date: string } => !!m.date);
+    .map((h) => {
+      const date = nextMaturity(h, today);
+      const paid = date ? payout(date) : undefined;
+      return {
+        id: h.id,
+        name: h.name,
+        date,
+        payoutNote: paid?.reason ? `${paid.reason} olduğu için ödeme ${formatLongDate(paid.date)} günü yapılır.` : undefined,
+      };
+    })
+    .filter((m): m is { id: string; name: string; date: string; payoutNote: string | undefined } => !!m.date);
 }
 
 /** Deposit maturity reminders on or off; false if notifications are not permitted. */

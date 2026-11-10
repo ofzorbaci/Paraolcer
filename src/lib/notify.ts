@@ -80,7 +80,7 @@ export async function disableReminders(kind: ReminderKind): Promise<void> {
   );
 }
 
-export type MaturityReminder = { id: string; name: string; date: string };
+export type MaturityReminder = { id: string; name: string; date: string; payoutNote?: string };
 
 /**
  * One reminder per deposit, two days before its next maturity at 10:00. Tapping it opens
@@ -97,7 +97,9 @@ export async function scheduleMaturityReminders(items: MaturityReminder[]): Prom
     await Notifications.scheduleNotificationAsync({
       content: {
         title: `${m.name}: vaden 2 gün sonra doluyor`,
-        body: 'Yenilemeden önce son dönemde dolar ve altınla nasıl kıyaslandığına bak.',
+        body: m.payoutNote
+          ? `${m.payoutNote} Yenilemeden önce son dönemde dolar ve altınla nasıl kıyaslandığına bak.`
+          : 'Yenilemeden önce son dönemde dolar ve altınla nasıl kıyaslandığına bak.',
         data: { tag: MATURITY_TAG, url: `/renew/${m.id}` },
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },

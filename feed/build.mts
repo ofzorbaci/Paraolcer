@@ -25,7 +25,9 @@ import {
   parsePpkYear,
   parseSebText,
 } from './parse.ts';
+import { parseBlsCpi, parseNagerHolidays, parseWorldBankInflation, WORLD_COUNTRIES } from './extras.ts';
 import { fetchSecurityList, mergeSecurityPrices, securitiesConfig } from './securities.ts';
+import { buildUsQuotes, type Universe } from './us-quotes.ts';
 import {
   checkCpi,
   checkDecisions,
@@ -149,10 +151,22 @@ const markets = await section(
 const usCpi = await section(
   'ABD TÜFE',
   async () => {
-    // BLS CPI-U via FRED; public-domain data, cited in the app.
-    const rows = parseFredMonthly(await (await get('https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL')).text());
+    // BLS CPI-U via FRED; public-domain data, cited in the app. BLS's own API is the fallback.
     const from = `${Number(today.slice(0, 4)) - 6}-01`;
-    return { rows: rows.filter((r) => r.month >= from), source: 'ABD Çalışma İstatistikleri Bürosu (BLS) CPI-U, FRED üzerinden' };
+    try {
+      const rows = parseFredMonthly(await (await get('https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL')).text());
+      return { rows: rows.filter((r) => r.month >= from), source: 'ABD Çalışma İstatistikleri Bürosu (BLS) CPI-U, FRED üzerinden' };
+    } catch (fredError) {
+      const year = Number(today.slice(0, 4));
+      const res = await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seriesid: ['CUSR0000SA0'], startyear: String(year - 6), endyear: String(year) }),
+      });
+      if (!res.ok) throw fredError;
+      const rows = parseBlsCpi(await res.json());
+      return { rows: rows.filter((r) => r.month >= from), source: 'ABD Çalışma İstatistikleri Bürosu (BLS) CPI-U' };
+    }
   },
   previous.usCpi,
 );
@@ -245,6 +259,47 @@ const bist100 = EVDS_KEY
     )
   : previous.bist100;
 
+// Public holidays this year and next (Nager.Date, keyless): a deposit maturing on one pays the next business day.
+const holidays = await section(
+  'Resmi tatiller',
+  async () => {
+    const year = Number(today.slice(0, 4));
+    const lists = await Promise.all(
+      [year, year + 1].map(async (y) => parseNagerHolidays(await (await get(`https://date.nager.at/api/v3/PublicHolidays/${y}/TR`)).json())),
+    );
+    return { dates: lists.flat(), source: 'Nager.Date' };
+  },
+  previous.holidays,
+);
+
+// Yearly CPI change around the world (World Bank, CC BY 4.0, keyless).
+const worldInflation = await section(
+  'Dünya enflasyonu',
+  async () => {
+    const url = `https://api.worldbank.org/v2/country/${WORLD_COUNTRIES.join(';')}/indicator/FP.CPI.TOTL.ZG?format=json&mrnev=1&per_page=100`;
+    return { items: parseWorldBankInflation(await (await get(url)).json()), source: 'Dünya Bankası (FP.CPI.TOTL.ZG)' };
+  },
+  previous.worldInflation,
+);
+
+// US stocks, ETFs and crypto in USD: only when an API key is configured (GitHub secrets).
+const FINNHUB_KEY = process.env.FINNHUB_API_KEY;
+const ALPHA_KEY = process.env.ALPHAVANTAGE_API_KEY;
+const usQuotes =
+  FINNHUB_KEY || ALPHA_KEY
+    ? await section(
+        'ABD fiyatları',
+        async () => {
+          const universe = JSON.parse(readFileSync(fileURLToPath(new URL('./us-universe.json', import.meta.url)), 'utf8')) as Universe;
+          const { missing, ...book } = await buildUsQuotes(universe, previous.usQuotes, { finnhubKey: FINNHUB_KEY, alphaKey: ALPHA_KEY, today });
+          if (Object.keys(book.stocks).length + Object.keys(book.crypto).length === 0) throw new Error('hiç fiyat alınamadı');
+          if (missing.length) console.warn(`ABD fiyatı alınamayan semboller: ${missing.join(', ')}`);
+          return book;
+        },
+        previous.usQuotes,
+      )
+    : previous.usQuotes;
+
 const ENAG = fileURLToPath(new URL('./enag.json', import.meta.url));
 const enagFile = existsSync(ENAG) ? (JSON.parse(readFileSync(ENAG, 'utf8')) as { month?: string | null; yoy?: number | null }) : undefined;
 const enag =
@@ -281,6 +336,9 @@ const feed: Feed = {
   ...(bist100 && { bist100 }),
   ...(offer && { offer }),
   ...(enag && { enag }),
+  ...(usQuotes && { usQuotes }),
+  ...(holidays && { holidays }),
+  ...(worldInflation && { worldInflation }),
   errors,
 };
 

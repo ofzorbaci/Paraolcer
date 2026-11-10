@@ -9,16 +9,16 @@ import { Button, Card, Choice, Field, Icon, IconButton, Pct, Row, Screen } from 
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { defaultWithholding } from '@/lib/deposit';
-import { formatDate, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
+import { formatDate, formatMoney, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { fetchTryRate } from '@/lib/fx';
 import { priceLookup } from '@/lib/lookup';
-import { feedQuote } from '@/lib/securities';
+import { feedQuote, knownSymbols, usSymbol } from '@/lib/securities';
 import { analyzeHolding } from '@/lib/returns';
-import { CURRENCY_SYMBOL, GOLD_LABELS, isCurrencyKind, KIND_LABELS, type CurrencyKind, type GoldType, type Holding, type HoldingKind } from '@/lib/types';
+import { CURRENCY_SYMBOL, GOLD_LABELS, isCurrencyKind, isUsdPriced, KIND_LABELS, type CurrencyKind, type GoldType, type Holding, type HoldingKind } from '@/lib/types';
 import { plausibilityWarnings } from '@/lib/validate';
 import { newId, saveHolding, useStore } from '@/state/store';
 
-type Group = 'deposit' | 'fx' | 'gold' | 'fund' | 'stock' | 'other';
+type Group = 'deposit' | 'fx' | 'gold' | 'fund' | 'stock' | 'usStock' | 'etf' | 'crypto' | 'other';
 
 const GROUPS: { value: Group; label: string }[] = [
   { value: 'deposit', label: 'Mevduat' },
@@ -26,6 +26,9 @@ const GROUPS: { value: Group; label: string }[] = [
   { value: 'gold', label: 'Altın' },
   { value: 'fund', label: 'Fon' },
   { value: 'stock', label: 'Hisse' },
+  { value: 'usStock', label: 'ABD hisse' },
+  { value: 'etf', label: 'ETF' },
+  { value: 'crypto', label: 'Kripto' },
   { value: 'other', label: 'Diğer' },
 ];
 
@@ -61,6 +64,12 @@ export default function EditHoldingScreen() {
   const [term, setTerm] = useState(numText(existing?.termDays ?? 32));
   const [withholding, setWithholding] = useState(numText(existing?.withholding));
   const [current, setCurrent] = useState(numText(existing?.currentPrice));
+  // US stocks, ETFs and crypto: prices in dollars and the USD/TRY of the purchase day.
+  const [usdCost, setUsdCost] = useState(numText(existing?.usdUnitCost));
+  const [usdRate, setUsdRate] = useState(
+    numText(existing?.usdUnitCost ? Number((existing.unitCost / existing.usdUnitCost).toFixed(4)) : undefined),
+  );
+  const [currentUsd, setCurrentUsd] = useState(numText(existing?.currentPriceUsd));
   const [goldType, setGoldType] = useState<GoldType>(existing?.goldType ?? 'gram');
   const [rateNote, setRateNote] = useState<string>();
   const [refRate, setRefRate] = useState<number>();
@@ -69,15 +78,23 @@ export default function EditHoldingScreen() {
 
   const kind: HoldingKind = group === 'fx' ? currency : group;
   const isDeposit = kind === 'deposit';
+  const usdKind = isUsdPriced(kind);
   const isFx = group === 'fx';
   const fxDeposit = isDeposit && depositCurrency !== 'try' ? depositCurrency : undefined;
   // Which currency's rate on the purchase day to look up: cash or a foreign-currency deposit.
-  const rateCurrency: CurrencyKind | undefined = isFx ? currency : fxDeposit;
+  const rateCurrency: CurrencyKind | undefined = isFx ? currency : (fxDeposit ?? (usdKind ? 'usd' : undefined));
   const isGold = kind === 'gold';
   // A fund or stock whose code the feed lists is priced automatically.
   const autoQuote = feedQuote({ kind, name });
   const manualPrice = !isDeposit && !isFx && !isGold && !autoQuote;
   const lookup = priceLookup(kind, name);
+  // Symbols the feed prices, filtered by what is typed: one tap fills the symbol.
+  const typed = name.trim().toUpperCase();
+  const suggestions = usdKind
+    ? knownSymbols(kind)
+        .filter((s) => s.symbol !== typed && (!typed || s.symbol.startsWith(typed) || s.name.toUpperCase().includes(typed)))
+        .slice(0, 6)
+    : [];
 
   // The ECB rate of the purchase day: pre-fills the cost and is the reference for the plausibility check.
   useEffect(() => {
@@ -87,6 +104,12 @@ export default function EditHoldingScreen() {
       .then((r) => {
         if (cancelled) return;
         setRefRate(r);
+        if (usdKind) {
+          if (usdRate) return;
+          setUsdRate(numText(Number(r.toFixed(4))));
+          setRateNote('O günün Avrupa Merkez Bankası dolar kuru. Kendi alış kurunla değiştirebilirsin.');
+          return;
+        }
         if (unitCost) return;
         setUnitCost(numText(Number(r.toFixed(4))));
         setRateNote('O günün Avrupa Merkez Bankası kuru. Kendi alış kurunla değiştirebilirsin.');
@@ -100,7 +123,16 @@ export default function EditHoldingScreen() {
 
   const termDays = parseAmount(term);
   const autoWithholding = defaultWithholding(termDays && termDays > 0 ? termDays : 32, fxDeposit);
-  const draft: Partial<Holding> = isDeposit
+  const usdUnitCost = parseAmount(usdCost);
+  const usdRateValue = parseAmount(usdRate);
+  const draft: Partial<Holding> = usdKind
+    ? {
+        quantity: parseAmount(quantity),
+        usdUnitCost,
+        unitCost: usdUnitCost && usdRateValue ? usdUnitCost * usdRateValue : undefined,
+        currentPriceUsd: manualPrice && currentUsd.trim() ? parseAmount(currentUsd) : undefined,
+      }
+    : isDeposit
     ? {
         // TRY: one unit worth the principal. Foreign currency: the principal in units, at the deposit-day rate.
         quantity: fxDeposit ? parseAmount(principal) : 1,
@@ -118,11 +150,28 @@ export default function EditHoldingScreen() {
   const errors = {
     date: !buyDate ? 'Tarih seç' : undefined,
     quantity: (!isDeposit || fxDeposit) && !(draft.quantity && draft.quantity > 0) ? 'Sıfırdan büyük bir miktar gir' : undefined,
-    cost: !(draft.unitCost && draft.unitCost > 0) ? (fxDeposit ? 'Yatırdığın günkü kuru gir' : 'Sıfırdan büyük bir tutar gir') : undefined,
+    name: usdKind && !usSymbol(name) ? `Sembolü gir (ör. ${kind === 'crypto' ? 'BTC' : kind === 'etf' ? 'SPY' : 'AAPL'})` : undefined,
+    cost: usdKind
+      ? !(usdUnitCost && usdUnitCost > 0)
+        ? 'Birim alış fiyatını dolar olarak gir'
+        : !(usdRateValue && usdRateValue > 0)
+          ? 'Aldığın günkü dolar kurunu gir'
+          : undefined
+      : !(draft.unitCost && draft.unitCost > 0)
+        ? fxDeposit
+          ? 'Yatırdığın günkü kuru gir'
+          : 'Sıfırdan büyük bir tutar gir'
+        : undefined,
     gross: isDeposit && draft.grossRate === undefined ? `Yıllık brüt faizi gir (ör. ${fxDeposit ? '2' : '40'})` : undefined,
     term: isDeposit && !(draft.termDays && draft.termDays > 0) ? 'Vadeyi gün olarak gir' : undefined,
     withholding: isDeposit && (draft.withholding === undefined || draft.withholding >= 100) ? 'Geçerli bir oran gir' : undefined,
-    current: manualPrice && current.trim() && draft.currentPrice === undefined ? 'Geçerli bir fiyat gir' : undefined,
+    current: usdKind
+      ? manualPrice && currentUsd.trim() && draft.currentPriceUsd === undefined
+        ? 'Geçerli bir fiyat gir'
+        : undefined
+      : manualPrice && current.trim() && draft.currentPrice === undefined
+        ? 'Geçerli bir fiyat gir'
+        : undefined,
   };
   const valid = !Object.values(errors).some(Boolean);
   const show = (e: string | undefined) => (tried ? e : undefined);
@@ -131,16 +180,20 @@ export default function EditHoldingScreen() {
     ? {
         id: existing?.id ?? newId(),
         kind,
-        name:
-          name.trim() ||
+        name: usdKind
+          ? usSymbol(name)!
+          : name.trim() ||
           (isGold ? GOLD_LABELS[goldType] : fxDeposit ? `${fxDeposit === 'usd' ? 'Dolar' : 'Euro'} mevduat` : isDeposit ? 'TL mevduat' : KIND_LABELS[kind]),
         goldType: isGold ? goldType : undefined,
         buyDate: buyDate!,
         quantity: draft.quantity!,
         unitCost: draft.unitCost!,
         currentPrice: draft.currentPrice,
-        priceUpdatedAt:
-          draft.currentPrice !== existing?.currentPrice ? new Date().toISOString() : existing?.priceUpdatedAt,
+        usdUnitCost: draft.usdUnitCost,
+        currentPriceUsd: draft.currentPriceUsd,
+        priceUpdatedAt: (usdKind ? draft.currentPriceUsd !== existing?.currentPriceUsd : draft.currentPrice !== existing?.currentPrice)
+          ? new Date().toISOString()
+          : existing?.priceUpdatedAt,
         grossRate: draft.grossRate,
         termDays: draft.termDays,
         withholding: draft.withholding,
@@ -252,6 +305,85 @@ export default function EditHoldingScreen() {
                 onChangeText={(t) => { setUnitCost(t); setRateNote(undefined); }}
                 error={show(errors.cost)}
                 hint={rateNote ?? 'TL karşılığını ve reel getiriyi bu kurdan hesaplarız; güncel kur otomatik alınır.'}
+              />
+            )}
+          </>
+        ) : usdKind ? (
+          <>
+            <Field
+              label={kind === 'crypto' ? 'Kripto para sembolü' : kind === 'etf' ? 'ETF sembolü' : 'Hisse sembolü'}
+              placeholder={kind === 'crypto' ? 'ör. BTC' : kind === 'etf' ? 'ör. SPY' : 'ör. AAPL'}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              value={name}
+              onChangeText={setName}
+              error={show(errors.name)}
+            />
+            {suggestions.length > 0 && (
+              <View style={styles.chips}>
+                {suggestions.map((s) => (
+                  <Button key={s.symbol} title={`${s.symbol} · ${s.name}`} kind="secondary" compact onPress={() => setName(s.symbol)} />
+                ))}
+              </View>
+            )}
+            <Field
+              label={kind === 'crypto' ? 'Miktar' : 'Adet'}
+              keyboardType="decimal-pad"
+              placeholder={kind === 'crypto' ? '0,05' : '10'}
+              value={quantity}
+              onChangeText={setQuantity}
+              error={show(errors.quantity)}
+            />
+            <DateField label="Alış tarihi" value={buyDate} onChange={setBuyDate} max={today} />
+            <View style={styles.pair}>
+              <Field
+                style={styles.flex}
+                label="Birim alış fiyatı"
+                prefix="$"
+                keyboardType="decimal-pad"
+                value={usdCost}
+                onChangeText={setUsdCost}
+                error={show(errors.cost)}
+              />
+              <Field
+                style={styles.flex}
+                label="O günkü dolar kuru"
+                prefix="₺"
+                keyboardType="decimal-pad"
+                value={usdRate}
+                onChangeText={(t) => { setUsdRate(t); setRateNote(undefined); }}
+              />
+            </View>
+            <ThemedText type="small" themeColor="textSecondary">
+              {rateNote ?? 'Maliyetini TL’ye bu kurdan çeviririz; reel getiri hem TÜFE’ye hem dolara göre hesaplanır.'}
+            </ThemedText>
+            {autoQuote ? (
+              <ThemedText type="small" style={{ color: theme.accent }}>
+                Güncel fiyat otomatik: {formatMoney(autoQuote.price, '$', true)}
+                {prices.usd ? ` ≈ ${formatTL(autoQuote.price * prices.usd, true)}` : ''} ({autoQuote.source}, {formatDate(autoQuote.date)})
+              </ThemedText>
+            ) : (
+              <Field
+                label="Güncel birim fiyat"
+                prefix="$"
+                keyboardType="decimal-pad"
+                value={currentUsd}
+                onChangeText={setCurrentUsd}
+                error={show(errors.current)}
+                hint={
+                  name.trim()
+                    ? 'Bu sembolün fiyatı veri akışında yok; dolar olarak sen gir, TL’ye günlük kurla çeviririz.'
+                    : undefined
+                }
+              />
+            )}
+            {lookup && !autoQuote && (
+              <Button
+                title={`Güncel fiyata bak · ${lookup.site}`}
+                kind="secondary"
+                compact
+                icon={{ ios: 'arrow.up.right.square', android: 'open_in_new', web: 'open_in_new' }}
+                onPress={() => WebBrowser.openBrowserAsync(lookup.url)}
               />
             )}
           </>
@@ -375,6 +507,7 @@ const styles = StyleSheet.create({
   section: { gap: Spacing.two },
   form: { gap: Spacing.three },
   pair: { flexDirection: 'row', gap: 12 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   preview: { borderRadius: 20, padding: 20, gap: Spacing.two },
   divider: { height: 1, marginVertical: Spacing.one },
   previewTotal: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

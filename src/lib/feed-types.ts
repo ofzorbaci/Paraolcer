@@ -16,6 +16,9 @@ export type CpiGroupKey = 'housing' | 'food' | 'transport' | 'education' | 'heal
 /** One closing price: TRY per unit and the trading day it belongs to ('YYYY-MM-DD'). */
 export type SecurityPrice = { price: number; date: string };
 
+/** A US-listed price: USD per share or coin, its trading day, a display name; `etf` marks funds. */
+export type UsQuote = { price: number; date: string; name?: string; etf?: boolean };
+
 export type Feed = {
   version: typeof FEED_VERSION;
   generatedAt: string;
@@ -62,6 +65,19 @@ export type Feed = {
     stocks: Record<string, SecurityPrice>;
     source: string;
   };
+  /**
+   * US stock, ETF and crypto closing prices in USD for the symbols in feed/us-universe.json
+   * (Finnhub, Alpha Vantage as backup). Absent until an API key is configured.
+   */
+  usQuotes?: {
+    stocks: Record<string, UsQuote>;
+    crypto: Record<string, UsQuote>;
+    source: string;
+  };
+  /** Türkiye's nationwide public holidays (Nager.Date), this year and next: deposits that mature on one pay the next business day */
+  holidays?: { dates: { date: string; name: string }[]; source: string };
+  /** latest yearly CPI change for Türkiye and a few other economies (World Bank), Türkiye first */
+  worldInflation?: { items: { code: string; name: string; year: string; value: number }[]; source: string };
   /** ENAG's latest yearly rate, kept by hand in feed/enag.json; absent until set */
   enag?: { month: string; yoy: number };
   /** lifetime seats left, from feed/offer.json; shown only when set */

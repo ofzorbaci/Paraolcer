@@ -199,7 +199,7 @@ export default function ProfileScreen() {
 
       <DataCard />
 
-      <Disclaimer text="Kaynaklar: TÜİK, TCMB (EVDS), Avrupa Merkez Bankası, gold-api.com, ENAG · Ayrıntı: Yöntem" />
+      <Disclaimer text="Kaynaklar: TÜİK, TCMB (EVDS), Avrupa Merkez Bankası, gold-api.com, Finnhub, Alpha Vantage, Dünya Bankası, ENAG · Ayrıntı: Yöntem" />
       <Disclaimer
         text={`Paraölçer ${Constants.expoConfig?.version ?? ''} · Alım gücünü ölç · Bir hesaplama aracıdır, yatırım tavsiyesi vermez.`}
       />

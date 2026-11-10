@@ -195,7 +195,11 @@ export default function MethodScreen() {
         {feed.cpiGroups && <Row label="Harcama grupları" value="TÜİK, TCMB EVDS aracılığıyla" />}
         {feed.bist100 && <Row label="BIST 100 getiri endeksi" value="Borsa İstanbul, TCMB EVDS aracılığıyla" />}
         <Row label="Döviz kurları" value="Avrupa Merkez Bankası, yedek TCMB" />
-        <Row label="Altın" value="gold-api.com" />
+        <Row label="Altın" value="gold-api.com, yedek goldprice.dev" />
+        <Row label="Yedek kur" value="currency-api" />
+        {feed.usQuotes && <Row label="ABD hisse, ETF, kripto" value={`${feed.usQuotes.source} · dolar fiyatı × günlük kur`} />}
+        {feed.holidays && <Row label="Resmi tatiller" value={feed.holidays.source} />}
+        {feed.worldInflation && <Row label="Dünya enflasyonu" value={feed.worldInflation.source} />}
         {feed.enag && <Row label="ENAG" value={`ENAG açıklaması · ${formatMonth(feed.enag.month)}`} />}
         <Row label="Veri akışı" value={`son derleme ${formatStamp(feed.generatedAt)}`} />
       </Card>

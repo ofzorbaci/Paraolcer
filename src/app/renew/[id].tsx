@@ -12,6 +12,7 @@ import { defaultWithholding, depositValue, isTlDeposit } from '@/lib/deposit';
 import { formatDate, formatLongDate, formatMonth, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { nextMaturity, RENEW_WINDOWS, renewComparison, type RenewWindow } from '@/lib/renew';
 import { averageRateFor, compoundToSimple, forwardReal, lastTermReal, liraOutcomes, liraSpread, renewRanking } from '@/lib/renew-forward';
+import { payout } from '@/lib/business-day';
 import type { Holding } from '@/lib/types';
 import { recordRenewView, setMaturityReminders, updateSettings, useStore } from '@/state/store';
 
@@ -62,6 +63,8 @@ export default function RenewScreen() {
   }
 
   const daysLeft = maturity ? Math.round((Date.parse(maturity) - Date.parse(today)) / 86_400_000) : undefined;
+  // A maturity on a weekend or public holiday is paid on the next business day.
+  const paid = maturity ? payout(maturity) : undefined;
   const lira = result ? new Map(liraOutcomes(result, h, today).map((x) => [x.key, x.lira])) : undefined;
 
   return (
@@ -73,6 +76,7 @@ export default function RenewScreen() {
           <ThemedText type="small" themeColor="textSecondary">
             {h.name}
             {maturity ? ` · vade ${formatLongDate(maturity)}${daysLeft !== undefined && daysLeft <= 7 ? ` (${daysLeft === 0 ? 'bugün' : `${daysLeft} gün sonra`})` : ''}` : ''}
+            {paid?.reason ? ` · ${paid.reason} olduğu için ödeme ${formatLongDate(paid.date)}` : ''}
           </ThemedText>
         </View>
       </View>

@@ -2,7 +2,7 @@ import { inflationFor, type CpiIndex, type InflationResult } from './cpi';
 import { depositValue } from './deposit';
 import { goldPureGrams } from './gold';
 import { feedQuote } from './securities';
-import { isLivePriced, type Holding, type HoldingKind, type LivePrices, type Settings } from './types';
+import { isLivePriced, isUsdPriced, type Holding, type HoldingKind, type LivePrices, type Settings } from './types';
 
 /** Fisher equation: growth in purchasing power. */
 export function realReturn(nominal: number, inflation: number): number {
@@ -19,10 +19,20 @@ export function holdingCost(h: Holding): number {
  * feed's closing price for a fund or stock whose code it lists, else the hand-entered price.
  */
 export function unitPrice(h: Holding, prices: LivePrices): number | undefined {
+  // US stocks, ETFs and crypto: the dollar price (feed, else hand-entered) at today's USD/TRY.
+  if (isUsdPriced(h.kind)) {
+    const usd = usdUnitPrice(h);
+    return usd !== undefined && prices.usd ? usd * prices.usd : h.currentPrice;
+  }
   if (!isLivePriced(h.kind)) return feedQuote(h)?.price ?? h.currentPrice;
   const live = prices[h.kind];
   if (live === undefined) return h.currentPrice;
   return h.kind === 'gold' ? live * goldPureGrams(h.goldType) : live;
+}
+
+/** USD per unit for a US stock, ETF or coin: the feed's close, else the hand-entered price. */
+export function usdUnitPrice(h: Holding): number | undefined {
+  return feedQuote(h)?.price ?? h.currentPriceUsd;
 }
 
 export function holdingValue(h: Holding, today: string, prices: LivePrices): number | undefined {

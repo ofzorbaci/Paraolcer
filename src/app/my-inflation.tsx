@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { BasketEditor } from '@/components/basket-editor';
 import { ThemedText } from '@/components/themed-text';
 import { Disclaimer, IconButton, Screen } from '@/components/ui';
+import { WorldInflationCard } from '@/components/world-inflation-card';
 import { Spacing } from '@/constants/theme';
 
 /** "Senin enflasyonun kaç?": five questions straight away, from the Bütçe tab, Araçlar or Özet. */
@@ -20,6 +21,7 @@ export default function MyInflationScreen() {
         doldurup TÜİK’in grup artışlarıyla sana özel oranı hesaplayalım.
       </ThemedText>
       <BasketEditor onSaved={close} />
+      <WorldInflationCard />
       <Disclaimer text="Tahmini bir hesaptır; resmi enflasyon TÜİK’in açıkladığıdır." />
     </Screen>
   );

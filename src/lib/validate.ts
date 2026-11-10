@@ -1,6 +1,6 @@
 import { goldPureGrams } from './gold';
 import { formatTL } from './format';
-import { isCurrencyKind, type Holding, type LivePrices } from './types';
+import { isCurrencyKind, isUsdPriced, type Holding, type LivePrices } from './types';
 
 /** A save-blocking check would be an error; these only ask "are you sure?". */
 export type Warning = { field: string; message: string };
@@ -42,6 +42,17 @@ export function plausibilityWarnings(h: Holding, ctx: Context): Warning[] {
       field: 'cost',
       message: `Alış kuru o günün referans kurundan (${formatTL(ctx.referenceRate, true)}) çok farklı.`,
     });
+  }
+
+  // US stocks, ETFs and crypto: the USD/TRY of the purchase day against the ECB rate.
+  if (isUsdPriced(h.kind) && h.usdUnitCost && ctx.referenceRate && off(h.unitCost / h.usdUnitCost, ctx.referenceRate) > 0.3) {
+    out.push({
+      field: 'cost',
+      message: `Girdiğin dolar kuru o günün referans kurundan (${formatTL(ctx.referenceRate, true)}) çok farklı.`,
+    });
+  }
+  if (h.currentPriceUsd !== undefined && h.usdUnitCost && (h.currentPriceUsd > h.usdUnitCost * 20 || h.currentPriceUsd < h.usdUnitCost / 20)) {
+    out.push({ field: 'current', message: 'Güncel dolar fiyatı alış fiyatının 20 katından fazla farklı. Sent/dolar karışmış olabilir.' });
   }
 
   if (h.kind === 'gold' && ctx.prices.gold) {

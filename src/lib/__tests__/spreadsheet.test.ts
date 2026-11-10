@@ -26,7 +26,7 @@ describe('import', () => {
       ['TL mevduat', 'Ziraat', '2025-10-22', '', '100.000', '', '42', '32', '', ''],
       ['Altın', '', '2026-01-10', 4, '9.500', '', '', '', '', 'Çeyrek altın'],
       ['Hisse', 'thyao', '2026-02-01', 100, '250,5', '260', '', '', '', ''],
-      ['Kripto', 'BTC', '2026-02-01', 1, 100, '', '', '', '', ''],
+      ['Tahvil', 'TRT2027', '2026-02-01', 1, 100, '', '', '', '', ''],
       ['Dolar', '', '2030-01-01', 100, 40, '', '', '', '', ''],
     ];
     const r = rowsToHoldings(rows, today, id);
@@ -37,6 +37,21 @@ describe('import', () => {
     expect(r[3].errors[0]).toMatch(/Tür/);
     expect(r[4].errors[0]).toMatch(/bugün/);
     expect(r[4].line).toBe(6);
+  });
+
+  it('reads US stocks, ETFs and crypto rows with their symbol uppercased', () => {
+    const rows = [
+      ['Tür', 'Ad', 'Alış tarihi', 'Miktar', 'Birim maliyet (TL)'],
+      ['ABD hissesi', 'aapl', '2026-02-01', 10, '8.000'],
+      ['ETF', 'spy', '2026-02-01', 2, '25.000'],
+      ['Kripto', 'btc', '2026-02-01', '0,05', '3.000.000'],
+    ];
+    const r = rowsToHoldings(rows, today, id);
+    expect(r.map((x) => [x.holding?.kind, x.holding?.name, x.holding?.quantity])).toEqual([
+      ['usStock', 'AAPL', 10],
+      ['etf', 'SPY', 2],
+      ['crypto', 'BTC', 0.05],
+    ]);
   });
 
   it('understands a stock tracker export without a type column and skips sells', () => {

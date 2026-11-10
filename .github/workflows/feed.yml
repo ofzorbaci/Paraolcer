@@ -49,6 +49,8 @@ jobs:
           SECURITIES_STOCKS_URL: ${{ secrets.SECURITIES_STOCKS_URL }}
           SECURITIES_API_KEY: ${{ secrets.SECURITIES_API_KEY }}
           SECURITIES_SOURCE: ${{ vars.SECURITIES_SOURCE }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
         run: node feed/build.mts
 
       - name: Değişen veriyi kaydet

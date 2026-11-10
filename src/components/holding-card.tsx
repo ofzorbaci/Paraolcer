@@ -16,7 +16,7 @@ import { feedQuote } from '@/lib/securities';
 import { STALE_DAYS } from '@/lib/stale';
 import { nextMaturity } from '@/lib/renew';
 import type { HoldingAnalysis } from '@/lib/returns';
-import { CURRENCY_SYMBOL, isLivePriced, KIND_LABELS, type Holding } from '@/lib/types';
+import { CURRENCY_SYMBOL, isLivePriced, isUsdPriced, KIND_LABELS, type Holding } from '@/lib/types';
 import { useStore } from '@/state/store';
 
 const qty = { format: (n: number) => groupThousands(n, 2) };
@@ -38,7 +38,11 @@ export function holdingTitle(h: Holding): string {
       return h.depositCurrency ? `${base} · ${CURRENCY_SYMBOL[h.depositCurrency]}${qty.format(h.quantity)}` : base;
     case 'stock':
     case 'fund':
+    case 'usStock':
+    case 'etf':
       return `${base} · ${qty.format(h.quantity)} adet`;
+    case 'crypto':
+      return `${base} · ${groupThousands(h.quantity, 8)}`;
     default:
       return base;
   }
@@ -54,7 +58,7 @@ export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; ana
   const premium = usePremium();
   const prices = useStore((s) => s.prices);
   const feed = useStore((s) => s.feed);
-  const dollarBased = h.kind === 'usd' || h.kind === 'eur' || h.kind === 'gbp' || h.kind === 'gold';
+  const dollarBased = h.kind === 'usd' || h.kind === 'eur' || h.kind === 'gbp' || h.kind === 'gold' || isUsdPriced(h.kind);
   const usd = dollarBased && premium ? usdReal(h, a, prices, feed) : undefined;
   const stats =
     h.kind === 'deposit' && h.grossRate !== undefined

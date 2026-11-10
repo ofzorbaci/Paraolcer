@@ -1,6 +1,13 @@
 import type { Basket } from './basket';
 
-export type HoldingKind = 'deposit' | 'usd' | 'eur' | 'gbp' | 'gold' | 'stock' | 'fund' | 'other';
+export type HoldingKind = 'deposit' | 'usd' | 'eur' | 'gbp' | 'gold' | 'stock' | 'fund' | 'usStock' | 'etf' | 'crypto' | 'other';
+
+/** US stocks, ETFs and crypto: priced in dollars, valued in TRY at today's USD/TRY */
+export type UsdKind = 'usStock' | 'etf' | 'crypto';
+
+export function isUsdPriced(kind: string | undefined): kind is UsdKind {
+  return kind === 'usStock' || kind === 'etf' || kind === 'crypto';
+}
 
 /** Foreign currencies held as cash or in a deposit, priced live */
 export type CurrencyKind = 'usd' | 'eur' | 'gbp';
@@ -33,6 +40,10 @@ export type Holding = {
   unitCost: number;
   /** TRY per unit, entered by the user when there is no live price */
   currentPrice?: number;
+  /** US stocks, ETFs, crypto: USD per unit at purchase (unitCost is that times the day's USD/TRY) */
+  usdUnitCost?: number;
+  /** US stocks, ETFs, crypto: USD per unit entered by the user when the feed has no price */
+  currentPriceUsd?: number;
   /** ISO time the current price was entered */
   priceUpdatedAt?: string;
   /** deposits: annual gross interest, % */
@@ -106,6 +117,9 @@ export const KIND_LABELS: Record<HoldingKind, string> = {
   gold: 'Altın',
   stock: 'Hisse',
   fund: 'Fon',
+  usStock: 'ABD hissesi',
+  etf: 'ETF',
+  crypto: 'Kripto',
   other: 'Diğer',
 };
 

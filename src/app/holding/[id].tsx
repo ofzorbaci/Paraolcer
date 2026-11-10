@@ -11,11 +11,11 @@ import { Button, Card, Disclaimer, Field, IconButton, Pct, Row, Screen } from '@
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isTlDeposit } from '@/lib/deposit';
-import { formatDate, formatLongDate, formatMonth, formatPct, formatTL, parseAmount, todayISO } from '@/lib/format';
+import { formatDate, formatLongDate, formatMoney, formatMonth, formatPct, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { priceLookup } from '@/lib/lookup';
 import { feedQuote } from '@/lib/securities';
 import { analyzeHolding, unitPrice } from '@/lib/returns';
-import { isLivePriced, KIND_LABELS } from '@/lib/types';
+import { isLivePriced, isUsdPriced, KIND_LABELS } from '@/lib/types';
 import { deleteHolding, saveHolding, useStore } from '@/state/store';
 
 export default function HoldingDetailScreen() {
@@ -50,6 +50,7 @@ export default function HoldingDetailScreen() {
   const a = analyzeHolding(h, todayISO(), prices, settings, index);
   // A fund or stock the feed prices needs no hand-entered price.
   const manual = h.kind !== 'deposit' && !isLivePriced(h.kind) && !feedQuote(h);
+  const usdKind = isUsdPriced(h.kind);
   const newPrice = parseAmount(price);
   const lookup = priceLookup(h.kind, h.name);
   const losing = a.real !== undefined && a.real < 0;
@@ -124,9 +125,9 @@ export default function HoldingDetailScreen() {
       {manual && (
         <Card>
           <ThemedText style={styles.cardTitle}>Güncel fiyatı güncelle</ThemedText>
-          {h.currentPrice !== undefined && (
+          {(usdKind ? h.currentPriceUsd : h.currentPrice) !== undefined && (
             <ThemedText type="small" themeColor="textSecondary">
-              Şu an {formatTL(h.currentPrice, true)}
+              Şu an {usdKind ? formatMoney(h.currentPriceUsd!, '$', true) : formatTL(h.currentPrice!, true)}
               {h.priceUpdatedAt ? ` · ${formatDate(h.priceUpdatedAt.slice(0, 10))} tarihinde girildi` : ''}
             </ThemedText>
           )}
@@ -138,12 +139,16 @@ export default function HoldingDetailScreen() {
               onPress={() => WebBrowser.openBrowserAsync(lookup.url)}
             />
           )}
-          <Field label="Birim fiyat" prefix="₺" keyboardType="decimal-pad" value={price} onChangeText={setPrice} />
+          <Field label="Birim fiyat" prefix={usdKind ? '$' : '₺'} keyboardType="decimal-pad" value={price} onChangeText={setPrice} />
           <Button
             title="Fiyatı kaydet"
             disabled={!newPrice}
             onPress={() => {
-              saveHolding({ ...h, currentPrice: newPrice, priceUpdatedAt: new Date().toISOString() });
+              saveHolding(
+                usdKind
+                  ? { ...h, currentPriceUsd: newPrice, priceUpdatedAt: new Date().toISOString() }
+                  : { ...h, currentPrice: newPrice, priceUpdatedAt: new Date().toISOString() },
+              );
               setPrice('');
             }}
           />
