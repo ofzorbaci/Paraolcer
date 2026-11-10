@@ -139,6 +139,11 @@ export default function HoldingDetailScreen() {
               onPress={() => WebBrowser.openBrowserAsync(lookup.url)}
             />
           )}
+          <Pressable accessibilityRole="link" onPress={() => router.push('/prices')}>
+            <ThemedText type="small" style={{ color: theme.accent }}>
+              Tüm elle girilen fiyatları tek ekranda güncelle ›
+            </ThemedText>
+          </Pressable>
           <Field label="Birim fiyat" prefix={usdKind ? '$' : '₺'} keyboardType="decimal-pad" value={price} onChangeText={setPrice} />
           <Button
             title="Fiyatı kaydet"

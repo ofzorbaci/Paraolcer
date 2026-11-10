@@ -44,3 +44,11 @@ example
 
 # reference screenshots of other apps; never published
 replica/screens/
+
+# TEFAS pipeline: local venv and output (published from the fund-data branch)
+data-pipeline/.venv/
+data-pipeline/out/
+data-pipeline/__pycache__/
+data-pipeline/*.log
+data-pipeline/fund-data/
+data-pipeline/windows-sync.log

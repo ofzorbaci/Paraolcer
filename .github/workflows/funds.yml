@@ -1,0 +1,117 @@
+# TEFAS fon verisi: data-pipeline/sync.py ile çekilir, fund-data dalında saklanır ve
+# GitHub Pages'te /funds altında yayınlanır (feed.json ve web sayfalarıyla birlikte).
+#
+# Saatler UTC; Türkiye UTC+3:
+#   05:30 UTC = 08:30 TSİ  ana çekim
+#   07:00 UTC = 10:00 TSİ  tamamlama turu (son günü ve eksik fonları yeniden çeker)
+#
+# Hata olursa iş kırmızı görünür ve GitHub sana e-posta atar; fund-data dalına ve Pages'e
+# dokunulmaz, yani eski veri yerinde kalır. fund-data dalı her seferinde tek commit olarak
+# yeniden yazılır, böylece 5 yıllık geçmiş repoyu her gün büyütmez.
+#
+# Windows yedeği (data-pipeline/windows-sync.bat) fund-data dalına push edince bu iş
+# yalnızca yayın adımını çalıştırır.
+
+name: Fon verisi
+
+on:
+  schedule:
+    - cron: '30 5 * * 1-5'
+    - cron: '0 7 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'main: yeni günler · topup: son günü yeniden çek'
+        type: choice
+        options: [main, topup]
+        default: main
+  push:
+    branches: [fund-data]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Veri akışı iş akışıyla aynı grup: iki Pages yayını üst üste binmesin.
+concurrency:
+  group: feed
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Uygulama deposu (main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: app
+
+      - name: Fon verisi dalı (fund-data)
+        id: data
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: fund-data
+          path: data
+
+      - name: İlk çalıştırma için boş veri klasörü
+        if: steps.data.outcome == 'failure'
+        run: mkdir -p data && cd data && git init -q -b fund-data && git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+
+      - uses: actions/setup-python@v5
+        if: github.event_name != 'push'
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: app/data-pipeline/requirements.txt
+
+      - name: Bağımlılıklar
+        if: github.event_name != 'push'
+        run: pip install -r app/data-pipeline/requirements.txt
+
+      - name: TEFAS senkronu
+        if: github.event_name != 'push'
+        run: |
+          MODE=main
+          if [[ "${{ github.event.schedule }}" == "0 7 * * 1-5" ]]; then MODE=topup; fi
+          if [[ -n "${{ inputs.mode }}" ]]; then MODE="${{ inputs.mode }}"; fi
+          python app/data-pipeline/sync.py --out data --mode "$MODE"
+
+      - name: fund-data dalına kaydet (tek commit)
+        if: github.event_name != 'push'
+        working-directory: data
+        run: |
+          git config user.name "fon-verisi[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git checkout -q --orphan snapshot
+            git add -A
+            git commit -q -m "Fon verisi: $(jq -r .lastDate funds/meta.json) ($(jq -r .fundCount funds/meta.json) fon)"
+            git push -f origin snapshot:fund-data
+          else
+            echo "Değişiklik yok."
+          fi
+
+      - name: Pages içeriğini hazırla
+        run: |
+          mkdir -p _site
+          cp -r app/feed/public/. _site/
+          if [[ -d data/funds ]]; then cp -r data/funds _site/funds; fi
+          test -f _site/feed.json
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

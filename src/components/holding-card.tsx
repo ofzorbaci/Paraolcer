@@ -13,7 +13,7 @@ import { formatDate, formatPct, formatRate, formatTL, groupThousands, todayISO }
 import { usdReal } from '@/lib/usd-real';
 import { priceAgeDays } from '@/lib/lookup';
 import { feedQuote } from '@/lib/securities';
-import { STALE_DAYS } from '@/lib/stale';
+import { enteredLabel, STALE_DAYS } from '@/lib/stale';
 import { nextMaturity } from '@/lib/renew';
 import type { HoldingAnalysis } from '@/lib/returns';
 import { CURRENCY_SYMBOL, isLivePriced, isUsdPriced, KIND_LABELS, type Holding } from '@/lib/types';
@@ -102,8 +102,8 @@ export function HoldingCard({ holding: h, analysis: a }: { holding: Holding; ana
           <HoldingSource holding={h} />
           {age !== undefined && h.priceUpdatedAt && (
             <ThemedText type="small" style={age >= STALE_DAYS ? { color: theme.negative } : undefined} themeColor="textSecondary">
-              Fiyat: {formatDate(h.priceUpdatedAt.slice(0, 10))}
-              {age >= STALE_DAYS ? ` · ${age} gün önce girildi, güncellemek için dokun` : ''}
+              Fiyat: {enteredLabel(h, new Date())}
+              {age >= STALE_DAYS ? ', güncellemek için dokun' : ''}
             </ThemedText>
           )}
           {dollarBased &&

@@ -9,7 +9,8 @@ import { buildCpiIndex, type CpiIndex } from '@/lib/cpi';
 import { parseTcmbCpiHtml, TCMB_CPI_URL, type CpiRow } from '@/lib/cpi-parse';
 import { payout, setHolidays } from '@/lib/business-day';
 import { setWithholdingRules } from '@/lib/deposit';
-import { setSecurityPrices } from '@/lib/securities';
+import { setFundBook, setSecurityPrices } from '@/lib/securities';
+import { loadFundBook, readCachedFundBook, clearFundCache, type CachedFundBook } from '@/lib/fund-service';
 import { checkAlerts, goalTarget, type AlertState } from '@/lib/alerts';
 import { NO_PREMIUM, type PremiumStatus } from '@/lib/entitlements';
 import { fetchFeed, isFeed, newerFeed } from '@/lib/feed';
@@ -65,6 +66,8 @@ type State = {
   /** the same prices with source and time */
   priceBook: PriceBook;
   priceError?: string;
+  /** TEFAS fund prices (funds/latest.json) and when this phone last downloaded them */
+  funds?: CachedFundBook;
 };
 
 const KEYS = {
@@ -216,11 +219,34 @@ export function loadStore(): Promise<void> {
     void initPurchases(applyStorePremium).then((s) => s && applyStorePremium(s));
     void refreshCpi();
     void refreshPrices();
+    void refreshFunds();
     // In the background, so a slow network never holds the splash screen. Reminders are
     // re-scheduled afterwards so they roll forward and pick up a newly published PPK calendar.
     void refreshFeed().finally(rescheduleReminders);
   })();
   return loading;
+}
+
+/**
+ * TEFAS fund prices: the cached copy at once (offline too), a download at most once a day.
+ * Only the public latest.json is fetched; nothing about the user's holdings is sent.
+ */
+export async function refreshFunds(force = false): Promise<boolean> {
+  if (!state.funds) {
+    const cached = await readCachedFundBook();
+    if (cached) {
+      setFundBook(cached.book);
+      set({ funds: cached });
+    }
+  }
+  if (!FEED_URL) return false;
+  const { result, fresh } = await loadFundBook(FEED_URL, todayISO(), { force, cached: state.funds });
+  if (result && result !== state.funds) {
+    setFundBook(result.book);
+    set({ funds: result });
+  }
+  if (fresh) void runAlertCheck();
+  return fresh;
 }
 
 /** Downloads the published feed; keeps the current one if anything fails. */
@@ -425,6 +451,7 @@ export async function maybeAskForReview(goodMoment: boolean): Promise<void> {
 export async function deleteAllData(): Promise<void> {
   await Promise.all([disableReminders('cpi'), disableReminders('rate'), cancelMaturityReminders(), cancelTrialEndReminder()]);
   await AsyncStorage.multiRemove(Object.values(KEYS)).catch(() => {});
+  await clearFundCache();
   deleteSnapshot();
   set({
     allHoldings: [],

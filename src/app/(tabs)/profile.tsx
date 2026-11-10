@@ -17,7 +17,7 @@ import { Spacing } from '@/constants/theme';
 import { currentPolicyRate } from '@/lib/feed';
 import { formatDate, formatMonth, formatRate, formatStamp, formatTL } from '@/lib/format';
 import { bugReportUrl, SUPPORT_EMAIL } from '@/lib/support';
-import { refreshCpi, refreshFeed, refreshPrices, rescheduleReminders, useStore } from '@/state/store';
+import { refreshCpi, refreshFeed, refreshFunds, refreshPrices, rescheduleReminders, useStore } from '@/state/store';
 
 const legal = (Constants.expoConfig?.extra?.legal ?? {}) as { termsUrl?: string; privacyUrl?: string; licensesUrl?: string };
 
@@ -35,7 +35,7 @@ export default function ProfileScreen() {
 
   const onRefresh = async () => {
     setStatus('Güncelleniyor…');
-    const [ok] = await Promise.all([refreshCpi(), refreshPrices(), refreshFeed()]);
+    const [ok] = await Promise.all([refreshCpi(), refreshPrices(), refreshFeed(), refreshFunds(true)]);
     await rescheduleReminders();
     setStatus(ok ? 'TÜFE ve fiyatlar güncellendi.' : 'Fiyatlar güncellendi; TÜFE için uygulama içi veri kullanılıyor.');
   };

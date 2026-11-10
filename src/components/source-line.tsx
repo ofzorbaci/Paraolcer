@@ -1,5 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
-import { formatDate, formatMoney, formatMonth, formatStamp } from '@/lib/format';
+import { formatMoney, formatMonth, formatStamp, todayISO } from '@/lib/format';
+import { closeLabel } from '@/lib/funds';
 import type { PriceKey, PriceQuote } from '@/lib/prices';
 import { feedQuote } from '@/lib/securities';
 import { isCurrencyKind, type Holding } from '@/lib/types';
@@ -14,13 +15,15 @@ export function quoteLabel(q: PriceQuote): string {
 export function HoldingSource({ holding }: { holding: Pick<Holding, 'kind' | 'name'> }) {
   const kind = holding.kind;
   const q = useStore((s) => (isCurrencyKind(kind) || kind === 'gold' ? s.priceBook[kind as PriceKey] : undefined));
+  // Re-render when a new fund book arrives (feedQuote reads it from lib/securities).
+  useStore((s) => s.funds?.fetchedAt);
   const close = feedQuote(holding, useStore((s) => s.feed.securities), useStore((s) => s.feed.usQuotes));
   const usd = useStore((s) => s.priceBook.usd);
   if (close) {
     return (
       <ThemedText type="small" themeColor="textSecondary">
-        Fiyat: {close.source} · {formatDate(close.date)}
-        {close.currency === 'USD' ? ` · ${formatMoney(close.price, '$', true)}${usd ? `, kur ${quoteLabel(usd)}` : ''}` : ' kapanışı'}
+        Fiyat: {close.source} · {closeLabel(close.date, todayISO())}
+        {close.currency === 'USD' ? ` · ${formatMoney(close.price, '$', true)}${usd ? `, kur ${quoteLabel(usd)}` : ''}` : ''}
       </ThemedText>
     );
   }

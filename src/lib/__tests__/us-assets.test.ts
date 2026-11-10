@@ -94,3 +94,23 @@ describe('US stocks, ETFs and crypto', () => {
     expect(plausibilityWarnings(apple, { referenceRate: 40, prices: {} })).toEqual([]);
   });
 });
+
+describe('hand-entered prices', () => {
+  it('lists hand-priced holdings oldest first and labels them as entered by the user', async () => {
+    const { enteredLabel, manualHoldings, staleHoldings, withEnteredPrice } = await import('../stale');
+    setSecurityPrices(undefined, undefined);
+    const now = new Date('2026-11-10T12:00:00');
+    const thy: Holding = { id: 't', kind: 'stock', name: 'THYAO', buyDate: '2026-01-02', quantity: 10, unitCost: 300, currentPrice: 320, priceUpdatedAt: '2026-11-06T09:00:00' };
+    const asels: Holding = { ...thy, id: 'a', name: 'ASELS', priceUpdatedAt: '2026-11-09T09:00:00' };
+    const usd: Holding = { id: 'u', kind: 'usd', name: '', buyDate: '2026-01-02', quantity: 100, unitCost: 40 };
+    expect(manualHoldings([asels, usd, thy]).map((h) => h.id)).toEqual(['t', 'a']);
+    expect(staleHoldings([asels, thy], now).map((h) => h.id)).toEqual(['t']);
+    expect(enteredLabel(asels, now)).toBe('Senin girdiğin · 9 Kasım');
+    expect(enteredLabel(thy, now)).toBe('Senin girdiğin · 6 Kasım · 4 gün önce');
+    const checked = withEnteredPrice(thy, 320, now);
+    expect(checked.currentPrice).toBe(320);
+    expect(staleHoldings([checked], now)).toEqual([]);
+    const coin = withEnteredPrice({ ...thy, kind: 'crypto', name: 'ZZZ' }, 1.5, now);
+    expect(coin.currentPriceUsd).toBe(1.5);
+  });
+});

@@ -9,9 +9,10 @@ import { Button, Card, Choice, Field, Icon, IconButton, Pct, Row, Screen } from 
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { defaultWithholding } from '@/lib/deposit';
-import { formatDate, formatMoney, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
+import { formatMoney, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { fetchTryRate } from '@/lib/fx';
 import { priceLookup } from '@/lib/lookup';
+import { closeLabel } from '@/lib/funds';
 import { feedQuote, knownSymbols, usSymbol } from '@/lib/securities';
 import { analyzeHolding } from '@/lib/returns';
 import { CURRENCY_SYMBOL, GOLD_LABELS, isCurrencyKind, isUsdPriced, KIND_LABELS, type CurrencyKind, type GoldType, type Holding, type HoldingKind } from '@/lib/types';
@@ -113,11 +114,18 @@ export default function EditHoldingScreen() {
   const lookup = priceLookup(kind, name);
   // Symbols the feed prices, filtered by what is typed: one tap fills the symbol.
   const typed = name.trim().toUpperCase();
-  const suggestions = usdKind
-    ? knownSymbols(kind)
-        .filter((s) => s.symbol !== typed && (!typed || s.symbol.startsWith(typed) || s.name.toUpperCase().includes(typed)))
-        .slice(0, 6)
-    : [];
+  // Funds: ~2.400 TEFAS codes, so only once something is typed.
+  const suggestions =
+    usdKind || (kind === 'fund' && typed.length >= 2)
+      ? knownSymbols(kind)
+          .filter(
+            (s) =>
+              s.symbol !== typed &&
+              (!typed || s.symbol.startsWith(typed) || s.name.toLocaleUpperCase('tr-TR').includes(name.trim().toLocaleUpperCase('tr-TR'))),
+          )
+          .slice(0, 6)
+      : [];
+  const codeField = kind === 'fund' || kind === 'stock' || kind === 'other';
 
   // The ECB rate of the purchase day: pre-fills the cost and is the reference for the plausibility check.
   useEffect(() => {
@@ -383,7 +391,7 @@ export default function EditHoldingScreen() {
             {autoQuote ? (
               <ThemedText type="small" style={{ color: theme.accent }}>
                 Güncel fiyat otomatik: {formatMoney(autoQuote.price, '$', true)}
-                {prices.usd ? ` ≈ ${formatTL(autoQuote.price * prices.usd, true)}` : ''} ({autoQuote.source}, {formatDate(autoQuote.date)})
+                {prices.usd ? ` ≈ ${formatTL(autoQuote.price * prices.usd, true)}` : ''} ({autoQuote.source} · {closeLabel(autoQuote.date, today)})
               </ThemedText>
             ) : (
               <Field
@@ -412,14 +420,23 @@ export default function EditHoldingScreen() {
           </>
         ) : (
           <>
-            {manualPrice && (
+            {/* Stays on screen once the code matches a priced fund, so it can still be corrected. */}
+            {codeField && (
               <Field
                 label={kind === 'fund' ? 'Fon kodu / adı' : kind === 'stock' ? 'Hisse kodu' : 'İsim'}
                 placeholder={kind === 'fund' ? 'ör. TTE' : kind === 'stock' ? 'ör. THYAO' : KIND_LABELS[kind]}
                 autoCapitalize="characters"
+                autoCorrect={false}
                 value={name}
                 onChangeText={setName}
               />
+            )}
+            {kind === 'fund' && suggestions.length > 0 && (
+              <View style={styles.chips}>
+                {suggestions.map((s) => (
+                  <Button key={s.symbol} title={`${s.symbol} · ${s.name}`} kind="secondary" compact onPress={() => setName(s.symbol)} />
+                ))}
+              </View>
             )}
             <Field
               label={isFx || (isGold && goldType === 'gram') ? 'Miktar' : 'Adet'}
@@ -453,7 +470,7 @@ export default function EditHoldingScreen() {
             ) : null}
             {autoQuote && (
               <ThemedText type="small" style={{ color: theme.accent }}>
-                Güncel fiyat otomatik: {formatTL(autoQuote.price, true)} ({autoQuote.source}, {formatDate(autoQuote.date)} kapanışı)
+                {autoQuote.name ? `${autoQuote.name}\n` : ''}Güncel fiyat otomatik: {formatTL(autoQuote.price, true)} ({autoQuote.source} · {closeLabel(autoQuote.date, today)})
               </ThemedText>
             )}
             {lookup && !autoQuote && (

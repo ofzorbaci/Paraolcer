@@ -3,11 +3,18 @@
 // each new feed to this module, so pricing code anywhere can read it.
 
 import type { Feed } from './feed-types';
+import type { FundBook } from './funds';
 import { assetCode } from './lookup';
 import { isUsdPriced, type Holding } from './types';
 
 let book: Feed['securities'];
 let usBook: Feed['usQuotes'];
+/** TEFAS fund prices from funds/latest.json (fund-service.ts); preferred over Feed['securities'].funds */
+let fundBook: FundBook | undefined;
+
+export function setFundBook(next: FundBook | undefined) {
+  fundBook = next;
+}
 
 export function setSecurityPrices(next: Feed['securities'], us?: Feed['usQuotes']) {
   book = next;
@@ -34,14 +41,19 @@ export function feedQuote(
     const q = sym && us ? (h.kind === 'crypto' ? us.crypto : us.stocks)[sym] : undefined;
     return q && { price: q.price, date: q.date, source: us!.source, currency: 'USD', name: q.name };
   }
-  if (!securities || (h.kind !== 'fund' && h.kind !== 'stock')) return undefined;
   const code = assetCode(h.name);
+  if (h.kind === 'fund' && code && fundBook?.funds[code]) {
+    const f = fundBook.funds[code];
+    return { price: f.price, date: f.date, source: fundBook.source, name: f.name };
+  }
+  if (!securities || (h.kind !== 'fund' && h.kind !== 'stock')) return undefined;
   const q = code ? (h.kind === 'fund' ? securities.funds : securities.stocks)[code] : undefined;
   return q && { ...q, source: securities.source };
 }
 
 /** Symbols the feed prices for a kind, with their names: suggestions for the add form. */
 export function knownSymbols(kind: Holding['kind'], us: Feed['usQuotes'] = usBook): { symbol: string; name: string }[] {
+  if (kind === 'fund') return Object.values(fundBook?.funds ?? {}).map((f) => ({ symbol: f.code, name: f.name }));
   if (!us || !isUsdPriced(kind)) return [];
   const map = kind === 'crypto' ? us.crypto : us.stocks;
   return Object.entries(map)

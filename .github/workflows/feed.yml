@@ -63,9 +63,25 @@ jobs:
             git push
           fi
 
+      # Fon verisi ayrı dalda (fund-data, bkz. funds.yml); Pages'e birlikte yayınlanır ki
+      # bu iş akışı yayın yaptığında /funds kaybolmasın.
+      - name: Fon verisi dalı
+        id: funds
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: fund-data
+          path: _fund-data
+
+      - name: Pages içeriğini hazırla
+        run: |
+          mkdir -p _site
+          cp -r feed/public/. _site/
+          if [[ -d _fund-data/funds ]]; then cp -r _fund-data/funds _site/funds; fi
+
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: feed/public
+          path: _site
 
   deploy:
     needs: build

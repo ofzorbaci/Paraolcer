@@ -7,6 +7,7 @@ import { useMasked } from '@/hooks/use-masked';
 import { useTheme } from '@/hooks/use-theme';
 import { formatPct, formatTL } from '@/lib/format';
 import type { PortfolioAnalysis } from '@/lib/returns';
+import { STALE_DAYS } from '@/lib/stale';
 
 function verdict(real: number): string {
   if (real >= 0.05) return 'Enflasyonun açık ara önündesin.';
@@ -59,9 +60,9 @@ export function HeroCard({
         </Pressable>
       )}
       {stale > 0 && (
-        <Pressable accessibilityRole="button" onPress={() => router.push('/holdings')} hitSlop={6}>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/prices')} hitSlop={6}>
           <ThemedText type="small" style={{ color: '#FDBA74' }}>
-            ⚠ {stale} varlığın fiyatı 7 günden eski; skor eksik olabilir · Fiyatları güncelle ›
+            ⚠ {stale} varlığın elle girilen fiyatı {STALE_DAYS} günden eski; skor eksik olabilir · Fiyatları güncelle ›
           </ThemedText>
         </Pressable>
       )}
