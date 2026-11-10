@@ -21,6 +21,11 @@ class SyncTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         sync.MIN_FUNDS = 1
+        ck = self.tmp.parent / (self.tmp.name + "-ck")
+        ck.mkdir()
+        real = sync.sync
+        self.addCleanup(setattr, sync, "sync", real)
+        sync.sync = lambda out, mode, today, fetch, _r=real, _ck=ck: _r(out, mode, today, fetch, checkpoint_dir=_ck)
 
     def test_first_load_then_incremental(self):
         calls = []

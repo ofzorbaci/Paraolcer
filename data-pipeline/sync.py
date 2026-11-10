@@ -100,6 +100,19 @@ def write_json(path: Path, data) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
 
+def retry(action, attempts: int = 6, wait: float = 2.0):
+    """Runs a file operation again when Windows briefly locks the path (PermissionError)."""
+    import time
+
+    for i in range(attempts):
+        try:
+            return action()
+        except PermissionError:
+            if i == attempts - 1:
+                raise
+            time.sleep(wait)
+
+
 def price_at_or_before(prices: list[list], target: str) -> float | None:
     """prices: [["YYYY-MM-DD", fiyat], ...] eskiden yeniye. target gününde ya da öncesindeki son fiyat."""
     lo, hi, found = 0, len(prices) - 1, None
@@ -150,7 +163,7 @@ def returns(prices: list[list]) -> dict:
 # --------------------------------------------------------------------------- senkron
 
 
-def sync(out: Path, mode: str, today: date, fetch=fetch_rows) -> dict:
+def sync(out: Path, mode: str, today: date, fetch=fetch_rows, checkpoint_dir: Path | None = None) -> dict:
     """Yeni dosyaları geçici klasörde hazırlar, doğrular ve <out>/funds yerine koyar."""
     funds_dir = out / "funds"
     meta = read_json(funds_dir / "meta.json") or {}
@@ -170,8 +183,19 @@ def sync(out: Path, mode: str, today: date, fetch=fetch_rows) -> dict:
         print("Yeni gün yok; değişiklik yapılmadı.")
         return {"changed": False}
 
-    print(f"Çekiliyor: {start} - {today} ({'ilk yükleme' if first_load else mode})")
-    rows = [r for r in fetch(start, today) if r["code"] and num(r["price"]) and num(r["price"]) > 0]
+    # A finished download is kept next to the output until the files are in place, so a failure
+    # in the last step (e.g. Windows locking a folder) does not cost another 40-minute fetch.
+    # In the temp folder, not in <out>: it must never be committed with the published data.
+    checkpoint = (checkpoint_dir or Path(tempfile.gettempdir())) / f"paraolcer-tefas-{start}-{today}.json"
+    cached = read_json(checkpoint)
+    if cached is not None:
+        print(f"Önceki çekim kullanılıyor: {checkpoint.name}")
+        fetched = cached
+    else:
+        print(f"Çekiliyor: {start} - {today} ({'ilk yükleme' if first_load else mode})")
+        fetched = fetch(start, today)
+        checkpoint.write_text(json.dumps(fetched, ensure_ascii=False, default=str), encoding="utf-8")
+    rows = [r for r in fetched if r["code"] and num(r["price"]) and num(r["price"]) > 0]
     if not rows:
         print("Kaynakta bu aralık için fiyat yok (hafta sonu/tatil olabilir); değişiklik yapılmadı.")
         return {"changed": False}
@@ -244,12 +268,18 @@ def sync(out: Path, mode: str, today: date, fetch=fetch_rows) -> dict:
         backup = None
         if funds_dir.exists():
             backup = out / f".funds-old-{now[:19].replace(':', '')}"
-            funds_dir.rename(backup)
-        (staging / "funds").rename(funds_dir)
+            retry(lambda: funds_dir.rename(backup))
+        try:
+            retry(lambda: (staging / "funds").rename(funds_dir))
+        except OSError:
+            # Windows can keep a fresh folder locked (antivirus, indexer). Copy instead; the
+            # staged files are complete and verified, only the swap is not a single step.
+            shutil.copytree(staging / "funds", funds_dir)
         if backup:
             shutil.rmtree(backup, ignore_errors=True)
     finally:
         shutil.rmtree(staging, ignore_errors=True)
+    checkpoint.unlink(missing_ok=True)
 
     print(f"Tamam: {len(by_code)} fonda yeni fiyat, toplam {len(funds)} fon, son fiyat tarihi {latest_date}")
     return {"changed": True, "funds": len(funds), "lastDate": latest_date}
