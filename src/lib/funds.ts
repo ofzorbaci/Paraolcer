@@ -84,3 +84,36 @@ export function fundLatestUrl(feedUrl: string): string {
 export function fundBookStale(fetchedAt: string | undefined, today: string): boolean {
   return !fetchedAt || fetchedAt.slice(0, 10) < today;
 }
+
+/** funds/daily/<YYYY-MM>.json: every fund's price on every trading day of one month. */
+export type FundMonth = { month: string; dates: string[]; prices: Record<string, (number | null)[]> };
+
+export function parseFundMonth(body: unknown): FundMonth | undefined {
+  const b = body as { schema?: number; month?: string; dates?: unknown; prices?: unknown };
+  if (!b || b.schema !== FUND_SCHEMA || typeof b.month !== 'string' || !Array.isArray(b.dates) || !b.prices || typeof b.prices !== 'object') {
+    return undefined;
+  }
+  return { month: b.month, dates: b.dates as string[], prices: b.prices as FundMonth['prices'] };
+}
+
+/** The fund's price on `date`, or on the last trading day before it within the month. */
+export function priceOnDate(month: FundMonth, code: string, date: string): { price: number; date: string } | undefined {
+  const row = month.prices[code.toUpperCase()];
+  if (!row) return undefined;
+  for (let i = month.dates.length - 1; i >= 0; i--) {
+    const p = row[i];
+    if (month.dates[i] <= date && typeof p === 'number' && p > 0) return { price: p, date: month.dates[i] };
+  }
+  return undefined;
+}
+
+/** https://…/feed.json → https://…/funds/daily/2025-10.json */
+export function fundMonthUrl(feedUrl: string, month: string): string {
+  return feedUrl.replace(/[^/]*$/, `funds/daily/${month}.json`);
+}
+
+/** 'YYYY-MM' of the month before. */
+export function previousMonth(month: string): string {
+  const [y, m] = month.split('-').map(Number);
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+}

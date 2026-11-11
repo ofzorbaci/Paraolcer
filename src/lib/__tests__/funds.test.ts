@@ -49,3 +49,26 @@ describe('TEFAS fund book', () => {
     setFundBook(undefined);
   });
 });
+
+describe('price on the purchase day', () => {
+  it('reads a month file and falls back to the last trading day before the date', async () => {
+    const { parseFundMonth, priceOnDate, previousMonth, fundMonthUrl } = await import('../funds');
+    const month = parseFundMonth({
+      schema: 1,
+      source: 'TEFAS',
+      month: '2025-10',
+      dates: ['2025-10-01', '2025-10-02', '2025-10-03', '2025-10-06'],
+      prices: { AAL: [2.6, 2.61, null, 2.63] },
+    })!;
+    expect(priceOnDate(month, 'aal', '2025-10-02')).toEqual({ price: 2.61, date: '2025-10-02' });
+    // Saturday the 4th → Thursday the 2nd (Friday had no price)
+    expect(priceOnDate(month, 'AAL', '2025-10-04')).toEqual({ price: 2.61, date: '2025-10-02' });
+    expect(priceOnDate(month, 'AAL', '2025-09-30')).toBeUndefined();
+    expect(priceOnDate(month, 'XYZ', '2025-10-02')).toBeUndefined();
+    expect(previousMonth('2026-01')).toBe('2025-12');
+    expect(fundMonthUrl('https://ofzorbaci.github.io/Paraolcer/feed.json', '2025-10')).toBe(
+      'https://ofzorbaci.github.io/Paraolcer/funds/daily/2025-10.json',
+    );
+    expect(parseFundMonth({ schema: 2 })).toBeUndefined();
+  });
+});

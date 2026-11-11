@@ -100,6 +100,7 @@ export default function PricesScreen() {
                 style={styles.flex}
                 label="Güncel birim fiyat"
                 prefix={usd ? '$' : '₺'}
+                decimals={6}
                 keyboardType="decimal-pad"
                 placeholder={current !== undefined ? String(current).replace('.', ',') : ''}
                 value={typed[h.id] ?? ''}

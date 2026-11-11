@@ -188,16 +188,17 @@ export function Field({
   prefix,
   suffix,
   style,
+  decimals,
   ...input
-}: TextInputProps & { label: string; hint?: string; error?: string; prefix?: string; suffix?: string; style?: ViewStyle }) {
+}: TextInputProps & { label: string; hint?: string; error?: string; prefix?: string; suffix?: string; style?: ViewStyle; decimals?: number }) {
   const theme = useTheme();
   // Money fields (₺ $ € £) group thousands while typing: 1.000.000
   if (prefix && ['₺', '$', '€', '£'].includes(prefix)) {
     const { onChangeText } = input;
     input = {
       ...input,
-      value: input.value === undefined ? undefined : formatMoneyInput(input.value),
-      onChangeText: onChangeText && ((t: string) => onChangeText(formatMoneyInput(t, true))),
+      value: input.value === undefined ? undefined : formatMoneyInput(input.value, false, decimals),
+      onChangeText: onChangeText && ((t: string) => onChangeText(formatMoneyInput(t, true, decimals))),
     };
   }
   return (

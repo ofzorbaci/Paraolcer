@@ -35,7 +35,8 @@ export function formatMoney(n: number, sign = '₺', precise = false): string {
  * "1000000" → "1.000.000", "1234,5" → "1.234,5". While typing, dots are always our own separators
  * (deleting a digit from "1.000" gives "100"); a prefilled "38.25" keeps its decimal.
  */
-export function formatMoneyInput(text: string, typed = false): string {
+/** `decimals`: digits kept after the comma (2 for lira amounts; up to 6 for fund and share prices). */
+export function formatMoneyInput(text: string, typed = false, decimals = 2): string {
   let t = text.replace(/[^\d.,]/g, '');
   // Our grouping never ends in a dot, so a trailing dot is the user's decimal key (English keyboards).
   if (typed && t.endsWith('.') && !t.includes(',')) t = `${t.slice(0, -1)},`;
@@ -46,7 +47,7 @@ export function formatMoneyInput(text: string, typed = false): string {
   }
   const comma = t.indexOf(',');
   const intPart = (comma >= 0 ? t.slice(0, comma) : t).replace(/\D/g, '');
-  const decPart = comma >= 0 ? t.slice(comma + 1).replace(/\D/g, '').slice(0, 2) : undefined;
+  const decPart = comma >= 0 ? t.slice(comma + 1).replace(/\D/g, '').slice(0, decimals) : undefined;
   const int = intPart.replace(/^0+(?=\d)/, '');
   const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   return decPart === undefined ? grouped : `${grouped || '0'},${decPart}`;

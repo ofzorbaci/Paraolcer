@@ -4,7 +4,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { fundBookStale, fundLatestUrl, parseFundLatest, type FundBook } from './funds';
+import { fundBookStale, fundLatestUrl, fundMonthUrl, parseFundLatest, parseFundMonth, previousMonth, priceOnDate, type FundBook, type FundMonth } from './funds';
 
 const KEY = 'gg.funds.v1';
 
@@ -49,4 +49,50 @@ export async function loadFundBook(
 
 export async function clearFundCache(): Promise<void> {
   await AsyncStorage.removeItem(KEY).catch(() => {});
+}
+
+const MONTH_KEY = 'gg.fundmonth.';
+const months = new Map<string, FundMonth>();
+
+/**
+ * One month of every fund's prices. Past months never change, so they are kept on the phone for
+ * good; the current month is downloaded again on another day. Only the month is requested: the
+ * server cannot tell which fund the user is looking at.
+ */
+export async function loadFundMonth(feedUrl: string, month: string, today: string): Promise<FundMonth | undefined> {
+  const current = month >= today.slice(0, 7);
+  const memo = months.get(month);
+  if (memo && !current) return memo;
+  let cached: { month: FundMonth; fetchedAt: string } | undefined;
+  try {
+    const raw = await AsyncStorage.getItem(MONTH_KEY + month);
+    cached = raw ? JSON.parse(raw) : undefined;
+  } catch {
+    cached = undefined;
+  }
+  if (cached && (!current || !fundBookStale(cached.fetchedAt, today))) {
+    months.set(month, cached.month);
+    return cached.month;
+  }
+  try {
+    const res = await fetch(fundMonthUrl(feedUrl, month));
+    const parsed = res.ok ? parseFundMonth(await res.json()) : undefined;
+    if (!parsed) return cached?.month;
+    months.set(month, parsed);
+    AsyncStorage.setItem(MONTH_KEY + month, JSON.stringify({ month: parsed, fetchedAt: new Date().toISOString() })).catch(() => {});
+    return parsed;
+  } catch {
+    return cached?.month;
+  }
+}
+
+/** The fund's price on the purchase day (or the last trading day before it, looking one month back). */
+export async function fundPriceOn(feedUrl: string, code: string, date: string, today: string): Promise<{ price: number; date: string } | undefined> {
+  const month = date.slice(0, 7);
+  const here = await loadFundMonth(feedUrl, month, today);
+  const found = here && priceOnDate(here, code, date);
+  if (found) return found;
+  // Bought on the 1st and that was a weekend or holiday: the last price of the previous month.
+  const before = await loadFundMonth(feedUrl, previousMonth(month), today);
+  return before && priceOnDate(before, code, date);
 }

@@ -144,7 +144,7 @@ export default function HoldingDetailScreen() {
               Tüm elle girilen fiyatları tek ekranda güncelle ›
             </ThemedText>
           </Pressable>
-          <Field label="Birim fiyat" prefix={usdKind ? '$' : '₺'} keyboardType="decimal-pad" value={price} onChangeText={setPrice} />
+          <Field label="Birim fiyat" prefix={usdKind ? '$' : '₺'} decimals={6} keyboardType="decimal-pad" value={price} onChangeText={setPrice} />
           <Button
             title="Fiyatı kaydet"
             disabled={!newPrice}

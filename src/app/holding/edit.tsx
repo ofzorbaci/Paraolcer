@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
@@ -9,15 +10,19 @@ import { Button, Card, Choice, Field, Icon, IconButton, Pct, Row, Screen } from 
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { defaultWithholding } from '@/lib/deposit';
-import { formatMoney, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
+import { formatLongDate, formatMoney, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { fetchTryRate } from '@/lib/fx';
 import { priceLookup } from '@/lib/lookup';
+import { fundPriceOn } from '@/lib/fund-service';
 import { closeLabel } from '@/lib/funds';
 import { feedQuote, knownSymbols, usSymbol } from '@/lib/securities';
 import { analyzeHolding } from '@/lib/returns';
 import { CURRENCY_SYMBOL, GOLD_LABELS, isCurrencyKind, isUsdPriced, KIND_LABELS, type CurrencyKind, type GoldType, type Holding, type HoldingKind } from '@/lib/types';
 import { plausibilityWarnings } from '@/lib/validate';
 import { newId, saveHolding, useStore } from '@/state/store';
+
+/** GitHub Pages address of feed.json; the TEFAS month files sit next to it. */
+const FEED_URL = Constants.expoConfig?.extra?.feedUrl as string | undefined;
 
 type Group = 'deposit' | 'fx' | 'gold' | 'fund' | 'stock' | 'usStock' | 'etf' | 'crypto' | 'other';
 
@@ -73,6 +78,8 @@ export default function EditHoldingScreen() {
   const [currentUsd, setCurrentUsd] = useState(numText(existing?.currentPriceUsd));
   const [goldType, setGoldType] = useState<GoldType>(existing?.goldType ?? 'gram');
   const [rateNote, setRateNote] = useState<string>();
+  // the unit cost we filled from TEFAS, so a later date or code may replace it (a typed one stays)
+  const [autoCost, setAutoCost] = useState<string>();
   const [refRate, setRefRate] = useState<number>();
   const [tried, setTried] = useState(false);
   const [acknowledged, setAcknowledged] = useState<string>();
@@ -84,6 +91,7 @@ export default function EditHoldingScreen() {
     setName('');
     setQuantity('');
     setUnitCost('');
+    setAutoCost(undefined);
     setCurrent('');
     setPrincipal('');
     setGross('');
@@ -151,6 +159,32 @@ export default function EditHoldingScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rateCurrency, buyDate]);
+
+  // A TEFAS fund: its price on the purchase day becomes the unit cost, as long as the user has
+  // not typed their own (a cost we filled ourselves is replaced when the date or code changes).
+  const fundCode = kind === 'fund' && autoQuote?.source === 'TEFAS' ? autoQuote && name.trim().toUpperCase() : undefined;
+  useEffect(() => {
+    if (!fundCode || !buyDate || !FEED_URL || existing) return;
+    if (unitCost && unitCost !== autoCost) return;
+    let cancelled = false;
+    fundPriceOn(FEED_URL, fundCode, buyDate, today)
+      .then((p) => {
+        if (cancelled || !p) return;
+        const text = numText(p.price);
+        setUnitCost(text);
+        setAutoCost(text);
+        setRateNote(
+          p.date === buyDate
+            ? `${formatLongDate(p.date)} TEFAS fiyatı. Talimat saatine göre fon bir sonraki günün fiyatıyla alınmış olabilir; farklıysa kendi fiyatınla değiştir.`
+            : `${formatLongDate(buyDate)} işlem günü değil; önceki işlem günü (${formatLongDate(p.date)}) TEFAS fiyatı. Farklıysa kendi fiyatınla değiştir.`,
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fundCode, buyDate]);
 
   const termDays = parseAmount(term);
   const autoWithholding = defaultWithholding(termDays && termDays > 0 ? termDays : 32, fxDeposit);
@@ -331,6 +365,7 @@ export default function EditHoldingScreen() {
               <Field
                 label="Yatırdığın günkü kur"
                 prefix="₺"
+                decimals={4}
                 keyboardType="decimal-pad"
                 value={unitCost}
                 onChangeText={(t) => { setUnitCost(t); setRateNote(undefined); }}
@@ -371,6 +406,7 @@ export default function EditHoldingScreen() {
                 style={styles.flex}
                 label="Birim alış fiyatı"
                 prefix="$"
+                decimals={6}
                 keyboardType="decimal-pad"
                 value={usdCost}
                 onChangeText={setUsdCost}
@@ -380,6 +416,7 @@ export default function EditHoldingScreen() {
                 style={styles.flex}
                 label="O günkü dolar kuru"
                 prefix="₺"
+                decimals={4}
                 keyboardType="decimal-pad"
                 value={usdRate}
                 onChangeText={(t) => { setUsdRate(t); setRateNote(undefined); }}
@@ -397,6 +434,7 @@ export default function EditHoldingScreen() {
               <Field
                 label="Güncel birim fiyat"
                 prefix="$"
+                decimals={6}
                 keyboardType="decimal-pad"
                 value={currentUsd}
                 onChangeText={setCurrentUsd}
@@ -451,6 +489,7 @@ export default function EditHoldingScreen() {
             <Field
               label={isFx ? 'Alış kuru' : isGold ? (goldType === 'gram' ? 'Gram alış fiyatı' : 'Adet alış fiyatı') : 'Birim alış fiyatı'}
               prefix="₺"
+              decimals={isFx ? 4 : isGold ? 2 : 6}
               keyboardType="decimal-pad"
               value={unitCost}
               onChangeText={(t) => { setUnitCost(t); setRateNote(undefined); }}
@@ -461,6 +500,7 @@ export default function EditHoldingScreen() {
               <Field
                 label="Güncel birim fiyat"
                 prefix="₺"
+                decimals={6}
                 keyboardType="decimal-pad"
                 value={current}
                 onChangeText={setCurrent}
