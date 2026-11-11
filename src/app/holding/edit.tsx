@@ -13,7 +13,7 @@ import { defaultWithholding } from '@/lib/deposit';
 import { formatLongDate, formatMoney, formatPct, formatRate, formatTL, parseAmount, todayISO } from '@/lib/format';
 import { fetchTryRate } from '@/lib/fx';
 import { priceLookup } from '@/lib/lookup';
-import { fundPriceOn } from '@/lib/fund-service';
+import { fundPriceOn, usPriceOn } from '@/lib/fund-service';
 import { closeLabel } from '@/lib/funds';
 import { feedQuote, knownSymbols, usSymbol } from '@/lib/securities';
 import { analyzeHolding } from '@/lib/returns';
@@ -80,6 +80,9 @@ export default function EditHoldingScreen() {
   const [rateNote, setRateNote] = useState<string>();
   // the unit cost we filled from TEFAS, so a later date or code may replace it (a typed one stays)
   const [autoCost, setAutoCost] = useState<string>();
+  // the same for the dollar price of a US stock, ETF or coin, with the note under it
+  const [autoUsd, setAutoUsd] = useState<string>();
+  const [usdNote, setUsdNote] = useState<string>();
   const [refRate, setRefRate] = useState<number>();
   const [tried, setTried] = useState(false);
   const [acknowledged, setAcknowledged] = useState<string>();
@@ -92,6 +95,8 @@ export default function EditHoldingScreen() {
     setQuantity('');
     setUnitCost('');
     setAutoCost(undefined);
+    setAutoUsd(undefined);
+    setUsdNote(undefined);
     setCurrent('');
     setPrincipal('');
     setGross('');
@@ -185,6 +190,38 @@ export default function EditHoldingScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fundCode, buyDate]);
+
+  // A listed US stock, ETF or coin: its USD close on the purchase day becomes the unit price.
+  const usCode = usdKind && autoQuote ? usSymbol(name) : undefined;
+  useEffect(() => {
+    if (!usCode || !buyDate || !FEED_URL || existing) return;
+    if (usdCost && usdCost !== autoUsd) return;
+    let cancelled = false;
+    usPriceOn(FEED_URL, usCode, kind === 'crypto', buyDate, today)
+      .then((p) => {
+        if (cancelled) return;
+        if (!p) {
+          setUsdNote('Bu tarih için kapanış henüz yüklenmedi; alış fiyatını dolar olarak gir.');
+          return;
+        }
+        const text = numText(p.price);
+        setUsdCost(text);
+        setAutoUsd(text);
+        setUsdNote(
+          p.date === buyDate
+            ? `${formatLongDate(p.date)} kapanışı (ABD saati). Farklı fiyattan aldıysan değiştir.`
+            : `${formatLongDate(buyDate)} işlem günü değil; ${formatLongDate(p.date)} kapanışı. Farklı fiyattan aldıysan değiştir.`,
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usCode, buyDate]);
+
+  // A Turkish exchange-traded fund typed under "ETF": it is priced by TEFAS, under "Fon".
+  const tefasEtf = kind === 'etf' && !autoQuote && name.trim().length >= 3 ? feedQuote({ kind: 'fund', name }) : undefined;
 
   const termDays = parseAmount(term);
   const autoWithholding = defaultWithholding(termDays && termDays > 0 ? termDays : 32, fxDeposit);
@@ -392,6 +429,24 @@ export default function EditHoldingScreen() {
                 ))}
               </View>
             )}
+            {tefasEtf && (
+              <View style={[styles.preview, { backgroundColor: theme.info }]}>
+                <ThemedText type="small" style={{ color: theme.infoText }}>
+                  {name.trim().toUpperCase()} bir Türk borsa yatırım fonu{tefasEtf.name ? ` (${tefasEtf.name})` : ''}. Fiyatı TEFAS’tan
+                  gelir; “Fon” türüyle ekle.
+                </ThemedText>
+                <Button
+                  title="Fon olarak ekle"
+                  kind="secondary"
+                  compact
+                  onPress={() => {
+                    const code = name.trim().toUpperCase();
+                    changeGroup('fund');
+                    setName(code);
+                  }}
+                />
+              </View>
+            )}
             <Field
               label={kind === 'crypto' ? 'Miktar' : 'Adet'}
               keyboardType="decimal-pad"
@@ -409,7 +464,10 @@ export default function EditHoldingScreen() {
                 decimals={6}
                 keyboardType="decimal-pad"
                 value={usdCost}
-                onChangeText={setUsdCost}
+                onChangeText={(t) => {
+                  setUsdCost(t);
+                  setUsdNote(undefined);
+                }}
                 error={show(errors.cost)}
               />
               <Field
@@ -423,6 +481,7 @@ export default function EditHoldingScreen() {
               />
             </View>
             <ThemedText type="small" themeColor="textSecondary">
+              {usdNote ? `${usdNote} ` : ''}
               {rateNote ?? 'Maliyetini TL’ye bu kurdan çeviririz; reel getiri hem TÜFE’ye hem dolara göre hesaplanır.'}
             </ThemedText>
             {autoQuote ? (

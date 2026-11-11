@@ -18,10 +18,10 @@ import { formatMoneyInput, formatPct } from '@/lib/format';
 
 export const Radius = { card: 24, inner: 16, pill: 999 } as const;
 
-export function Screen({ children, tabs = true }: { children: ReactNode; tabs?: boolean }) {
+export function Screen({ children, tabs = true, background }: { children: ReactNode; tabs?: boolean; background?: string }) {
   const theme = useTheme();
   return (
-    <SafeAreaView edges={['top']} style={[styles.flex, { backgroundColor: theme.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.flex, { backgroundColor: background ?? theme.background }]}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.scroll, { paddingBottom: (tabs ? BottomTabInset : 0) + Spacing.five }]}>

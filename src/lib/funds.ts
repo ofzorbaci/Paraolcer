@@ -117,3 +117,27 @@ export function previousMonth(month: string): string {
   const [y, m] = month.split('-').map(Number);
   return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
 }
+
+/** us/daily/<YYYY-MM>.json: US stocks and ETFs (`stocks`) and coins (`crypto`), USD closes. */
+export type UsMonth = { month: string; dates: string[]; stocks: Record<string, (number | null)[]>; crypto: Record<string, (number | null)[]> };
+
+export function parseUsMonth(body: unknown): UsMonth | undefined {
+  const b = body as { schema?: number; month?: string; dates?: unknown; stocks?: unknown; crypto?: unknown };
+  if (!b || b.schema !== FUND_SCHEMA || typeof b.month !== 'string' || !Array.isArray(b.dates)) return undefined;
+  return {
+    month: b.month,
+    dates: b.dates as string[],
+    stocks: (b.stocks ?? {}) as UsMonth['stocks'],
+    crypto: (b.crypto ?? {}) as UsMonth['crypto'],
+  };
+}
+
+/** The US month as a FundMonth for one group, so `priceOnDate` works on it. */
+export function usGroup(month: UsMonth, crypto: boolean): FundMonth {
+  return { month: month.month, dates: month.dates, prices: crypto ? month.crypto : month.stocks };
+}
+
+/** https://…/feed.json → https://…/us/daily/2025-10.json */
+export function usMonthUrl(feedUrl: string, month: string): string {
+  return feedUrl.replace(/[^/]*$/, `us/daily/${month}.json`);
+}

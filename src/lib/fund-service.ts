@@ -4,7 +4,21 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { fundBookStale, fundLatestUrl, fundMonthUrl, parseFundLatest, parseFundMonth, previousMonth, priceOnDate, type FundBook, type FundMonth } from './funds';
+import {
+  fundBookStale,
+  fundLatestUrl,
+  fundMonthUrl,
+  parseFundLatest,
+  parseFundMonth,
+  parseUsMonth,
+  previousMonth,
+  priceOnDate,
+  usGroup,
+  usMonthUrl,
+  type FundBook,
+  type FundMonth,
+  type UsMonth,
+} from './funds';
 
 const KEY = 'gg.funds.v1';
 
@@ -53,37 +67,67 @@ export async function clearFundCache(): Promise<void> {
 
 const MONTH_KEY = 'gg.fundmonth.';
 const months = new Map<string, FundMonth>();
+const US_MONTH_KEY = 'gg.usmonth.';
+const usMonths = new Map<string, UsMonth>();
 
 /**
- * One month of every fund's prices. Past months never change, so they are kept on the phone for
- * good; the current month is downloaded again on another day. Only the month is requested: the
- * server cannot tell which fund the user is looking at.
+ * A month file (TEFAS funds or US closes): past months are kept on the phone for good, the
+ * current month is downloaded again on another day. Only the month is requested.
  */
-export async function loadFundMonth(feedUrl: string, month: string, today: string): Promise<FundMonth | undefined> {
+async function loadMonthFile<T>(
+  url: string,
+  storageKey: string,
+  memo: Map<string, T>,
+  month: string,
+  today: string,
+  parse: (body: unknown) => T | undefined,
+): Promise<T | undefined> {
   const current = month >= today.slice(0, 7);
-  const memo = months.get(month);
-  if (memo && !current) return memo;
-  let cached: { month: FundMonth; fetchedAt: string } | undefined;
+  const hit = memo.get(month);
+  if (hit && !current) return hit;
+  let cached: { month: T; fetchedAt: string } | undefined;
   try {
-    const raw = await AsyncStorage.getItem(MONTH_KEY + month);
+    const raw = await AsyncStorage.getItem(storageKey + month);
     cached = raw ? JSON.parse(raw) : undefined;
   } catch {
     cached = undefined;
   }
   if (cached && (!current || !fundBookStale(cached.fetchedAt, today))) {
-    months.set(month, cached.month);
+    memo.set(month, cached.month);
     return cached.month;
   }
   try {
-    const res = await fetch(fundMonthUrl(feedUrl, month));
-    const parsed = res.ok ? parseFundMonth(await res.json()) : undefined;
+    const res = await fetch(url);
+    const parsed = res.ok ? parse(await res.json()) : undefined;
     if (!parsed) return cached?.month;
-    months.set(month, parsed);
-    AsyncStorage.setItem(MONTH_KEY + month, JSON.stringify({ month: parsed, fetchedAt: new Date().toISOString() })).catch(() => {});
+    memo.set(month, parsed);
+    AsyncStorage.setItem(storageKey + month, JSON.stringify({ month: parsed, fetchedAt: new Date().toISOString() })).catch(() => {});
     return parsed;
   } catch {
     return cached?.month;
   }
+}
+
+/** US stock, ETF or coin close on the purchase day, USD (or the last trading day before it). */
+export async function usPriceOn(
+  feedUrl: string,
+  symbol: string,
+  crypto: boolean,
+  date: string,
+  today: string,
+): Promise<{ price: number; date: string } | undefined> {
+  const load = (m: string) => loadMonthFile(usMonthUrl(feedUrl, m), US_MONTH_KEY, usMonths, m, today, parseUsMonth);
+  const month = date.slice(0, 7);
+  const here = await load(month);
+  const found = here && priceOnDate(usGroup(here, crypto), symbol, date);
+  if (found) return found;
+  const before = await load(previousMonth(month));
+  return before && priceOnDate(usGroup(before, crypto), symbol, date);
+}
+
+/** One month of every TEFAS fund's prices; the server cannot tell which fund the user looks at. */
+export function loadFundMonth(feedUrl: string, month: string, today: string): Promise<FundMonth | undefined> {
+  return loadMonthFile(fundMonthUrl(feedUrl, month), MONTH_KEY, months, month, today, parseFundMonth);
 }
 
 /** The fund's price on the purchase day (or the last trading day before it, looking one month back). */

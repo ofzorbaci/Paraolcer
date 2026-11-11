@@ -72,3 +72,20 @@ describe('price on the purchase day', () => {
     expect(parseFundMonth({ schema: 2 })).toBeUndefined();
   });
 });
+
+describe('US closes on the purchase day', () => {
+  it('reads the US month file per group', async () => {
+    const { parseUsMonth, usGroup, priceOnDate, usMonthUrl } = await import('../funds');
+    const m = parseUsMonth({
+      schema: 1,
+      month: '2025-10',
+      dates: ['2025-10-09', '2025-10-10'],
+      stocks: { SPY: [670.1, 668.5] },
+      crypto: { BTC: [121000, null] },
+    })!;
+    expect(priceOnDate(usGroup(m, false), 'spy', '2025-10-11')).toEqual({ price: 668.5, date: '2025-10-10' });
+    expect(priceOnDate(usGroup(m, true), 'BTC', '2025-10-10')).toEqual({ price: 121000, date: '2025-10-09' });
+    expect(priceOnDate(usGroup(m, true), 'SPY', '2025-10-10')).toBeUndefined();
+    expect(usMonthUrl('https://x.io/P/feed.json', '2025-10')).toBe('https://x.io/P/us/daily/2025-10.json');
+  });
+});
