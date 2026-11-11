@@ -78,6 +78,7 @@ jobs:
           mkdir -p _site
           cp -r feed/public/. _site/
           if [[ -d _fund-data/funds ]]; then cp -r _fund-data/funds _site/funds; fi
+          if [[ -d _fund-data/us ]]; then cp -r _fund-data/us _site/us; fi
 
       - uses: actions/upload-pages-artifact@v3
         with:

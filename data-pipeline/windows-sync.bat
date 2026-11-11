@@ -37,6 +37,9 @@ if not exist "%DATA%\.git" (
 rem Senkron: hata olursa cikis 1, eski dosyalar yerinde kalir
 "%PY%" "%HERE%sync.py" --out "%DATA%" --mode %MODE% >> "%LOG%" 2>&1 || goto :fail
 
+rem ABD hisse, ETF, kripto gecmisi (hata TEFAS yayinini durdurmaz; anahtar yoksa sadece gunluk kapanislar)
+"%PY%" "%HERE%us_history.py" --out "%DATA%" --universe "%REPO%\feed\us-universe.json" --feed "%REPO%\feed\public\feed.json" --budget 10 >> "%LOG%" 2>&1
+
 rem Degisiklik varsa tek commit olarak yeniden yaz ve push et
 for /f %%s in ('git -C "%DATA%" status --porcelain') do goto :commit
 echo Degisiklik yok. >> "%LOG%"

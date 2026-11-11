@@ -28,7 +28,7 @@ on:
   # fund-data: Windows yedeğinin push'u · main: bu iş akışı ya da betik değişince yeniden yayınla
   push:
     branches: [fund-data, main]
-    paths: ['funds/**', 'data-pipeline/**', '.github/workflows/funds.yml']
+    paths: ['funds/**', 'us/**', 'data-pipeline/**', '.github/workflows/funds.yml', 'feed/us-universe.json']
 
 permissions:
   contents: write
@@ -42,8 +42,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # GitHub Pages yalnızca main'den tetiklenen yayına izin verir. fund-data'ya push gelince
-  # (Windows yedeği) bu iş akışını main üzerinde "publish" moduyla yeniden başlat.
+  # GitHub Pages yalnızca main'den tetiklenen yayına izin verir. Push gelince bu iş akışını
+  # main üzerinde yeniden başlat: fund-data'dan gelirse "publish", main'den gelirse "main".
   relay:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -51,7 +51,11 @@ jobs:
       - name: main üzerinde yayını başlat
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run funds.yml --repo "${{ github.repository }}" --ref main -f mode=publish
+        # fund-data (Windows yedeği): yalnızca yayınla · main (betik değişti): normal çekimle çalıştır
+        run: |
+          MODE=publish
+          if [[ "${{ github.ref_name }}" == "main" ]]; then MODE=main; fi
+          gh workflow run funds.yml --repo "${{ github.repository }}" --ref main -f mode="$MODE"
 
   build:
     if: github.event_name != 'push'
@@ -95,6 +99,16 @@ jobs:
           if [[ -n "${{ inputs.mode }}" ]]; then MODE="${{ inputs.mode }}"; fi
           python app/data-pipeline/sync.py --out data --mode "$MODE"
 
+      # ABD hisse, ETF ve kripto geçmişi (alış günü fiyatı için). Alpha Vantage'ın ücretsiz
+      # hakkı günde 25 istek: her çalıştırma en fazla 10 sembol yükler, ilk yükleme birkaç günde
+      # tamamlanır. Bir sorun TEFAS verisinin yayınını engellemesin diye adım hatası işi düşürmez.
+      - name: ABD fiyat geçmişi
+        if: inputs.mode != 'publish'
+        continue-on-error: true
+        env:
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
+        run: python app/data-pipeline/us_history.py --out data --universe app/feed/us-universe.json --feed app/feed/public/feed.json --budget 10
+
       - name: fund-data dalına kaydet (tek commit)
         if: inputs.mode != 'publish'
         working-directory: data
@@ -104,7 +118,7 @@ jobs:
           if [[ -n "$(git status --porcelain)" ]]; then
             git checkout -q --orphan snapshot
             git add -A
-            git commit -q -m "Fon verisi: $(jq -r .lastDate funds/meta.json) ($(jq -r .fundCount funds/meta.json) fon)"
+            git commit -q -m "Fon verisi: $(jq -r .lastDate funds/meta.json) ($(jq -r .fundCount funds/meta.json) fon) · ABD geçmişi bekleyen: $(jq -r '.remaining | length' us/meta.json 2>/dev/null || echo -)"
             git push -f origin snapshot:fund-data
           else
             echo "Değişiklik yok."
@@ -115,6 +129,7 @@ jobs:
           mkdir -p _site
           cp -r app/feed/public/. _site/
           if [[ -d data/funds ]]; then cp -r data/funds _site/funds; fi
+          if [[ -d data/us ]]; then cp -r data/us _site/us; fi
           test -f _site/feed.json
 
       - uses: actions/upload-pages-artifact@v3
