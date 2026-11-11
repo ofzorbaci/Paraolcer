@@ -100,6 +100,39 @@ def write_json(path: Path, data) -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
 
+def write_monthly(funds_dir: Path, months: set[str] | None = None) -> int:
+    """funds/daily/<YYYY-MM>.json: every fund's price on every trading day of that month.
+
+    The app downloads the month of a purchase date to fill in the purchase price. A month file
+    holds all ~2.500 funds, so the server learns the month, never which fund the user holds.
+    Shape: {"dates": ["2025-10-01", …], "prices": {"AAL": [3.1, 3.11, null, …]}} with one price
+    per date (null when the fund had none that day). `months` None rebuilds every month.
+    """
+    by_month: dict[str, dict[str, dict[str, float]]] = {}
+    for path in (funds_dir / "history").glob("*.json"):
+        hist = read_json(path) or {}
+        code = hist.get("code") or path.stem
+        for d, p in hist.get("prices", []):
+            m = d[:7]
+            if months is None or m in months:
+                by_month.setdefault(m, {}).setdefault(code, {})[d] = p
+    daily = funds_dir / "daily"
+    daily.mkdir(parents=True, exist_ok=True)
+    for m, funds in by_month.items():
+        dates = sorted({d for prices in funds.values() for d in prices})
+        write_json(
+            daily / f"{m}.json",
+            {
+                "schema": SCHEMA_VERSION,
+                "source": SOURCE,
+                "month": m,
+                "dates": dates,
+                "prices": {code: [prices.get(d) for d in dates] for code, prices in sorted(funds.items())},
+            },
+        )
+    return len(by_month)
+
+
 def retry(action, attempts: int = 6, wait: float = 2.0):
     """Runs a file operation again when Windows briefly locks the path (PermissionError)."""
     import time
@@ -240,6 +273,12 @@ def sync(out: Path, mode: str, today: date, fetch=fetch_rows, checkpoint_dir: Pa
                     "returns": returns([[d, p] for d, p in ordered]),
                 }
 
+        # Month files for the app's "price on the purchase day": rebuild the months that got
+        # new prices (all of them on the first load or when none exist yet).
+        daily_dir = staging / "funds" / "daily"
+        months = None if first_load or not daily_dir.exists() else {r["date"][:7] for r in rows}
+        write_monthly(staging / "funds", months)
+
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         funds = sorted(info.values(), key=lambda f: f["code"])
         latest_date = max(f["date"] for f in funds)
@@ -290,9 +329,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", required=True, help="funds/ klasörünün yazılacağı yer (ör. fund-data dalının kopyası)")
     p.add_argument("--mode", choices=("main", "topup"), default="main")
     p.add_argument("--today", help="test için: YYYY-MM-DD (varsayılan: bugün, Türkiye saati)")
+    p.add_argument("--rebuild-monthly", action="store_true", help="çekmeden, mevcut geçmişten tüm ay dosyalarını yeniden üret")
     args = p.parse_args(argv)
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
+    if args.rebuild_monthly:
+        n = write_monthly(out / "funds")
+        print(f"{n} ay dosyası yazıldı.")
+        return 0
     today = date.fromisoformat(args.today) if args.today else datetime.now(timezone(timedelta(hours=3))).date()
     try:
         sync(out, args.mode, today)

@@ -50,6 +50,10 @@ class SyncTest(unittest.TestCase):
         self.assertAlmostEqual(aak["price"], 10.0)
         hist = json.loads((self.tmp / "funds/history/AAK.json").read_text(encoding="utf-8"))
         self.assertEqual([p[0] for p in hist["prices"]], ["2025-11-10", "2026-10-30", "2026-11-09", "2026-11-10"])
+        month = json.loads((self.tmp / "funds/daily/2026-11.json").read_text(encoding="utf-8"))
+        self.assertEqual(month["dates"], ["2026-11-09", "2026-11-10"])
+        self.assertEqual(month["prices"]["AAK"], [10.2, 10.0])  # sırası tarihlerle aynı
+        self.assertTrue((self.tmp / "funds/daily/2025-11.json").exists())
         meta = json.loads((self.tmp / "funds/meta.json").read_text(encoding="utf-8"))
         self.assertEqual(meta["priceDates"]["TTE"], "2026-11-10")
         self.assertEqual(meta["schema"], sync.SCHEMA_VERSION)
