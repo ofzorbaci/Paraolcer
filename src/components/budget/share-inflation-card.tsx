@@ -2,6 +2,7 @@ import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { Wordmark } from '@/components/wordmark';
 import { Button } from '@/components/ui';
 import { BrandFonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -30,7 +31,7 @@ export function ShareInflationCard({ rate, official, month }: { rate: number; of
   return (
     <>
       <View ref={card} collapsable={false} style={[styles.card, { backgroundColor: theme.hero }]}>
-        <ThemedText style={[styles.brand, { color: theme.heroText }]}>Paraölçer</ThemedText>
+        <Wordmark size={20} onDark />
         <ThemedText style={[styles.small, { color: theme.heroMuted }]}>Benim enflasyonum</ThemedText>
         <ThemedText style={[styles.big, { color: theme.heroAccent }]}>{formatRate(rate)}</ThemedText>
         <View style={styles.row}>

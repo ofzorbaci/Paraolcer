@@ -9,6 +9,7 @@ import type { Holding, Settings } from './types';
 
 export type Snapshot = { savedAt: string; holdings: Holding[]; settings: Settings };
 
+// File names kept from the earlier app name (Paraölçer): renaming them would orphan existing snapshots.
 const NAME = 'paraolcer-otomatik-yedek.json';
 
 function file(): File {

@@ -7,8 +7,11 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+/** ParaLens logo colours. */
+export const Brand = { navy: '#0B1F3A', teal: '#0E7C72', gold: '#E9B949', mint: '#DDF4F1', dial: '#1E3A5F' };
+
 export const Colors = {
-  // Paraölçer brand: navy, blue for gains, burnt orange for losses (no red/green, readable for colour-blind users).
+  // ParaLens: logo navy, blue for gains, burnt orange for losses (no red/green, readable for colour-blind users).
   light: {
     text: '#0F1B2D',
     background: '#F4F6F9',
@@ -24,11 +27,11 @@ export const Colors = {
     info: '#E8EEFD',
     infoText: '#1E3A8A',
     border: '#E2E8F0',
-    hero: '#0F1B2D',
+    hero: '#0B1F3A',
     heroText: '#FFFFFF',
     heroMuted: '#A8B3C7',
     heroAccent: '#8EAEFF',
-    chip: '#0F1B2D',
+    chip: '#0B1F3A',
     onChip: '#FFFFFF',
     chartMuted: '#8A93A6',
     chartGold: '#A16207',
@@ -90,7 +93,7 @@ export const Fonts = Platform.select({
   },
 });
 
-/** Brand type: Inter for all app text, Sora (bold) only for the Paraölçer wordmark. */
+/** Brand type: Inter for all app text, Sora (bold) only for the ParaLens wordmark. */
 export const BrandFonts = {
   400: 'Inter_400Regular',
   500: 'Inter_500Medium',

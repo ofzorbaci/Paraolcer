@@ -8,7 +8,7 @@ export async function lockAvailable(): Promise<boolean> {
 /** Face ID / fingerprint, falling back to the phone's own passcode. The app stores no PIN. */
 export async function unlock(): Promise<boolean> {
   const r = await LocalAuthentication.authenticateAsync({
-    promptMessage: 'Paraölçer’in kilidini aç',
+    promptMessage: 'ParaLens’in kilidini aç',
     cancelLabel: 'Vazgeç',
     fallbackLabel: 'Telefon şifresini kullan',
     disableDeviceFallback: false,

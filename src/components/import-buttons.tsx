@@ -11,7 +11,7 @@ export function ImportButtons() {
       <Button
         title="Örnek Excel şablonunu indir"
         kind="secondary"
-        onPress={() => void shareWorkbook(templateWorkbook(), 'paraolcer-sablon.xlsx')}
+        onPress={() => void shareWorkbook(templateWorkbook(), 'paralens-sablon.xlsx')}
       />
       <Button title="Excel / CSV’den yükle" kind="secondary" onPress={() => router.push('/import')} />
     </>

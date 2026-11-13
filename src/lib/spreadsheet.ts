@@ -121,7 +121,7 @@ export function rowsToHoldings(rows: unknown[][], today: string, id: () => strin
 
     const side = normalise(get('side'));
     if (side && /sat/.test(side)) {
-      out.push({ line, errors: ['Satış satırı atlandı; Paraölçer şimdilik eldeki varlıkları takip ediyor.'] });
+      out.push({ line, errors: ['Satış satırı atlandı; ParaLens şimdilik eldeki varlıkları takip ediyor.'] });
       return;
     }
 

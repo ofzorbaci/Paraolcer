@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { Wordmark } from '@/components/wordmark';
 import { Button, Icon, Radius, Screen } from '@/components/ui';
 import { BrandFonts, Spacing } from '@/constants/theme';
 import { FOUNDER_YEARLY_UNTIL, LIFETIME_SEATS, PREMIUM_FEATURES, YEARLY_AFTER_FOUNDER, premiumShowcase, yearlySavings, type PremiumFeature } from '@/lib/entitlements';
@@ -19,7 +20,7 @@ const PLAN_LABEL: Record<Plan['period'], string> = { yearly: 'Yıllık · Kurucu
 const PER: Record<Plan['period'], string> = { yearly: ' / yıl', monthly: ' / ay', lifetime: '' };
 /** The paywall is navy in both themes, like the summary's hero card. */
 const C = {
-  bg: '#0F1B2D',
+  bg: '#0B1F3A',
   card: 'rgba(255,255,255,0.06)',
   cardOn: 'rgba(142,174,255,0.14)',
   border: 'rgba(255,255,255,0.14)',
@@ -92,7 +93,7 @@ export default function PaywallScreen() {
 
       <View style={styles.hero}>
         <Image source={require('@/assets/images/icon.png')} style={styles.logo} />
-        <ThemedText style={[styles.brand, { color: C.text }]}>{showcase.title}</ThemedText>
+        <Wordmark size={30} onDark suffix={showcase.title.replace(/^ParaLens/, '')} />
         <ThemedText type="small" style={{ color: C.muted }}>
           {showcase.subtitle}
         </ThemedText>

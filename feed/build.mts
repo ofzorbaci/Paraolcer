@@ -49,7 +49,7 @@ const SNAPSHOT = fileURLToPath(new URL('../src/data/feed-snapshot.json', import.
 const WITHHOLDING = fileURLToPath(new URL('./withholding.json', import.meta.url));
 
 async function get(url: string): Promise<Response> {
-  const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (paraolcer feed)' } });
+  const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (paralens feed)' } });
   if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
   return res;
 }

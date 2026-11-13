@@ -403,7 +403,7 @@ export async function setMaturityReminders(on: boolean): Promise<boolean> {
 
 /**
  * Remembers the lira gap a Premium user saw at a deposit's maturity, once per maturity, for the
- * "Paraölçer showed you ₺X this year" counter.
+ * "ParaLens showed you ₺X this year" counter.
  */
 export function recordRenewView(id: string, maturity: string, diff: number) {
   if (!state.premium.active || !(diff > 0) || state.allHoldings.find((h) => h.id === id)?.sample) return;
@@ -447,7 +447,7 @@ export async function maybeAskForReview(goodMoment: boolean): Promise<void> {
   await requestReview();
 }
 
-/** Deletes everything Paraölçer keeps on this phone. The store subscription is not affected. */
+/** Deletes everything ParaLens keeps on this phone. The store subscription is not affected. */
 export async function deleteAllData(): Promise<void> {
   await Promise.all([disableReminders('cpi'), disableReminders('rate'), cancelMaturityReminders(), cancelTrialEndReminder()]);
   await AsyncStorage.multiRemove(Object.values(KEYS)).catch(() => {});

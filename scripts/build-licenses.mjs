@@ -78,20 +78,23 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Açık kaynak lisansları · Paraölçer</title>
+<link rel="icon" type="image/png" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Açık kaynak lisansları · ParaLens</title>
 <meta name="robots" content="noindex">
 ${style}
 </head>
 <body>
 <header>
   <div class="wrap">
+    <img src="paralens-logo-dark-bg.png" alt="ParaLens" width="160" height="45" style="display:block;margin:0 0 18px">
     <h1>Açık kaynak lisansları</h1>
-    <p>Paraölçer · ${rows.length} paket</p>
+    <p>ParaLens · ${rows.length} paket</p>
   </div>
 </header>
 <main class="wrap">
   <section>
-    <p>Paraölçer aşağıdaki açık kaynak yazılımlarla yapıldı. Her paket kendi lisansıyla dağıtılır; telif hakları sahiplerine aittir. Lisansların tam metni her paketin kaynak deposunda ve <a href="https://opensource.org/licenses" rel="noopener">opensource.org</a> adresinde yer alır.</p>
+    <p>ParaLens aşağıdaki açık kaynak yazılımlarla yapıldı. Her paket kendi lisansıyla dağıtılır; telif hakları sahiplerine aittir. Lisansların tam metni her paketin kaynak deposunda ve <a href="https://opensource.org/licenses" rel="noopener">opensource.org</a> adresinde yer alır.</p>
     <p class="muted">Lisanslar: ${summary}</p>
     <p class="muted">Yazı tipleri: Inter ve Sora, SIL Open Font License 1.1 ile.</p>
   </section>

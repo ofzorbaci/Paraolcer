@@ -11,8 +11,9 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import type { BudgetData } from './budget/types';
 import type { Holding, Settings } from './types';
 
+/** Id written into backup files. Kept from the app's earlier name (Paraölçer) so existing backups still open. */
 export const BACKUP_APP = 'paraolcer';
-/** Backups made before the app was named Paraölçer. */
+/** Backup ids from even earlier names, still accepted. */
 const LEGACY_APPS = ['reel-getiri-pusulasi'];
 const ITERATIONS = 100_000;
 export const MIN_PASSWORD = 8;
@@ -61,7 +62,7 @@ export async function decryptBackup(text: string, password: string): Promise<Bac
     throw new Error('Bu bir yedek dosyası değil');
   }
   const known = file?.app === BACKUP_APP || LEGACY_APPS.includes(file?.app);
-  if (!known || file.version !== 1) throw new Error('Bu dosya Paraölçer yedeği değil');
+  if (!known || file.version !== 1) throw new Error('Bu dosya ParaLens yedeği değil');
 
   const key = await deriveKey(password, hexToBytes(file.kdf.salt), file.kdf.iterations);
   let plain: Uint8Array;

@@ -155,9 +155,9 @@ export default function ProfileScreen() {
       </Card>
 
       <Card>
-        <ThemedText style={styles.cardTitle}>Paraölçer’i kim yaptı?</ThemedText>
+        <ThemedText style={styles.cardTitle}>ParaLens’i kim yaptı?</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Paraölçer’i, Serbest Piyasa Analiz YouTube kanalının sahibi Ömer Faruk Zorbacı yaptı. Amaç basit: birikimin
+          ParaLens’i, Serbest Piyasa Analiz YouTube kanalının sahibi Ömer Faruk Zorbacı yaptı. Amaç basit: birikimin
           enflasyonun önünde mi, dürüstçe ölçmek. Soru ve önerilerini “Hata bildir” ile doğrudan bana yazabilirsin.
         </ThemedText>
         <Button
@@ -179,7 +179,7 @@ export default function ProfileScreen() {
       <Card>
         <ThemedText style={styles.cardTitle}>Yasal</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Paraölçer bir hesaplama ve bilgi aracıdır; yatırım danışmanlığı yapmaz, alım satım önermez. Geçmiş veriler
+          ParaLens bir hesaplama ve bilgi aracıdır; yatırım danışmanlığı yapmaz, alım satım önermez. Geçmiş veriler
           gelecekteki sonuçları garanti etmez.
         </ThemedText>
         {!!legal.termsUrl && (
@@ -201,7 +201,7 @@ export default function ProfileScreen() {
 
       <Disclaimer text="Kaynaklar: TÜİK, TCMB (EVDS), Avrupa Merkez Bankası, gold-api.com, Finnhub, Alpha Vantage, Dünya Bankası, ENAG · Ayrıntı: Yöntem" />
       <Disclaimer
-        text={`Paraölçer ${Constants.expoConfig?.version ?? ''} · Alım gücünü ölç · Bir hesaplama aracıdır, yatırım tavsiyesi vermez.`}
+        text={`ParaLens ${Constants.expoConfig?.version ?? ''} · Alım gücünü ölç · Bir hesaplama aracıdır, yatırım tavsiyesi vermez.`}
       />
     </Screen>
   );

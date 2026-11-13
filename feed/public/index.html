@@ -3,15 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Enflasyon hesaplama: Senin enflasyonun kaç? · Paraölçer</title>
+<link rel="icon" type="image/png" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Enflasyon hesaplama: Senin enflasyonun kaç? · ParaLens</title>
 <meta name="description" content="5 soruda kişisel enflasyonunu hesapla, TÜİK ile karşılaştır. Birikiminin reel getirisini TÜFE'ye göre hesapla. Ücretsiz, kayıt yok, veri sunucuya gitmez.">
 <link rel="canonical" href="https://ofzorbaci.github.io/Paraolcer/">
-<meta property="og:title" content="Senin enflasyonun kaç? · Paraölçer">
+<meta property="og:title" content="Senin enflasyonun kaç? · ParaLens">
 <meta property="og:description" content="5 soruda kişisel enflasyonunu hesapla, TÜİK ile karşılaştır; birikiminin reel getirisini gör.">
 <style>
   :root {
     --bg: #F4F6F9; --card: #FFFFFF; --text: #0F1B2D; --muted: #5B6475;
-    --accent: #1D4ED8; --neg: #C2410C; --border: #E2E8F0; --navy: #0F1B2D; --chip: #0F1B2D; --on-chip: #FFFFFF;
+    --accent: #1D4ED8; --neg: #C2410C; --border: #E2E8F0; --navy: #0B1F3A; --chip: #0F1B2D; --on-chip: #FFFFFF;
   }
   @media (prefers-color-scheme: dark) {
     :root { --bg: #0A101C; --card: #131C2D; --text: #E6EBF4; --muted: #94A3B8; --accent: #7FA3FF; --neg: #FB8F5E; --border: #23304A; --chip: #E6EBF4; --on-chip: #0A101C; }
@@ -47,6 +49,7 @@
 <body>
 <header>
   <div class="wrap">
+    <img src="paralens-logo-dark-bg.png" alt="ParaLens" width="160" height="45" style="display:block;margin:0 0 18px">
     <h1>Senin enflasyonun kaç?</h1>
     <p>Kiracıyla ev sahibinin, arabası olanla olmayanın enflasyonu aynı değil. 5 soruda kendi oranını hesapla.</p>
   </div>
@@ -73,12 +76,12 @@
   </section>
 
   <section>
-    <h2>Paraölçer uygulaması</h2>
+    <h2>ParaLens uygulaması</h2>
     <p>Bu sayfadaki hesabın tamamı uygulamada: harcamandan gerçek kişisel enflasyonun, mevduat, döviz ve altının TÜFE ve dolara göre reel getirisi, vade günü "yenilesem mi?" hesabı. Hesap açtırmaz, verin telefonundan çıkmaz.</p>
     <p class="muted">Yakında App Store ve Google Play'de. <a href="gizlilik.html">Gizlilik politikası</a> · <a href="kosullar.html">Kullanım koşulları</a></p>
   </section>
 </main>
-<footer>Bilgi amaçlıdır, yatırım tavsiyesi değildir. Kaynak: TÜİK, TCMB EVDS (Paraölçer veri akışı). Geçmiş veriler gelecekteki sonuçları garanti etmez.</footer>
+<footer>Bilgi amaçlıdır, yatırım tavsiyesi değildir. Kaynak: TÜİK, TCMB EVDS (ParaLens veri akışı). Geçmiş veriler gelecekteki sonuçları garanti etmez.</footer>
 
 <script>
 // Same questions and shares as the app (src/lib/basket.ts → basketFromAnswers).
@@ -147,7 +150,7 @@ document.getElementById('calc').onclick = () => {
   out.innerHTML = `<div class="muted" style="color:#A8B3C7">Tahmini enflasyonun</div>
     <div class="big">${pct(rate)}</div>
     <div style="color:#A8B3C7">TÜİK ${pct(official)} · en çok ${LABELS[top.k].toLowerCase()} yükseltiyor</div>
-    <div style="margin-top:10px;font-size:14px;color:#A8B3C7">Gerçek harcamanla hesaplamak için Paraölçer uygulaması: banka ekstreni aktar, kendi enflasyonunu gör.</div>`;
+    <div style="margin-top:10px;font-size:14px;color:#A8B3C7">Gerçek harcamanla hesaplamak için ParaLens uygulaması: banka ekstreni aktar, kendi enflasyonunu gör.</div>`;
 };
 
 function cpiFactor(fromMonth) {

@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/use-theme';
 
 /** Everything the app asks the internet, and why. Nothing on this list carries the user's data. */
 const CALLS: { host: string; what: string; sends: string }[] = [
-  { host: 'ofzorbaci.github.io', what: 'TÜFE, politika faizi, beklenti, stopaj ve grup verisi (Paraölçer veri akışı)', sends: 'Hiçbir şey; herkese aynı dosya' },
+  { host: 'ofzorbaci.github.io', what: 'TÜFE, politika faizi, beklenti, stopaj ve grup verisi (ParaLens veri akışı)', sends: 'Hiçbir şey; herkese aynı dosya' },
   { host: 'www.tcmb.gov.tr', what: 'Yeni TÜFE açıklandı mı ve günün kuru (yedek)', sends: 'Hiçbir şey' },
   { host: 'api.frankfurter.dev', what: 'Dolar, euro, sterlin kuru (Avrupa Merkez Bankası)', sends: 'Hiçbir şey; yalnızca para birimi ve tarih' },
   { host: 'api.gold-api.com', what: 'Altının ons fiyatı', sends: 'Hiçbir şey' },

@@ -204,7 +204,7 @@ export default function MethodScreen() {
         <Row label="Veri akışı" value={`son derleme ${formatStamp(feed.generatedAt)}`} />
       </Card>
 
-      <Disclaimer text="Paraölçer bir hesaplama aracıdır; yatırım tavsiyesi vermez." />
+      <Disclaimer text="ParaLens bir hesaplama aracıdır; yatırım tavsiyesi vermez." />
     </Screen>
   );
 }

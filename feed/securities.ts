@@ -113,7 +113,7 @@ export function securitiesConfig(env: Record<string, string | undefined>): Secur
 }
 
 export async function fetchSecurityList(url: string, apiKey: string | undefined, today: string): Promise<Record<string, SecurityPrice>> {
-  const res = await fetch(url, { headers: { 'User-Agent': 'paraolcer-feed', ...(apiKey && { Authorization: `Bearer ${apiKey}` }) } });
+  const res = await fetch(url, { headers: { 'User-Agent': 'paralens-feed', ...(apiKey && { Authorization: `Bearer ${apiKey}` }) } });
   if (!res.ok) throw new Error(`${new URL(url).host} → HTTP ${res.status}`);
   return parseSecurityPrices(await res.text(), today);
 }

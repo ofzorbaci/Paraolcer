@@ -56,7 +56,7 @@ export default function ImportScreen() {
           “İşlemler” sayfasına her varlığı bir satır olarak yaz; tarih yyyy-aa-gg biçiminde. “Varlık Tipleri” sayfası
           hangi sütunun ne istediğini anlatıyor.
         </ThemedText>
-        <Button title="Excel şablonunu indir" kind="secondary" onPress={() => shareWorkbook(templateWorkbook(), 'paraolcer-sablon.xlsx')} />
+        <Button title="Excel şablonunu indir" kind="secondary" onPress={() => shareWorkbook(templateWorkbook(), 'paralens-sablon.xlsx')} />
       </Card>
 
       <Card>

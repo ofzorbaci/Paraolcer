@@ -136,7 +136,7 @@ export async function scheduleTrialEndReminder(expiresAt: string): Promise<void>
   if (at.getTime() <= Date.now()) return;
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'Paraölçer Premium denemen 2 gün sonra bitiyor',
+      title: 'ParaLens Premium denemen 2 gün sonra bitiyor',
       body: 'Devam etmek istemiyorsan mağaza ayarlarından iptal edebilirsin; deneme süresinde ücret alınmaz.',
       data: { tag: TRIAL_TAG, url: '/profile' },
     },
@@ -169,7 +169,7 @@ export async function scheduleBudgetReminders(items: PaymentReminder[]): Promise
     await Notifications.scheduleNotificationAsync({
       content: {
         title: `Bugün ödeme günü: ${p.name}`,
-        body: `${p.amount} ödendiyse Paraölçer’de işaretle, bütçen güncel kalsın.`,
+        body: `${p.amount} ödendiyse ParaLens’te işaretle, bütçen güncel kalsın.`,
         data: { tag: BUDGET_TAG, url: '/budget/payments' },
       },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },

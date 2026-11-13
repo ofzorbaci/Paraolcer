@@ -3,6 +3,7 @@ import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { AppState, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { Wordmark } from '@/components/wordmark';
 import { Button } from '@/components/ui';
 import { BrandFonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -48,7 +49,7 @@ export function AppLock({ children }: { children: ReactNode }) {
   return (
     <View style={[styles.cover, { backgroundColor: theme.hero }]}>
       <Image source={require('@/assets/images/icon.png')} style={styles.logo} />
-      <ThemedText style={styles.brand}>Paraölçer</ThemedText>
+      <Wordmark size={28} onDark />
       <ThemedText type="small" style={{ color: theme.heroMuted }}>
         Birikimlerin kilitli.
       </ThemedText>

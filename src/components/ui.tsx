@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
+import { Wordmark } from '@/components/wordmark';
 import { BottomTabInset, BrandFonts, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatMoneyInput, formatPct } from '@/lib/format';
@@ -51,7 +52,7 @@ export function ScreenHeader({
             {eyebrow}
           </ThemedText>
         ) : null}
-        <ThemedText style={[styles.title, wordmark && styles.wordmark]}>{title}</ThemedText>
+        {wordmark ? <Wordmark size={28} /> : <ThemedText style={styles.title}>{title}</ThemedText>}
       </View>
       {right}
     </View>
@@ -295,7 +296,6 @@ const styles = StyleSheet.create({
   inner: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', gap: Spacing.three },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginBottom: Spacing.one },
   title: { fontSize: 28, lineHeight: 34, fontWeight: 800 },
-  wordmark: { fontFamily: BrandFonts.wordmark, fontWeight: 'normal', letterSpacing: -0.5 },
   card: { borderRadius: Radius.card, borderWidth: 1, padding: 20, gap: Spacing.two },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.two },
   strip: { flexDirection: 'row', borderRadius: Radius.inner, padding: Spacing.three, gap: Spacing.two },

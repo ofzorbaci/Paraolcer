@@ -42,7 +42,7 @@ export function PremiumCard() {
 
   return (
     <Card style={premium.active ? { borderColor: theme.accent } : undefined}>
-      <ThemedText style={styles.title}>Paraölçer Premium</ThemedText>
+      <ThemedText style={styles.title}>ParaLens Premium</ThemedText>
       <ThemedText type="small" style={{ color: premium.active ? theme.accent : theme.textSecondary }}>
         {line}
       </ThemedText>

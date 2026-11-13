@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { MonthEndCard } from '@/components/budget/month-end-card';
 import { openPaywall, PremiumGate, usePremium } from '@/components/premium-gate';
 import { ThemedText } from '@/components/themed-text';
+import { Wordmark } from '@/components/wordmark';
 import { Button, Card, Disclaimer, IconButton, Screen } from '@/components/ui';
 import { BrandFonts, Spacing } from '@/constants/theme';
 import { usePortfolio } from '@/hooks/use-portfolio';
@@ -59,7 +60,7 @@ export default function KarneScreen() {
       )}
 
       <View ref={card} collapsable={false} style={[styles.karne, { backgroundColor: theme.hero }]}>
-        <ThemedText style={[styles.brand, { color: theme.heroText }]}>Paraölçer</ThemedText>
+        <Wordmark size={24} onDark />
         <ThemedText style={[styles.small, { color: theme.heroMuted }]}>
           {formatMonth(lastCpi.month)} TÜFE: aylık {formatRate(lastCpi.mom)} · yıllık {formatRate(lastCpi.yoy)}
         </ThemedText>

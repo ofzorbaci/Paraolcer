@@ -1,5 +1,5 @@
 @echo off
-rem Paraolcer TEFAS yedek senkronu (GitHub sunuculari TEFAS'a erisemezse).
+rem ParaLens TEFAS yedek senkronu (GitHub sunuculari TEFAS'a erisemezse).
 rem Ayni betigi bu bilgisayarda calistirir ve fund-data dalina push eder; push GitHub'daki
 rem "Fon verisi" is akisini tetikler, o da sadece Pages'e yayinlar.
 rem
@@ -58,5 +58,5 @@ exit /b 0
 
 :fail
 echo HATA: senkron basarisiz, ayrintilar %LOG% >> "%LOG%"
-echo HATA: Paraolcer fon senkronu basarisiz. Ayrintilar: %LOG%
+echo HATA: ParaLens fon senkronu basarisiz. Ayrintilar: %LOG%
 exit /b 1

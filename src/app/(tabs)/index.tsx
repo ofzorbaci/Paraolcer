@@ -93,7 +93,7 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
     <Screen>
       <ScreenHeader
         eyebrow={`Başlangıçtan bu yana · ${formatMonth(todayISO().slice(0, 7))}`}
-        title="Paraölçer"
+        title="ParaLens"
         wordmark
         right={
           <View style={styles.headerButtons}>
@@ -171,7 +171,7 @@ Faiz kararı: ${RELEASE_FMT.format(nextRate)}, 14:00.` : ''),
         <Card>
           <ThemedText style={styles.cardTitle}>Vade günü sayacı</ThemedText>
           <ThemedText>
-            Bu yıl vade günlerinde Paraölçer sana{' '}
+            Bu yıl vade günlerinde ParaLens sana{' '}
             <ThemedText style={[styles.bold, { color: theme.accent }]}>{formatTL(savings)}</ThemedText> fark gösterdi.
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">

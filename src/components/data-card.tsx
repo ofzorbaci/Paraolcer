@@ -24,7 +24,7 @@ export function DataCard() {
         title="Excel’e aktar"
         kind="secondary"
         disabled={holdings.length === 0}
-        onPress={() => shareWorkbook(exportWorkbook(holdings), `paraolcer-${todayISO()}.xlsx`)}
+        onPress={() => shareWorkbook(exportWorkbook(holdings), `paralens-${todayISO()}.xlsx`)}
       />
       <ImportButtons />
       <ThemedText type="small" themeColor="textSecondary">

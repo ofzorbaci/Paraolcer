@@ -59,7 +59,7 @@ export const FOUNDER_YEARLY_UNTIL = '2027-01-31';
 export const YEARLY_AFTER_FOUNDER = '₺399,99';
 
 /**
- * One product name, "Paraölçer Premium", always. The subtitle and the first features follow
+ * One product name, "ParaLens Premium", always. The subtitle and the first features follow
  * the user's money: deposit holders get the maturity-day pack,
  * people who only hold dollars or gold get the "real wealth" pack. Everything stays included.
  */
@@ -68,7 +68,7 @@ export function premiumShowcase(holdings: Holding[]): Showcase {
   if (own.some((h) => h.kind === 'deposit')) {
     return {
       key: 'maturity',
-      title: 'Paraölçer Premium',
+      title: 'ParaLens Premium',
       subtitle: 'Her vadede paranın nerede daha iyi korunduğunu liralarla gör.',
       lead: ['personalInflation', 'renewForward', 'usdReal'],
     };
@@ -76,14 +76,14 @@ export function premiumShowcase(holdings: Holding[]): Showcase {
   if (own.length > 0 && own.every((h) => h.kind === 'usd' || h.kind === 'eur' || h.kind === 'gbp' || h.kind === 'gold')) {
     return {
       key: 'wealth',
-      title: 'Paraölçer Premium',
+      title: 'ParaLens Premium',
       subtitle: 'Dövizin ve altının sadece TL’ye değil, kendi enflasyonuna karşı da ölçülsün.',
       lead: ['usdReal', 'personalInflation', 'renewForward'],
     };
   }
   return {
     key: 'general',
-    title: 'Paraölçer Premium',
+    title: 'ParaLens Premium',
     subtitle: 'Senin enflasyonun kaç? Harcamandan hesaplar, birikimini ona karşı ölçer.',
     lead: ['personalInflation', 'renewForward', 'usdReal'],
   };

@@ -1,6 +1,6 @@
 """TEFAS fon verisi senkron betiği.
 
-Paraölçer'in herkese açık fon dosyalarını üretir:
+ParaLens'in herkese açık fon dosyalarını üretir:
 
     <out>/funds/latest.json          tüm fonların son fiyatı ve getirileri
     <out>/funds/history/<KOD>.json   her fonun günlük fiyat geçmişi
