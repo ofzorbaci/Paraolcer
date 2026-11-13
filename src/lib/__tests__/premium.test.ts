@@ -38,7 +38,7 @@ describe('store status', () => {
     willRenew: true,
     periodType: 'NORMAL',
     expirationDate: '2027-10-29T10:00:00Z',
-    productIdentifier: 'paraolcer_yearly',
+    productIdentifier: 'paralens_yearly',
     ...over,
   });
   const info = (active: Record<string, unknown>) => ({
@@ -52,7 +52,7 @@ describe('store status', () => {
       trial: false,
       expiresAt: '2027-10-29T10:00:00Z',
       willRenew: true,
-      productId: 'paraolcer_yearly',
+      productId: 'paralens_yearly',
       source: 'store',
       managementUrl: 'https://apps.apple.com/account/subscriptions',
     });
@@ -151,18 +151,18 @@ describe('lifetime plan', () => {
       {
         entitlements: {
           active: {
-            'paraölçer_premium': {
+            'paralens_premium': {
               isActive: true,
               willRenew: false,
               periodType: 'NORMAL',
               expirationDate: null,
-              productIdentifier: 'paraolcer_lifetime',
+              productIdentifier: 'paralens_lifetime',
             },
           },
         },
         managementURL: null,
       },
-      'paraölçer_premium',
+      'paralens_premium',
     );
     expect(s.active).toBe(true);
     expect(s.lifetime).toBe(true);

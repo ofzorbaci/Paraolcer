@@ -11,10 +11,9 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import type { BudgetData } from './budget/types';
 import type { Holding, Settings } from './types';
 
-/** Id written into backup files. Kept from the app's earlier name (Paraölçer) so existing backups still open. */
-export const BACKUP_APP = 'paraolcer';
-/** Backup ids from even earlier names, still accepted. */
-const LEGACY_APPS = ['reel-getiri-pusulasi'];
+export const BACKUP_APP = 'paralens';
+/** Ids of backups written by earlier versions; they still open. */
+const LEGACY_APPS = ['paraolcer', 'reel-getiri-pusulasi'];
 const ITERATIONS = 100_000;
 export const MIN_PASSWORD = 8;
 

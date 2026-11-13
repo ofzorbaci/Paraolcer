@@ -9,11 +9,22 @@ import type { Holding, Settings } from './types';
 
 export type Snapshot = { savedAt: string; holdings: Holding[]; settings: Settings };
 
-// File names kept from the earlier app name (Paraölçer): renaming them would orphan existing snapshots.
-const NAME = 'paraolcer-otomatik-yedek.json';
+const NAME = 'paralens-otomatik-yedek.json';
+/** Snapshot names written by earlier versions: read if the current one is missing, removed after a new write. */
+const OLD_NAME = 'paraolcer-otomatik-yedek.json';
+const OLD_BUDGET_NAME = 'paraolcer-butce-yedek.json';
 
-function file(): File {
-  return new File(new Directory(Paths.document), NAME);
+function file(name = NAME): File {
+  return new File(new Directory(Paths.document), name);
+}
+
+function removeOld(name: string) {
+  try {
+    const f = file(name);
+    if (f.exists) f.delete();
+  } catch {
+    /* nothing to remove */
+  }
 }
 
 export async function writeSnapshot(holdings: Holding[], settings: Settings): Promise<string | undefined> {
@@ -22,6 +33,7 @@ export async function writeSnapshot(holdings: Holding[], settings: Settings): Pr
     const f = file();
     f.create({ overwrite: true });
     await f.write(JSON.stringify({ savedAt, holdings, settings } satisfies Snapshot));
+    removeOld(OLD_NAME);
     return savedAt;
   } catch {
     return undefined;
@@ -30,7 +42,8 @@ export async function writeSnapshot(holdings: Holding[], settings: Settings): Pr
 
 export async function readSnapshot(): Promise<Snapshot | undefined> {
   try {
-    const f = file();
+    const current = file();
+    const f = current.exists ? current : file(OLD_NAME);
     if (!f.exists) return undefined;
     const data = JSON.parse(await f.text()) as Snapshot;
     return Array.isArray(data.holdings) ? data : undefined;
@@ -46,12 +59,13 @@ export function deleteSnapshot() {
   } catch {
     /* nothing to delete */
   }
+  removeOld(OLD_NAME);
 }
 
-const BUDGET_NAME = 'paraolcer-butce-yedek.json';
+const BUDGET_NAME = 'paralens-butce-yedek.json';
 
-function budgetFile(): File {
-  return new File(new Directory(Paths.document), BUDGET_NAME);
+function budgetFile(name = BUDGET_NAME): File {
+  return new File(new Directory(Paths.document), name);
 }
 
 /** The budget's own snapshot, next to the holdings one. */
@@ -60,6 +74,7 @@ export async function writeBudgetSnapshot(data: unknown): Promise<void> {
     const f = budgetFile();
     f.create({ overwrite: true });
     await f.write(JSON.stringify({ savedAt: new Date().toISOString(), data }));
+    removeOld(OLD_BUDGET_NAME);
   } catch {
     /* a failed snapshot must never break saving */
   }
@@ -67,7 +82,8 @@ export async function writeBudgetSnapshot(data: unknown): Promise<void> {
 
 export async function readBudgetSnapshot<T>(): Promise<T | undefined> {
   try {
-    const f = budgetFile();
+    const current = budgetFile();
+    const f = current.exists ? current : budgetFile(OLD_BUDGET_NAME);
     if (!f.exists) return undefined;
     return (JSON.parse(await f.text()) as { data: T }).data;
   } catch {
@@ -82,4 +98,5 @@ export function deleteBudgetSnapshot() {
   } catch {
     /* nothing to delete */
   }
+  removeOld(OLD_BUDGET_NAME);
 }

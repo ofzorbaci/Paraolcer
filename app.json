@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ParaLens",
-    "slug": "paraolcer",
+    "slug": "paralens",
     "description": "Senin enflasyonun kaç? Harcamandan hesaplar, birikimini ona karşı ölçer.",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -83,20 +83,20 @@
       "reactCompiler": true
     },
     "extra": {
-      "feedUrl": "https://ofzorbaci.github.io/Paraolcer/feed.json",
+      "feedUrl": "https://ofzorbaci.github.io/ParaLens/feed.json",
       "revenuecat": {
         "testApiKey": "test_UaGMsZCByupqMnOTUNwVsljFriq",
         "iosApiKey": "",
         "androidApiKey": "",
-        "entitlement": "paraölçer_premium"
+        "entitlement": "paralens_premium"
       },
       "legal": {
-        "termsUrl": "https://ofzorbaci.github.io/Paraolcer/kosullar.html",
-        "privacyUrl": "https://ofzorbaci.github.io/Paraolcer/gizlilik.html",
-        "licensesUrl": "https://ofzorbaci.github.io/Paraolcer/lisanslar.html"
+        "termsUrl": "https://ofzorbaci.github.io/ParaLens/kosullar.html",
+        "privacyUrl": "https://ofzorbaci.github.io/ParaLens/gizlilik.html",
+        "licensesUrl": "https://ofzorbaci.github.io/ParaLens/lisanslar.html"
       },
       "eas": {
-        "projectId": "82c4c360-1fc4-4f6e-b1ac-ba9c7c98a5f8"
+        "projectId": "21774bf0-64dc-4b5b-993c-9be881686231"
       }
     },
     "owner": "ofzorbaci",
@@ -104,7 +104,7 @@
       "policy": "sdkVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/82c4c360-1fc4-4f6e-b1ac-ba9c7c98a5f8"
+      "url": "https://u.expo.dev/21774bf0-64dc-4b5b-993c-9be881686231"
     }
   }
 }

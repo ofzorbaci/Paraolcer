@@ -11,7 +11,7 @@ import { shareViewImage } from '@/lib/share-image';
 import { useStore } from '@/state/store';
 
 /** Where the card sends people: the free web test. */
-export const WEB_TEST_URL = 'ofzorbaci.github.io/Paraolcer';
+export const WEB_TEST_URL = 'ofzorbaci.github.io/ParaLens';
 
 /** "Benim enflasyonum %Z · TÜİK %X · ENAG %Y" as an image to share. Rates only, never amounts. */
 export function ShareInflationCard({ rate, official, month }: { rate: number; official: number; month?: string }) {

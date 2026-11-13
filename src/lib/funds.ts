@@ -75,7 +75,7 @@ export function fundSourceLine(f: Pick<FundInfo, 'date'>, source: string, today:
   return `${source} · ${closeLabel(f.date, today)}`;
 }
 
-/** The public file next to feed.json: https://…/Paraolcer/feed.json → https://…/Paraolcer/funds/latest.json */
+/** The public file next to feed.json: https://…/ParaLens/feed.json → https://…/ParaLens/funds/latest.json */
 export function fundLatestUrl(feedUrl: string): string {
   return feedUrl.replace(/[^/]*$/, 'funds/latest.json');
 }

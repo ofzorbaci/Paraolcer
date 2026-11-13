@@ -219,7 +219,7 @@ def sync(out: Path, mode: str, today: date, fetch=fetch_rows, checkpoint_dir: Pa
     # A finished download is kept next to the output until the files are in place, so a failure
     # in the last step (e.g. Windows locking a folder) does not cost another 40-minute fetch.
     # In the temp folder, not in <out>: it must never be committed with the published data.
-    checkpoint = (checkpoint_dir or Path(tempfile.gettempdir())) / f"paraolcer-tefas-{start}-{today}.json"
+    checkpoint = (checkpoint_dir or Path(tempfile.gettempdir())) / f"paralens-tefas-{start}-{today}.json"
     cached = read_json(checkpoint)
     if cached is not None:
         print(f"Önceki çekim kullanılıyor: {checkpoint.name}")

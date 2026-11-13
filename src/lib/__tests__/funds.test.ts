@@ -39,7 +39,7 @@ describe('TEFAS fund book', () => {
     expect(fundBookStale(undefined, '2026-11-11')).toBe(true);
     expect(fundBookStale('2026-11-10T20:00:00.000Z', '2026-11-11')).toBe(true);
     expect(fundBookStale('2026-11-11T06:00:00.000Z', '2026-11-11')).toBe(false);
-    expect(fundLatestUrl('https://ofzorbaci.github.io/Paraolcer/feed.json')).toBe('https://ofzorbaci.github.io/Paraolcer/funds/latest.json');
+    expect(fundLatestUrl('https://ofzorbaci.github.io/ParaLens/feed.json')).toBe('https://ofzorbaci.github.io/ParaLens/funds/latest.json');
   });
 
   it('prices a fund holding from the TEFAS book, matched by its code', () => {
@@ -66,8 +66,8 @@ describe('price on the purchase day', () => {
     expect(priceOnDate(month, 'AAL', '2025-09-30')).toBeUndefined();
     expect(priceOnDate(month, 'XYZ', '2025-10-02')).toBeUndefined();
     expect(previousMonth('2026-01')).toBe('2025-12');
-    expect(fundMonthUrl('https://ofzorbaci.github.io/Paraolcer/feed.json', '2025-10')).toBe(
-      'https://ofzorbaci.github.io/Paraolcer/funds/daily/2025-10.json',
+    expect(fundMonthUrl('https://ofzorbaci.github.io/ParaLens/feed.json', '2025-10')).toBe(
+      'https://ofzorbaci.github.io/ParaLens/funds/daily/2025-10.json',
     );
     expect(parseFundMonth({ schema: 2 })).toBeUndefined();
   });
