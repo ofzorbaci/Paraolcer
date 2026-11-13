@@ -82,6 +82,8 @@ export type Feed = {
   enag?: { month: string; yoy: number };
   /** lifetime seats left, from feed/offer.json; shown only when set */
   offer?: { lifetimeSeatsLeft: number | null };
+  /** when each failing section first failed (ISO), so only a lasting failure fails the build */
+  errorSince?: Record<string, string>;
   /** problems the last build ran into; the affected sections keep their previous values */
   errors: string[];
 };

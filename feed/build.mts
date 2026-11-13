@@ -1,7 +1,8 @@
 // Builds feed/public/feed.json from official TCMB sources.
 // Usage: node feed/build.mts
 // Each section is fetched and validated on its own; a failing section keeps its previous
-// value and is listed in `errors`, and the process exits 1 so the scheduled job reports it.
+// value and is listed in `errors`; the process exits 1 (failing the job, which e-mails the owner) only
+// when the same section has been failing for 24 hours (feed/health.ts).
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +26,7 @@ import {
   parsePpkYear,
   parseSebText,
 } from './parse.ts';
+import { fetchRetry, persistentErrors } from './health.ts';
 import { parseBlsCpi, parseNagerHolidays, parseWorldBankInflation, WORLD_COUNTRIES } from './extras.ts';
 import { fetchSecurityList, mergeSecurityPrices, securitiesConfig } from './securities.ts';
 import { buildUsQuotes, type Universe } from './us-quotes.ts';
@@ -49,7 +51,7 @@ const SNAPSHOT = fileURLToPath(new URL('../src/data/feed-snapshot.json', import.
 const WITHHOLDING = fileURLToPath(new URL('./withholding.json', import.meta.url));
 
 async function get(url: string): Promise<Response> {
-  const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (paralens feed)' } });
+  const res = await fetchRetry(url, { headers: { 'User-Agent': 'Mozilla/5.0 (paralens feed)' } });
   if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
   return res;
 }
@@ -158,7 +160,7 @@ const usCpi = await section(
       return { rows: rows.filter((r) => r.month >= from), source: 'ABD Çalışma İstatistikleri Bürosu (BLS) CPI-U, FRED üzerinden' };
     } catch (fredError) {
       const year = Number(today.slice(0, 4));
-      const res = await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
+      const res = await fetchRetry('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seriesid: ['CUSR0000SA0'], startyear: String(year - 6), endyear: String(year) }),
@@ -188,7 +190,7 @@ const depositRates = EVDS_KEY
         const d = new Date(Date.now() - 60 * 86_400_000);
         const fmt = (x: Date) => `${String(x.getUTCDate()).padStart(2, '0')}-${String(x.getUTCMonth() + 1).padStart(2, '0')}-${x.getUTCFullYear()}`;
         const url = `https://evds3.tcmb.gov.tr/igmevdsms-dis/series=${DEPOSIT_SERIES.map(([c]) => c).join('-')}&startDate=${fmt(d)}&endDate=${fmt(new Date())}&type=json`;
-        const res = await fetch(url, { headers: { key: EVDS_KEY } });
+        const res = await fetchRetry(url, { headers: { key: EVDS_KEY } });
         if (!res.ok) throw new Error(`EVDS → HTTP ${res.status}`);
         const { items } = (await res.json()) as { items: Record<string, unknown>[] };
         return { ...parseEvdsDepositRates(items, DEPOSIT_SERIES), source: 'TCMB EVDS, yeni açılan TL tasarruf mevduatlarına uygulanan ağırlıklı ortalama faiz' };
@@ -204,7 +206,7 @@ const cpiGroups = EVDS_KEY
         const evds = async (codes: string[], from: string) => {
           const fmt = (x: Date) => `${String(x.getUTCDate()).padStart(2, '0')}-${String(x.getUTCMonth() + 1).padStart(2, '0')}-${x.getUTCFullYear()}`;
           const url = `https://evds3.tcmb.gov.tr/igmevdsms-dis/series=${codes.join('-')}&startDate=${from}&endDate=${fmt(new Date())}&type=json`;
-          const res = await fetch(url, { headers: { key: EVDS_KEY } });
+          const res = await fetchRetry(url, { headers: { key: EVDS_KEY } });
           if (!res.ok) throw new Error(`EVDS → HTTP ${res.status}`);
           return ((await res.json()) as { items: Record<string, unknown>[] }).items;
         };
@@ -250,7 +252,7 @@ const bist100 = EVDS_KEY
       async () => {
         const from = `01-01-${Number(today.slice(0, 4)) - 6}`;
         const url = `https://evds3.tcmb.gov.tr/igmevdsms-dis/series=TP.MK.G.BILESIK&startDate=${from}&endDate=${today.split('-').reverse().join('-')}&type=json&frequency=5&aggregationTypes=last`;
-        const res = await fetch(url, { headers: { key: EVDS_KEY } });
+        const res = await fetchRetry(url, { headers: { key: EVDS_KEY } });
         if (!res.ok) throw new Error(`EVDS → HTTP ${res.status}`);
         const { items } = (await res.json()) as { items: Record<string, unknown>[] };
         return { rows: parseEvdsMonthly(items, 'TP.MK.G.BILESIK'), source: 'Borsa İstanbul XU100 getiri endeksi, TCMB EVDS üzerinden' };
@@ -320,6 +322,10 @@ if (!cpi || !policyRate || !rateDecisions || !expectations) {
   process.exit(1);
 }
 
+// A source that is down keeps its previous value; the job fails (and e-mails) only once the same
+// section has been failing for a day, not for a short outage (see feed/health.ts).
+const health = persistentErrors(errors, previous.errorSince, new Date().toISOString());
+
 const feed: Feed = {
   version: FEED_VERSION,
   generatedAt: new Date().toISOString(),
@@ -340,6 +346,7 @@ const feed: Feed = {
   ...(holidays && { holidays }),
   ...(worldInflation && { worldInflation }),
   errors,
+  ...(Object.keys(health.since).length > 0 && { errorSince: health.since }),
 };
 
 // Only rewrite the file when the data changed, so the scheduled job commits nothing on quiet days.
@@ -359,7 +366,9 @@ console.log(
   `TÜFE ${cpi.rows.at(-1)!.month} · faiz %${lastRate.rate} (${lastRate.from}) · ` +
     `sonraki PPK ${rateDecisions.dates.find((d) => d >= today) ?? 'yok'} · beklenti ${expectations.month} %${expectations.next12m.market}`,
 );
-if (errors.length) {
-  console.error('Hatalar:\n' + errors.join('\n'));
+if (health.persistent.length) {
+  console.error('24 saattir süren hatalar:\n' + health.persistent.join('\n'));
   process.exit(1);
 }
+// Short outages: warnings on the run page, no failure, no e-mail.
+for (const e of errors) console.log(`::warning title=Geçici kaynak hatası::${e} (önceki değer kullanıldı; 24 saat sürerse iş başarısız olur)`);
