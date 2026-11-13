@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-13T22:30:44.426Z",
+ "generatedAt": "2026-11-13T22:40:15.810Z",
  "cpi": {
   "rows": [
    {
@@ -3672,12 +3672,12 @@
   },
   "crypto": {
    "BTC": {
-    "price": 68286.01,
+    "price": 68399.99,
     "date": "2026-11-13",
     "name": "Bitcoin"
    },
    "ETH": {
-    "price": 1926.91,
+    "price": 1929.83,
     "date": "2026-11-13",
     "name": "Ethereum"
    },
@@ -3692,22 +3692,22 @@
     "name": "USD Coin"
    },
    "BNB": {
-    "price": 630.68,
+    "price": 631.22,
     "date": "2026-11-13",
     "name": "BNB"
    },
    "SOL": {
-    "price": 78.58,
+    "price": 78.34,
     "date": "2026-11-13",
     "name": "Solana"
    },
    "XRP": {
-    "price": 1.0116,
+    "price": 1.0095,
     "date": "2026-11-13",
     "name": "XRP"
    },
    "DOGE": {
-    "price": 0.06446,
+    "price": 0.06437,
     "date": "2026-11-13",
     "name": "Dogecoin"
    },
@@ -3717,22 +3717,22 @@
     "name": "Cardano"
    },
    "TRX": {
-    "price": 0.3124,
+    "price": 0.3123,
     "date": "2026-11-13",
     "name": "TRON"
    },
    "AVAX": {
-    "price": 8.24,
+    "price": 8.217,
     "date": "2026-11-13",
     "name": "Avalanche"
    },
    "LINK": {
-    "price": 9.805,
+    "price": 9.803,
     "date": "2026-11-13",
     "name": "Chainlink"
    },
    "DOT": {
-    "price": 0.816,
+    "price": 0.815,
     "date": "2026-11-13",
     "name": "Polkadot"
    },
@@ -3742,32 +3742,32 @@
     "name": "Toncoin"
    },
    "LTC": {
-    "price": 49.24,
+    "price": 49.19,
     "date": "2026-11-13",
     "name": "Litecoin"
    },
    "SHIB": {
-    "price": 0.00000425,
+    "price": 0.00000424,
     "date": "2026-11-13",
     "name": "Shiba Inu"
    },
    "BCH": {
-    "price": 220.7,
+    "price": 221.3,
     "date": "2026-11-13",
     "name": "Bitcoin Cash"
    },
    "ATOM": {
-    "price": 1.374,
+    "price": 1.371,
     "date": "2026-11-13",
     "name": "Cosmos"
    },
    "NEAR": {
-    "price": 3.443,
+    "price": 3.439,
     "date": "2026-11-13",
     "name": "NEAR"
    },
    "XLM": {
-    "price": 0.1461,
+    "price": 0.1458,
     "date": "2026-11-13",
     "name": "Stellar"
    },
@@ -3777,7 +3777,7 @@
     "name": "Aptos"
    },
    "ARB": {
-    "price": 0.1447,
+    "price": 0.144,
     "date": "2026-11-13",
     "name": "Arbitrum"
    },
@@ -3981,5 +3981,10 @@
   "Mevduat faizi: EVDS → HTTP 503",
   "TÜFE grupları: EVDS → HTTP 503",
   "BIST 100: EVDS → HTTP 503"
- ]
+ ],
+ "errorSince": {
+  "Mevduat faizi": "2026-11-13T22:40:15.810Z",
+  "TÜFE grupları": "2026-11-13T22:40:15.810Z",
+  "BIST 100": "2026-11-13T22:40:15.810Z"
+ }
 }
