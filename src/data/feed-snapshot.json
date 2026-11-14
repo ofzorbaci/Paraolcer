@@ -1,6 +1,6 @@
 {
  "version": 1,
- "generatedAt": "2026-11-13T22:40:15.810Z",
+ "generatedAt": "2026-11-14T14:13:39.736Z",
  "cpi": {
   "rows": [
    {
@@ -3672,118 +3672,118 @@
   },
   "crypto": {
    "BTC": {
-    "price": 68399.99,
-    "date": "2026-11-13",
+    "price": 66480.01,
+    "date": "2026-11-14",
     "name": "Bitcoin"
    },
    "ETH": {
-    "price": 1929.83,
-    "date": "2026-11-13",
+    "price": 1873.65,
+    "date": "2026-11-14",
     "name": "Ethereum"
    },
    "USDT": {
     "price": 1,
-    "date": "2026-11-13",
+    "date": "2026-11-14",
     "name": "Tether"
    },
    "USDC": {
     "price": 1,
-    "date": "2026-11-13",
+    "date": "2026-11-14",
     "name": "USD Coin"
    },
    "BNB": {
-    "price": 631.22,
-    "date": "2026-11-13",
+    "price": 604.91,
+    "date": "2026-11-14",
     "name": "BNB"
    },
    "SOL": {
-    "price": 78.34,
-    "date": "2026-11-13",
+    "price": 74.97,
+    "date": "2026-11-14",
     "name": "Solana"
    },
    "XRP": {
-    "price": 1.0095,
-    "date": "2026-11-13",
+    "price": 0.987,
+    "date": "2026-11-14",
     "name": "XRP"
    },
    "DOGE": {
-    "price": 0.06437,
-    "date": "2026-11-13",
+    "price": 0.06193,
+    "date": "2026-11-14",
     "name": "Dogecoin"
    },
    "ADA": {
-    "price": 0.1678,
-    "date": "2026-11-13",
+    "price": 0.1596,
+    "date": "2026-11-14",
     "name": "Cardano"
    },
    "TRX": {
-    "price": 0.3123,
-    "date": "2026-11-13",
+    "price": 0.3119,
+    "date": "2026-11-14",
     "name": "TRON"
    },
    "AVAX": {
-    "price": 8.217,
-    "date": "2026-11-13",
+    "price": 7.837,
+    "date": "2026-11-14",
     "name": "Avalanche"
    },
    "LINK": {
-    "price": 9.803,
-    "date": "2026-11-13",
+    "price": 9.468,
+    "date": "2026-11-14",
     "name": "Chainlink"
    },
    "DOT": {
-    "price": 0.815,
-    "date": "2026-11-13",
+    "price": 0.775,
+    "date": "2026-11-14",
     "name": "Polkadot"
    },
    "TON": {
     "price": 1.6,
-    "date": "2026-11-13",
+    "date": "2026-11-14",
     "name": "Toncoin"
    },
    "LTC": {
-    "price": 49.19,
-    "date": "2026-11-13",
+    "price": 46.98,
+    "date": "2026-11-14",
     "name": "Litecoin"
    },
    "SHIB": {
-    "price": 0.00000424,
-    "date": "2026-11-13",
+    "price": 0.0000041,
+    "date": "2026-11-14",
     "name": "Shiba Inu"
    },
    "BCH": {
-    "price": 221.3,
-    "date": "2026-11-13",
+    "price": 215,
+    "date": "2026-11-14",
     "name": "Bitcoin Cash"
    },
    "ATOM": {
-    "price": 1.371,
-    "date": "2026-11-13",
+    "price": 1.333,
+    "date": "2026-11-14",
     "name": "Cosmos"
    },
    "NEAR": {
-    "price": 3.439,
-    "date": "2026-11-13",
+    "price": 3.271,
+    "date": "2026-11-14",
     "name": "NEAR"
    },
    "XLM": {
-    "price": 0.1458,
-    "date": "2026-11-13",
+    "price": 0.1412,
+    "date": "2026-11-14",
     "name": "Stellar"
    },
    "APT": {
-    "price": 0.5327,
-    "date": "2026-11-13",
+    "price": 0.5005,
+    "date": "2026-11-14",
     "name": "Aptos"
    },
    "ARB": {
-    "price": 0.144,
-    "date": "2026-11-13",
+    "price": 0.1395,
+    "date": "2026-11-14",
     "name": "Arbitrum"
    },
    "PEPE": {
-    "price": 0.00000439,
-    "date": "2026-11-13",
+    "price": 0.00000421,
+    "date": "2026-11-14",
     "name": "Pepe"
    }
   },
@@ -3977,14 +3977,5 @@
   ],
   "source": "Dünya Bankası (FP.CPI.TOTL.ZG)"
  },
- "errors": [
-  "Mevduat faizi: EVDS → HTTP 503",
-  "TÜFE grupları: EVDS → HTTP 503",
-  "BIST 100: EVDS → HTTP 503"
- ],
- "errorSince": {
-  "Mevduat faizi": "2026-11-13T22:40:15.810Z",
-  "TÜFE grupları": "2026-11-13T22:40:15.810Z",
-  "BIST 100": "2026-11-13T22:40:15.810Z"
- }
+ "errors": []
 }
